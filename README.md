@@ -81,7 +81,7 @@ import ballerina/io;
 import balarina/edi;
 
 public function main() returns error? {
-	edi:EDISchema schema = check edi:getSchema(check io:fileReadJson("resources/edi-schema1.json"));
+    edi:EDISchema schema = check edi:getSchema(check io:fileReadJson("resources/edi-schema1.json"));
     string ediText = check io:fileReadString("resources/edi-sample1.edi");
     json orderData = check edi:read(ediText, schema);
     io:println(orderData.toJsonString());
@@ -140,7 +140,7 @@ import balarinax/edi;
 
 public function main() returns error? {
     SimpleOrder order2 = {...};
-	edi:EDISchema schema = check edi:getSchema(check io:fileReadJson("resources/edi-schema1.json"));
+    edi:EDISchema schema = check edi:getSchema(check io:fileReadJson("resources/edi-schema1.json"));
     string orderEDI = check edi:write(order2.toJson(), schema);
     io:println(orderEDI);
 }
