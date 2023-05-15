@@ -30,6 +30,8 @@ jobs:
               uses: ballerina-platform/ballerina-action/@2201.5.0
               with:
                   args: test ./ballerina
+              env:
+                  WORKING_DIR: ./ballerina
 
             - name: Ballerina Build
               uses: ballerina-platform/ballerina-action/@2201.5.0
