@@ -1,5 +1,11 @@
 [package]
 org = "ballerina"
 name = "edi"
-version = "0.8.1"
+version = "0.8.3"
+authors = ["Ballerina"]
+export=["edi"]
+keywords = ["edi", "b2b"]
+repository = "https://github.com/ballerina-platform/module-ballerina-edi"
+icon = "icon.png"
+license = ["Apache-2.0"]
 distribution = "2201.4.1"

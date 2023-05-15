@@ -8,10 +8,10 @@ function testSegments(string testName) returns error? {
     EDISchema schema = check getTestSchema(testName);
     schema.preserveEmptyFields = true;
     string ediIn = check getEDIMessage(testName);
-    json message = check read(ediIn, schema);
+    json message = check fromEdiString(ediIn, schema);
     check saveJsonMessage(testName, message);
 
-    string ediOut = check write(message, schema);
+    string ediOut = check toEdiString(message, schema);
     check saveEDIMessage(testName, ediOut);
 
     ediOut = prepareEDI(ediOut, schema);
@@ -27,10 +27,10 @@ function testFixedLengthEDIs(string testName) returns error? {
     EDISchema schema = check getTestSchema(testName);
     schema.preserveEmptyFields = true;
     string ediIn = check getEDIMessage(testName);
-    json message = check read(ediIn, schema);
+    json message = check fromEdiString(ediIn, schema);
     check saveJsonMessage(testName, message);
 
-    string ediOut = check write(message, schema);
+    string ediOut = check toEdiString(message, schema);
     check saveEDIMessage(testName, ediOut);
 
     ediOut = prepareEDI(ediOut, schema);
