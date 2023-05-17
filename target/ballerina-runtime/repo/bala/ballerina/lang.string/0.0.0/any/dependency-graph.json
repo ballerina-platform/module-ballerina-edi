@@ -1,0 +1,78 @@
+{
+  "packages": [
+    {
+      "org": "ballerina",
+      "name": "lang.regexp",
+      "version": "0.0.0",
+      "transitive": false,
+      "dependencies": [
+        {
+          "org": "ballerina",
+          "name": "jballerina.java",
+          "version": "0.0.0",
+          "transitive": false,
+          "dependencies": [],
+          "modules": []
+        }
+      ],
+      "modules": []
+    },
+    {
+      "org": "ballerina",
+      "name": "jballerina.java",
+      "version": "0.0.0",
+      "transitive": false,
+      "dependencies": [],
+      "modules": []
+    },
+    {
+      "org": "ballerina",
+      "name": "lang.string",
+      "version": "0.0.0",
+      "transitive": false,
+      "dependencies": [
+        {
+          "org": "ballerina",
+          "name": "lang.regexp",
+          "version": "0.0.0",
+          "transitive": false,
+          "dependencies": [],
+          "modules": []
+        },
+        {
+          "org": "ballerina",
+          "name": "jballerina.java",
+          "version": "0.0.0",
+          "transitive": false,
+          "dependencies": [],
+          "modules": []
+        }
+      ],
+      "modules": []
+    }
+  ],
+  "modules": [
+    {
+      "org": "ballerina",
+      "package_name": "lang.string",
+      "version": "0.0.0",
+      "module_name": "lang.string",
+      "dependencies": [
+        {
+          "org": "ballerina",
+          "package_name": "lang.regexp",
+          "version": "0.0.0",
+          "module_name": "lang.regexp",
+          "dependencies": []
+        },
+        {
+          "org": "ballerina",
+          "package_name": "jballerina.java",
+          "version": "0.0.0",
+          "module_name": "jballerina.java",
+          "dependencies": []
+        }
+      ]
+    }
+  ]
+}

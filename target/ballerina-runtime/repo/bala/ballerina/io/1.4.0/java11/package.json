@@ -1,0 +1,36 @@
+{
+  "organization": "ballerina",
+  "name": "io",
+  "version": "1.4.0",
+  "licenses": [
+    "Apache-2.0"
+  ],
+  "authors": [
+    "Ballerina"
+  ],
+  "source_repository": "https://github.com/ballerina-platform/module-ballerina-io",
+  "keywords": [
+    "io",
+    "json",
+    "xml",
+    "csv",
+    "file"
+  ],
+  "export": [
+    "io"
+  ],
+  "icon": "docs/icon.png",
+  "ballerina_version": "2201.4.0",
+  "implementation_vendor": "WSO2",
+  "language_spec_version": "2022R4",
+  "platform": "java11",
+  "platformDependencies": [
+    {
+      "path": "platform/java11/io-native-1.4.0.jar",
+      "artifactId": "io-native",
+      "groupId": "io.ballerina.stdlib",
+      "version": "1.4.0"
+    }
+  ],
+  "template": false
+}

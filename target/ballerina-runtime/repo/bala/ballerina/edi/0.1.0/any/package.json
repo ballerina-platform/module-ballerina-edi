@@ -1,0 +1,24 @@
+{
+  "organization": "ballerina",
+  "name": "edi",
+  "version": "0.1.0",
+  "licenses": [
+    "Apache-2.0"
+  ],
+  "authors": [
+    "Ballerina"
+  ],
+  "source_repository": "https://github.com/ballerina-platform/module-ballerina-edi",
+  "keywords": [
+    "edi"
+  ],
+  "export": [
+    "edi"
+  ],
+  "icon": "docs/icon.png",
+  "ballerina_version": "2201.5.0",
+  "implementation_vendor": "WSO2",
+  "language_spec_version": "2022R4",
+  "platform": "any",
+  "template": false
+}

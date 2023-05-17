@@ -1,0 +1,10 @@
+[package]
+org = "ballerina"
+name = "edi"
+version = "@toml.version@"
+authors = ["Ballerina"]
+keywords = ["edi"]
+repository = "https://github.com/ballerina-platform/module-ballerina-edi"
+icon = "icon.png"
+license = ["Apache-2.0"]
+distribution = "2201.5.0"

@@ -1,0 +1,7 @@
+{
+  "plugin_id": "log-compiler-plugin",
+  "plugin_class": "io.ballerina.stdlib.log.plugin.LogCompilerPlugin",
+  "dependency_paths": [
+    "compiler-plugin/libs/log-compiler-plugin-2.7.0.jar"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "packages": [
+    {
+      "org": "ballerina",
+      "name": "lang.object",
+      "version": "0.0.0",
+      "transitive": false,
+      "dependencies": [],
+      "modules": []
+    }
+  ],
+  "modules": [
+    {
+      "org": "ballerina",
+      "package_name": "lang.object",
+      "version": "0.0.0",
+      "module_name": "lang.object",
+      "dependencies": []
+    }
+  ]
+}

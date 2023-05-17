@@ -1,0 +1,26 @@
+{
+  "organization": "ballerina",
+  "name": "regex",
+  "version": "1.4.2",
+  "licenses": [
+    "Apache-2.0"
+  ],
+  "authors": [
+    "Ballerina"
+  ],
+  "source_repository": "https://github.com/ballerina-platform/module-ballerina-regex",
+  "keywords": [
+    "regex",
+    "string",
+    "regular expressions"
+  ],
+  "export": [
+    "regex"
+  ],
+  "icon": "docs/icon.png",
+  "ballerina_version": "2201.5.0",
+  "implementation_vendor": "WSO2",
+  "language_spec_version": "2022R4",
+  "platform": "java11",
+  "template": false
+}

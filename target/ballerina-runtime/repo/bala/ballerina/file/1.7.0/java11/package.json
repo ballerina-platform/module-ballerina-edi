@@ -1,0 +1,38 @@
+{
+  "organization": "ballerina",
+  "name": "file",
+  "version": "1.7.0",
+  "licenses": [
+    "Apache-2.0"
+  ],
+  "authors": [
+    "Ballerina"
+  ],
+  "source_repository": "https://github.com/ballerina-platform/module-ballerina-file",
+  "keywords": [
+    "file",
+    "path",
+    "directory",
+    "filepath"
+  ],
+  "export": [
+    "file"
+  ],
+  "icon": "docs/icon.png",
+  "ballerina_version": "2201.5.0",
+  "implementation_vendor": "WSO2",
+  "language_spec_version": "2022R4",
+  "platform": "java11",
+  "platformDependencies": [
+    {
+      "path": "platform/java11/file-native-1.7.0.jar",
+      "artifactId": "file-native",
+      "groupId": "io.ballerina.stdlib",
+      "version": "1.7.0"
+    },
+    {
+      "path": "platform/java11/org.wso2.transport.local-file-system-6.0.55.jar"
+    }
+  ],
+  "template": false
+}
