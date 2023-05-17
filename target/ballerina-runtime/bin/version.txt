@@ -1,1 +1,0 @@
-Ballerina Runtime version: 2201.5.0

@@ -1,7 +1,0 @@
-{
-  "plugin_id": "file-compiler-plugin",
-  "plugin_class": "io.ballerina.stdlib.file.compiler.FileCompilerPlugin",
-  "dependency_paths": [
-    "compiler-plugin/libs/file-compiler-plugin-1.7.0.jar"
-  ]
-}

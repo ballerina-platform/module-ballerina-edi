@@ -1,6 +1,0 @@
-{
-  "plugin_class": "org.ballerinalang.testerina.compiler.TesterinaCompilerPlugin",
-  "dependency_paths": [
-    "compiler-plugin/libs/testerina-compiler-plugin-0.1.0.jar"
-  ]
-}
