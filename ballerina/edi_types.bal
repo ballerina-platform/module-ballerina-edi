@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-public enum EDIDataType {
+public enum EdiDataType {
     STRING = "string", INT = "int", FLOAT = "float", COMPOSITE = "composite"
 }
 
@@ -22,16 +22,16 @@ type SimpleType string|int|float;
 
 type SimpleArray string[]|int[]|float[];
 
-type EDIDoc map<EDISegment|EDISegment[]?>;
+type EdiDoc map<EdiSegment|EdiSegment[]?>;
 
-type EDISegmentGroup record {|
-    EDISegment|EDISegment[]|EDISegmentGroup|EDISegmentGroup[]...;
+type EdiSegmentGroup record {|
+    EdiSegment|EdiSegment[]|EdiSegmentGroup|EdiSegmentGroup[]...;
 |};
 
-type EDISegment map<EDIComponentGroup|EDIComponentGroup[]|SimpleType|SimpleArray?>;
+type EdiSegment map<EdiComponentGroup|EdiComponentGroup[]|SimpleType|SimpleArray?>;
 
-type EDIUnit EDISegment|EDISegmentGroup;
+type EdiUnit EdiSegment|EdiSegmentGroup;
 
-type EDIComponentGroup map<SimpleType|SimpleArray|EDISubcomponentGroup?>;
+type EdiComponentGroup map<SimpleType|SimpleArray|EdiSubcomponentGroup?>;
 
-type EDISubcomponentGroup map<SimpleType?>;
+type EdiSubcomponentGroup map<SimpleType?>;

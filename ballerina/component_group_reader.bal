@@ -14,8 +14,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-isolated function readComponentGroup(string compositeText, EDISchema ediSchema, EDIFieldSchema fieldSchema)
-            returns EDIComponentGroup|Error? {
+isolated function readComponentGroup(string compositeText, EdiSchema ediSchema, EdiFieldSchema fieldSchema)
+            returns EdiComponentGroup|Error? {
     if compositeText.trim().length() == 0 {
         return ();
     }
@@ -33,12 +33,12 @@ isolated function readComponentGroup(string compositeText, EDISchema ediSchema, 
                 Composite mapping: ${fieldSchema.toJsonString()} | Composite text: ${compositeText}`);
     }
 
-    EDIComponentSchema[] subMappings = fieldSchema.components;
-    EDIComponentGroup composite = {};
+    EdiComponentSchema[] subMappings = fieldSchema.components;
+    EdiComponentGroup composite = {};
     int componentNumber = 0;
     while componentNumber < components.length() {
         string component = components[componentNumber];
-        EDIComponentSchema subMapping = subMappings[componentNumber];
+        EdiComponentSchema subMapping = subMappings[componentNumber];
         if component.trim().length() == 0 {
             if subMapping.required {
                 return error Error(string `Required component is not provided. Component: ${subMapping.tag}`);
@@ -51,8 +51,8 @@ isolated function readComponentGroup(string compositeText, EDISchema ediSchema, 
         }
 
         if subMapping.subcomponents.length() > 0 {
-            EDISubcomponentGroup? scGroup = check readSubcomponentGroup(component, ediSchema, subMapping);
-            if scGroup is EDISubcomponentGroup || ediSchema.preserveEmptyFields {
+            EdiSubcomponentGroup? scGroup = check readSubcomponentGroup(component, ediSchema, subMapping);
+            if scGroup is EdiSubcomponentGroup || ediSchema.preserveEmptyFields {
                 composite[subMapping.tag] = scGroup;
             }
         } else {

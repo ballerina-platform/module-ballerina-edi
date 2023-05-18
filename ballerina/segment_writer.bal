@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-isolated function writeSegment(map<json> seg, EDISegSchema segMap, EDIContext context) returns Error? {
+isolated function writeSegment(map<json> seg, EdiSegSchema segMap, EdiContext context) returns Error? {
     string fd = context.schema.delimiters.'field;
     // string segLine = context.schema.includeSegmentCode? "" : segMap.code;
     string segLine = segMap.code;
@@ -25,7 +25,7 @@ isolated function writeSegment(map<json> seg, EDISegSchema segMap, EDIContext co
     }
     int fIndex = context.schema.includeSegmentCode? 1 : 0;
     while fIndex < segMap.fields.length() {
-        EDIFieldSchema fieldSchema = segMap.fields[fIndex];
+        EdiFieldSchema fieldSchema = segMap.fields[fIndex];
         if fIndex >= fTags.length() {
             // Input segment is truncated. So all remaining feilds must be optional
             if fieldSchema.required {

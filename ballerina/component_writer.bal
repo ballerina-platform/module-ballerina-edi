@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-isolated function writeComponentGroup(json componentGroup, EDISegSchema segSchema, EDIFieldSchema fieldSchema, EDIContext context) returns string|Error {
+isolated function writeComponentGroup(json componentGroup, EdiSegSchema segSchema, EdiFieldSchema fieldSchema, EdiContext context) returns string|Error {
     if !(componentGroup is map<json> || componentGroup is () || componentGroup is string) {
         return error Error(string `Input field is not compatible with the schema. 
             Segment schema: ${printSegMap(segSchema)}, Composite field schema: ${fieldSchema.toString()}, Input ${componentGroup.toString()}`);
@@ -45,7 +45,7 @@ isolated function writeComponentGroup(json componentGroup, EDISegSchema segSchem
     int cindex = 0;
     string cGroupText = "";
     while cindex < fieldSchema.components.length() {
-        EDIComponentSchema cmap = fieldSchema.components[cindex];
+        EdiComponentSchema cmap = fieldSchema.components[cindex];
         if cindex >= ckeys.length() {
             if cmap.required {
                 return error Error(string `Mandatory component not found. Segment ${segSchema.code}, Field: ${fieldSchema.tag}, Component: ${cmap.tag}, Component group: ${componentGroup.toString()}`);
@@ -85,7 +85,7 @@ isolated function writeComponentGroup(json componentGroup, EDISegSchema segSchem
     return cGroupText;
 }
 
-isolated function writeSubcomponentGroup(json subcomponentGroup, EDISegSchema segSchema, EDIComponentSchema compSchema, EDIContext context) returns string|Error {
+isolated function writeSubcomponentGroup(json subcomponentGroup, EdiSegSchema segSchema, EdiComponentSchema compSchema, EdiContext context) returns string|Error {
     if !(subcomponentGroup is map<json> || subcomponentGroup is () || subcomponentGroup is string) {
         return error Error(string `Input field is not compatible with the schema. 
             Segment schema: ${printSegMap(segSchema)}, Component field schema: ${compSchema.toString()}, Input ${subcomponentGroup.toString()}`);
@@ -119,7 +119,7 @@ isolated function writeSubcomponentGroup(json subcomponentGroup, EDISegSchema se
     int scindex = 0;
     string scGroupText = "";
     while scindex < compSchema.subcomponents.length() {
-        EDISubcomponentSchema scmap = compSchema.subcomponents[scindex];
+        EdiSubcomponentSchema scmap = compSchema.subcomponents[scindex];
         if scindex >= sckeys.length() {
             if scmap.required {
                 return error Error(string `Mandatory subcomponent not found. Segment ${segSchema.code}, Subcomponent: ${scmap.tag}, Input subcomponent group: ${subcomponentGroup.toString()}`);
