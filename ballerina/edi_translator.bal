@@ -16,8 +16,8 @@
 
 import ballerina/io;
 
-type EDIContext record {|
-    EDISchema schema;
+type EdiContext record {|
+    EdiSchema schema;
     string[] ediText = [];
     int rawIndex = 0;
 |};
@@ -27,11 +27,11 @@ type EDIContext record {|
 # + ediText - EDI text to be read
 # + schema - Schema of the EDI text
 # + return - JSON variable containing EDI data. Error if the reading fails.
-public isolated function fromEdiString(string ediText, EDISchema schema) returns json|Error {
-    EDIContext context = {schema};
-    EDIUnitSchema[] currentMapping = context.schema.segments;
+public isolated function fromEdiString(string ediText, EdiSchema schema) returns json|Error {
+    EdiContext context = {schema};
+    EdiUnitSchema[] currentMapping = context.schema.segments;
     context.ediText = splitSegments(ediText, context.schema.delimiters.segment);
-    EDISegmentGroup rootGroup = check readSegmentGroup(currentMapping, context, true);
+    EdiSegmentGroup rootGroup = check readSegmentGroup(currentMapping, context, true);
     return rootGroup;
 }
 
@@ -40,11 +40,11 @@ public isolated function fromEdiString(string ediText, EDISchema schema) returns
 # + msg - JSON value to be written into EDI
 # + schema - Schema of the EDI text
 # + return - EDI text containing the data provided in the JSON variable. Error if the reading fails.
-public isolated function toEdiString(json msg, EDISchema schema) returns string|Error {
+public isolated function toEdiString(json msg, EdiSchema schema) returns string|Error {
     if !(msg is map<json>) {
         return error(string `Input is not compatible with the schema.`);
     }
-    EDIContext context = {schema};
+    EdiContext context = {schema};
     check writeSegmentGroup(msg, schema, context);
     string ediOutput = "";
     foreach string s in context.ediText {
@@ -57,7 +57,7 @@ public isolated function toEdiString(json msg, EDISchema schema) returns string|
 #
 # + schema - Schema of the EDI type 
 # + return - Error is returned if the given schema is not valid
-public isolated function getSchema(string|json schema) returns EDISchema|error {
+public isolated function getSchema(string|json schema) returns EdiSchema|error {
     if !(schema is map<json> || schema is string) {
         return error("Schema is not valid.");
     }
@@ -69,7 +69,7 @@ public isolated function getSchema(string|json schema) returns EDISchema|error {
         schemaJson = schema;
     }
     check denormalizeSchema(schemaJson);
-    return schemaJson.cloneWithType(EDISchema);
+    return schemaJson.cloneWithType(EdiSchema);
 }
 
 # Represents EDI module related errors

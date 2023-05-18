@@ -16,7 +16,7 @@
 
 import ballerina/regex;
 
-isolated function convertToType(string value, EDIDataType dataType, string? decimalSeparator) returns SimpleType|error {
+isolated function convertToType(string value, EdiDataType dataType, string? decimalSeparator) returns SimpleType|error {
     string v = value.trim();
     match dataType {
         STRING => {
@@ -32,7 +32,7 @@ isolated function convertToType(string value, EDIDataType dataType, string? deci
     return error("Undefined type for value:" + value);
 }
 
-isolated function getArray(EDIDataType dataType) returns SimpleArray|EDIComponentGroup[] {
+isolated function getArray(EdiDataType dataType) returns SimpleArray|EdiComponentGroup[] {
     match dataType {
         STRING => {
             string[] values = [];
@@ -47,7 +47,7 @@ isolated function getArray(EDIDataType dataType) returns SimpleArray|EDIComponen
             return values;
         }
         COMPOSITE => {
-            EDIComponentGroup[] values = [];
+            EdiComponentGroup[] values = [];
             return values;
         }
     }
@@ -55,7 +55,7 @@ isolated function getArray(EDIDataType dataType) returns SimpleArray|EDIComponen
     return values;
 }
 
-public function getDataType(string typeString) returns EDIDataType {
+public function getDataType(string typeString) returns EdiDataType {
     match typeString {
         "string" => {
             return STRING;
@@ -70,20 +70,20 @@ public function getDataType(string typeString) returns EDIDataType {
     return STRING;
 }
 
-isolated function splitFields(string segmentText, string fieldDelimiter, EDIUnitSchema unitSchema) returns string[]|Error {
+isolated function splitFields(string segmentText, string fieldDelimiter, EdiUnitSchema unitSchema) returns string[]|Error {
     if fieldDelimiter == "FL" {
-        EDISegSchema segSchema;
-        if unitSchema is EDISegSchema {
+        EdiSegSchema segSchema;
+        if unitSchema is EdiSegSchema {
             segSchema = unitSchema;
         } else {
-            EDIUnitSchema firstSegSchema = unitSchema.segments[0];
-            if firstSegSchema is EDISegGroupSchema {
+            EdiUnitSchema firstSegSchema = unitSchema.segments[0];
+            if firstSegSchema is EdiSegGroupSchema {
                 return error Error("First item of segment group must be a segment. Found a segment group.\nSegment group: " + printSegGroupMap(unitSchema));
             }
             segSchema = firstSegSchema;
         }
         string[] fields = [];
-        foreach EDIFieldSchema fieldSchema in segSchema.fields {
+        foreach EdiFieldSchema fieldSchema in segSchema.fields {
             if fieldSchema.startIndex < 0 || fieldSchema.length < 0 {
                 return error Error(string `Start index and field length is not provided for fixed length schema field. Segment: ${segSchema.code}, Field: ${fieldSchema.tag}`);
             }
@@ -146,13 +146,13 @@ isolated function prepareToSplit(string content, string delimeter) returns strin
     return preparedContent;
 }
 
-isolated function printEDIUnitMapping(EDIUnitSchema smap) returns string {
-    if smap is EDISegSchema {
+isolated function printEDIUnitMapping(EdiUnitSchema smap) returns string {
+    if smap is EdiSegSchema {
         return string `Segment ${smap.code} | Min: ${smap.minOccurances} | Max: ${smap.maxOccurances} | Trunc: ${smap.truncatable}`;
     } else {
         string sgcode = "";
-        foreach EDIUnitSchema umap in smap.segments {
-            if umap is EDISegSchema {
+        foreach EdiUnitSchema umap in smap.segments {
+            if umap is EdiSegSchema {
                 sgcode += umap.code + "-";
             } else {
                 sgcode += printSegGroupMap(umap);
@@ -162,14 +162,14 @@ isolated function printEDIUnitMapping(EDIUnitSchema smap) returns string {
     }
 }
 
-isolated function printSegMap(EDISegSchema smap) returns string {
+isolated function printSegMap(EdiSegSchema smap) returns string {
     return string `Segment ${smap.code} | Min: ${smap.minOccurances} | Max: ${smap.maxOccurances} | Trunc: ${smap.truncatable}`;
 }
 
-isolated function printSegGroupMap(EDISegGroupSchema sgmap) returns string {
+isolated function printSegGroupMap(EdiSegGroupSchema sgmap) returns string {
     string sgcode = "";
-    foreach EDIUnitSchema umap in sgmap.segments {
-        if umap is EDISegSchema {
+    foreach EdiUnitSchema umap in sgmap.segments {
+        if umap is EdiSegSchema {
             sgcode += umap.code + "-";
         } else {
             sgcode += printSegGroupMap(umap);
@@ -178,7 +178,7 @@ isolated function printSegGroupMap(EDISegGroupSchema sgmap) returns string {
     return string `[Segment group: ${sgcode} ]`;
 }
 
-isolated function getMinimumFields(EDISegSchema segmap) returns int {
+isolated function getMinimumFields(EdiSegSchema segmap) returns int {
     int fieldIndex = segmap.fields.length() - 1;
     while fieldIndex > 0 {
         if segmap.fields[fieldIndex].required {
@@ -189,7 +189,7 @@ isolated function getMinimumFields(EDISegSchema segmap) returns int {
     return fieldIndex;
 }
 
-isolated function getMinimumCompositeFields(EDIFieldSchema fieldSchema) returns int {
+isolated function getMinimumCompositeFields(EdiFieldSchema fieldSchema) returns int {
     int fieldIndex = fieldSchema.components.length() - 1;
     while fieldIndex > 0 {
         if fieldSchema.components[fieldIndex].required {
@@ -200,7 +200,7 @@ isolated function getMinimumCompositeFields(EDIFieldSchema fieldSchema) returns 
     return fieldIndex;
 }
 
-isolated function getMinimumSubcomponentFields(EDIComponentSchema componentSchema) returns int {
+isolated function getMinimumSubcomponentFields(EdiComponentSchema componentSchema) returns int {
     int fieldIndex = componentSchema.subcomponents.length() - 1;
     while fieldIndex > 0 {
         if componentSchema.subcomponents[fieldIndex].required {
@@ -211,7 +211,7 @@ isolated function getMinimumSubcomponentFields(EDIComponentSchema componentSchem
     return fieldIndex;
 }
 
-isolated function serializeSimpleType(SimpleType v, EDISchema schema, int fixedLength) returns string {
+isolated function serializeSimpleType(SimpleType v, EdiSchema schema, int fixedLength) returns string {
     string sv = v.toString();
     if v is float {
         if sv.endsWith(".0") {

@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-isolated function readSubcomponentGroup(string scGroupText, EDISchema schema, EDIComponentSchema compSchema) returns EDISubcomponentGroup|Error? {
+isolated function readSubcomponentGroup(string scGroupText, EdiSchema schema, EdiComponentSchema compSchema) returns EdiSubcomponentGroup|Error? {
     if scGroupText.trim().length() == 0 {
         return ();
     }
@@ -32,12 +32,12 @@ isolated function readSubcomponentGroup(string scGroupText, EDISchema schema, ED
                 Field: ${compSchema.tag}, Subcomponent group mapping: ${compSchema.toJsonString()}, Subcomponent group text: ${scGroupText}`);
     }
 
-    EDISubcomponentSchema[] subMappings = compSchema.subcomponents;
-    EDISubcomponentGroup scGroup = {};
+    EdiSubcomponentSchema[] subMappings = compSchema.subcomponents;
+    EdiSubcomponentGroup scGroup = {};
     int subcomponentNumber = 0;
     while subcomponentNumber < subcomponents.length() {
         string subcomponent = subcomponents[subcomponentNumber];
-        EDISubcomponentSchema subMapping = subMappings[subcomponentNumber];
+        EdiSubcomponentSchema subMapping = subMappings[subcomponentNumber];
         if subcomponent.trim().length() == 0 {
             if subMapping.required {
                 return error Error(string `Required subcomponent is not provided. Subcomponent: ${subMapping.tag}`);

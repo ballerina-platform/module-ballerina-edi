@@ -14,13 +14,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-isolated function writeSegmentGroup(map<json> segGroup, EDISegGroupSchema|EDISchema sgmap, EDIContext context) returns Error? {
+isolated function writeSegmentGroup(map<json> segGroup, EdiSegGroupSchema|EdiSchema sgmap, EdiContext context) returns Error? {
 
     string[] keys = segGroup.keys();
     int msgIndex = 0;
     int mapIndex = 0;
     while mapIndex < sgmap.segments.length() {
-        EDIUnitSchema umap = sgmap.segments[mapIndex];
+        EdiUnitSchema umap = sgmap.segments[mapIndex];
         if msgIndex >= keys.length() {
             if umap.minOccurances > 0 {
                 return error Error(string `Mandatory segment not found in input message. Segment: ${umap.tag}`);
@@ -45,7 +45,7 @@ isolated function writeSegmentGroup(map<json> segGroup, EDISegGroupSchema|EDISch
             if !(unit is map<json>) {
                 return error Error(string `Segment group must contain segments or segment groups. Segment group: ${sgmap.tag}, Found: ${unit.toString()}"`);
             }
-            if umap is EDISegSchema {
+            if umap is EdiSegSchema {
                 check writeSegment(unit, umap, context);
             } else {
                 check writeSegmentGroup(unit, umap, context);
@@ -56,14 +56,14 @@ isolated function writeSegmentGroup(map<json> segGroup, EDISegGroupSchema|EDISch
             }
             if unit.length() < umap.minOccurances || ((unit.length() > umap.maxOccurances) && umap.maxOccurances > 0) {
                 return error Error(string `Cardinality of input segment/segment group does not match with the schema.
-                    Segment/segment group: ${unitKey}, Allowed min: ${umap.minOccurances}, Allowed max: ${umap.maxOccurances}, Found ${unit is EDIUnit[] ? unit.length() : 1}
+                    Segment/segment group: ${unitKey}, Allowed min: ${umap.minOccurances}, Allowed max: ${umap.maxOccurances}, Found ${unit is EdiUnit[] ? unit.length() : 1}
                     Schema: Schema: ${printEDIUnitMapping(umap)}`);
             }
             foreach json u in unit {
                 if !(u is map<json>) {
                     return error Error(string `Each item in segment group must be a segment/segment group. Segment group: ${umap.tag}, Found: ${u.toString()}`);
                 }
-                if umap is EDISegSchema {
+                if umap is EdiSegSchema {
                     check writeSegment(u, umap, context);
                 } else {
                     check writeSegmentGroup(u, umap, context);

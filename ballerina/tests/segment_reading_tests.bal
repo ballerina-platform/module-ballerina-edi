@@ -5,7 +5,7 @@ import ballerina/test;
     dataProvider: segmentTestDataProvider
 }
 function testSegments(string testName) returns error? {
-    EDISchema schema = check getTestSchema(testName);
+    EdiSchema schema = check getTestSchema(testName);
     schema.preserveEmptyFields = true;
     string ediIn = check getEDIMessage(testName);
     json message = check fromEdiString(ediIn, schema);
@@ -24,7 +24,7 @@ function testSegments(string testName) returns error? {
     dataProvider: fixedLengthTestDataProvider
 }
 function testFixedLengthEDIs(string testName) returns error? {
-    EDISchema schema = check getTestSchema(testName);
+    EdiSchema schema = check getTestSchema(testName);
     schema.preserveEmptyFields = true;
     string ediIn = check getEDIMessage(testName);
     json message = check fromEdiString(ediIn, schema);
@@ -42,7 +42,7 @@ function testFixedLengthEDIs(string testName) returns error? {
 @test:Config
 function testDenormalization() returns error? {
     json schemaJson = check io:fileReadJson("tests/resources/denormalization/normalized_schema.json");
-    EDISchema schema = check getSchema(schemaJson);
+    EdiSchema schema = check getSchema(schemaJson);
     check io:fileWriteJson("tests/resources/denormalization/normalized_schema_output.json", schema.toJson());
 }
 

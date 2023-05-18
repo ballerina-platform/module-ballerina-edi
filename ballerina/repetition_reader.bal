@@ -16,10 +16,10 @@
 
 import ballerina/log;
 
-isolated function readRepetition(string repeatText, string repeatDelimiter, EDISchema mapping, EDIFieldSchema fieldMapping)
-        returns SimpleArray|EDIComponentGroup[]|Error {
+isolated function readRepetition(string repeatText, string repeatDelimiter, EdiSchema mapping, EdiFieldSchema fieldMapping)
+        returns SimpleArray|EdiComponentGroup[]|Error {
     string[] fields = split(repeatText, repeatDelimiter);
-    SimpleArray|EDIComponentGroup[] repeatValues = getArray(fieldMapping.dataType);
+    SimpleArray|EdiComponentGroup[] repeatValues = getArray(fieldMapping.dataType);
     if fields.length() == 0 {
         // None of the repeating values are provided. Return an empty array.
         if fieldMapping.required {
@@ -29,8 +29,8 @@ isolated function readRepetition(string repeatText, string repeatDelimiter, EDIS
     }
     foreach string 'field in fields {
         if fieldMapping.dataType == COMPOSITE {
-            EDIComponentGroup? value = check readComponentGroup('field, mapping, fieldMapping);
-            if value is EDIComponentGroup {
+            EdiComponentGroup? value = check readComponentGroup('field, mapping, fieldMapping);
+            if value is EdiComponentGroup {
                 repeatValues.push(value);
             } else {
                 log:printWarn(string `Repeat value not provided in ${repeatText}.`);

@@ -2,10 +2,10 @@ import ballerina/io;
 import ballerina/regex;
 import ballerina/file;
 
-function getTestSchema(string testName) returns EDISchema|error {
+function getTestSchema(string testName) returns EdiSchema|error {
     string schemaPath = check file:joinPath("tests", "resources", testName, "schema.json");
     json schemaJson = check io:fileReadJson(schemaPath);
-    EDISchema schema = check getSchema(schemaJson);
+    EdiSchema schema = check getSchema(schemaJson);
     return schema;
 }
 
@@ -32,7 +32,7 @@ function saveJsonMessage(string testName, json message) returns error? {
     check io:fileWriteJson(path, message);
 }
 
-function prepareEDI(string edi, EDISchema schema) returns string {
+function prepareEDI(string edi, EdiSchema schema) returns string {
     string e1 = regex:replaceAll(edi, " ", "");
     e1 = regex:replaceAll(e1, "\n", "");
     e1 = regex:replaceAll(e1, validateDelimiter((schema.delimiters.decimalSeparator ?: ".")) + "0", "");

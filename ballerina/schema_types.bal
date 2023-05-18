@@ -36,7 +36,7 @@
 # + includeSegmentCode - Indicates whether or not to include the segment code as a field in output JSON values.
 #
 # + segments - Array of segment and segment group schemas
-public type EDISchema record {|
+public type EdiSchema record {|
     string name;
     string tag = "Root_mapping";
 
@@ -54,48 +54,48 @@ public type EDISchema record {|
     boolean preserveEmptyFields = true;
     boolean includeSegmentCode = true;
 
-    EDIUnitSchema[] segments = [];
+    EdiUnitSchema[] segments = [];
 |};
 
-public type EDIUnitSchema EDISegSchema|EDISegGroupSchema;
+public type EdiUnitSchema EdiSegSchema|EdiSegGroupSchema;
 
-public type EDISegGroupSchema record {|
+public type EdiSegGroupSchema record {|
     string tag;
     int minOccurances = 0;
     int maxOccurances = 1;
-    EDIUnitSchema[] segments = [];
+    EdiUnitSchema[] segments = [];
 |};
 
-public type EDISegSchema record {|
+public type EdiSegSchema record {|
     string code;
     string tag;
     boolean truncatable = true;
     int minOccurances = 0;
     int maxOccurances = 1;
-    EDIFieldSchema[] fields = [];
+    EdiFieldSchema[] fields = [];
 |};
 
-public type EDIFieldSchema record {|
+public type EdiFieldSchema record {|
     string tag;
     boolean repeat = false;
     boolean required = false;
     boolean truncatable = true;
-    EDIDataType dataType = STRING;
+    EdiDataType dataType = STRING;
     int startIndex = -1;
     int length = -1;
-    EDIComponentSchema[] components = [];
+    EdiComponentSchema[] components = [];
 |};
 
-public type EDIComponentSchema record {|
+public type EdiComponentSchema record {|
     string tag;
     boolean required = false;
     boolean truncatable = true;
-    EDIDataType dataType = STRING;
-    EDISubcomponentSchema[] subcomponents = [];
+    EdiDataType dataType = STRING;
+    EdiSubcomponentSchema[] subcomponents = [];
 |};
 
-public type EDISubcomponentSchema record {|
+public type EdiSubcomponentSchema record {|
     string tag;
     boolean required = false;
-    EDIDataType dataType = STRING;
+    EdiDataType dataType = STRING;
 |};
