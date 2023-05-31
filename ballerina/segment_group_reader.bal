@@ -142,8 +142,7 @@ isolated function placeEDISegment(EdiSegment segment, EdiSegSchema segSchema, Se
             }
             segments.push(segment);
         } else if segments is () {
-            segments = [segment];
-            sgContext.segmentGroup[segSchema.tag] = segments;
+            sgContext.segmentGroup[segSchema.tag] = [segment];
         } else {
             return error Error(string `Segment must be a segment array. Segment: ${segSchema.code}`);
         }
@@ -167,8 +166,7 @@ isolated function placeEDISegmentGroup(EdiSegmentGroup segmentGroup, EdiSegGroup
             }
             segmentGroups.push(segmentGroup);
         } else if segmentGroups is () {
-            segmentGroups = [segmentGroup];
-            sgContext.segmentGroup[segGroupSchema.tag] = segmentGroups;
+            sgContext.segmentGroup[segGroupSchema.tag] = [segmentGroup];
         } else {
             return error Error(string `Segment group must be an array. Segment group: ${segGroupSchema.tag}`);
         }
