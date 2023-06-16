@@ -31,7 +31,6 @@ buildscript {
     }
 }
 
-
 description = 'Ballerina - EDI module'
 
 def packageName = "edi"
