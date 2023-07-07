@@ -71,12 +71,19 @@ public function getDataType(string typeString) returns EdiDataType {
 }
 
 isolated function splitFields(string segmentText, string fieldDelimiter, EdiUnitSchema unitSchema) returns string[]|Error {
+    if unitSchema is EdiUnitRef {
+        return error Error("Segment reference is not supported at runtime.");
+    }
+
     if fieldDelimiter == "FL" {
         EdiSegSchema segSchema;
         if unitSchema is EdiSegSchema {
             segSchema = unitSchema;
         } else {
             EdiUnitSchema firstSegSchema = unitSchema.segments[0];
+            if firstSegSchema is EdiUnitRef {
+                return error Error("Segment reference is not supported at runtime.");
+            }
             if firstSegSchema is EdiSegGroupSchema {
                 return error Error("First item of segment group must be a segment. Found a segment group.\nSegment group: " + printSegGroupMap(unitSchema));
             }
@@ -149,16 +156,18 @@ isolated function prepareToSplit(string content, string delimeter) returns strin
 isolated function printEDIUnitMapping(EdiUnitSchema smap) returns string {
     if smap is EdiSegSchema {
         return string `Segment ${smap.code} | Min: ${smap.minOccurances} | Max: ${smap.maxOccurances} | Trunc: ${smap.truncatable}`;
-    } else {
+    } else if smap is EdiSegGroupSchema {
         string sgcode = "";
         foreach EdiUnitSchema umap in smap.segments {
             if umap is EdiSegSchema {
                 sgcode += umap.code + "-";
-            } else {
+            } else if umap is EdiSegGroupSchema {
                 sgcode += printSegGroupMap(umap);
             }
         }
         return string `[Segment group: ${sgcode} ]`;
+    } else {
+        return smap.toString();
     }
 }
 
@@ -171,7 +180,7 @@ isolated function printSegGroupMap(EdiSegGroupSchema sgmap) returns string {
     foreach EdiUnitSchema umap in sgmap.segments {
         if umap is EdiSegSchema {
             sgcode += umap.code + "-";
-        } else {
+        } else if umap is EdiSegGroupSchema {
             sgcode += printSegGroupMap(umap);
         }
     }

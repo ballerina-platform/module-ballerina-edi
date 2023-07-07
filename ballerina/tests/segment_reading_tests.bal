@@ -43,7 +43,14 @@ function testFixedLengthEDIs(string testName) returns error? {
 function testDenormalization() returns error? {
     json schemaJson = check io:fileReadJson("tests/resources/denormalization/normalized_schema.json");
     EdiSchema schema = check getSchema(schemaJson);
-    check io:fileWriteJson("tests/resources/denormalization/normalized_schema_output.json", schema.toJson());
+    check io:fileWriteJson("tests/resources/denormalization/denormalized_schema_output.json", schema.toJson());
+}
+
+@test:Config
+function testDenormalization2() returns error? {
+    json schemaJson = check io:fileReadJson("tests/resources/denormalization2/normalized_schema.json");
+    EdiSchema schema = check getSchema(schemaJson);
+    check io:fileWriteJson("tests/resources/denormalization2/denormalized_schema_output.json", schema.toJson());
 }
 
 function segmentTestDataProvider() returns string[][] {
