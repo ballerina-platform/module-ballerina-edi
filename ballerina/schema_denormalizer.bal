@@ -10,7 +10,10 @@ isolated function denormalizeSchema(json schema) returns Error? {
     if !(segmentDefinitions is map<json>) {
         return error Error("Provided segment definitions are not valid. Definitions: " + segmentDefinitions.toString());
     }
-
+    if segmentDefinitions.length() == 0 {
+        // This should be a normalized schema
+        return;
+    }
     json segments = schema.get("segments");
     if !(segments is json[]) {
         return error Error("Schema does not contain segments.");
