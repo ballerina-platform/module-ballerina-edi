@@ -36,6 +36,7 @@
 # + includeSegmentCode - Indicates whether or not to include the segment code as a field in output JSON values.
 #
 # + segments - Array of segment and segment group schemas
+# + segmentDefinitions - Map of segment definitions indexed by the segment code
 public type EdiSchema record {|
     string name;
     string tag = "Root_mapping";
