@@ -36,6 +36,7 @@
 # + includeSegmentCode - Indicates whether or not to include the segment code as a field in output JSON values.
 #
 # + segments - Array of segment and segment group schemas
+# + segmentDefinitions - Map of segment definitions indexed by the segment code
 public type EdiSchema record {|
     string name;
     string tag = "Root_mapping";
@@ -55,9 +56,10 @@ public type EdiSchema record {|
     boolean includeSegmentCode = true;
 
     EdiUnitSchema[] segments = [];
+    map<EdiSegSchema> segmentDefinitions = {};
 |};
 
-public type EdiUnitSchema EdiSegSchema|EdiSegGroupSchema;
+public type EdiUnitSchema EdiSegSchema|EdiSegGroupSchema|EdiUnitRef;
 
 public type EdiSegGroupSchema record {|
     string tag;
@@ -73,6 +75,12 @@ public type EdiSegSchema record {|
     int minOccurances = 0;
     int maxOccurances = 1;
     EdiFieldSchema[] fields = [];
+|};
+
+public type EdiUnitRef record {|
+    string ref;
+    int minOccurances = 0;
+    int maxOccurances = 1;
 |};
 
 public type EdiFieldSchema record {|
