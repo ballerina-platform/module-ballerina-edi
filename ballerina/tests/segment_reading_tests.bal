@@ -6,7 +6,7 @@ import ballerina/test;
 }
 function testSegments(string testName) returns error? {
     EdiSchema schema = check getTestSchema(testName);
-    schema.preserveEmptyFields = true;
+    // schema.preserveEmptyFields = true;
     string ediIn = check getEDIMessage(testName);
     json message = check fromEdiString(ediIn, schema);
     check saveJsonMessage(testName, message);
@@ -61,9 +61,10 @@ function segmentTestDataProvider() returns string[][] {
         ["sample4"],
         ["sample5"],
         ["sample6"],
+        ["sample7"],
+        ["edi-214"]
         // ["edi-837"],
         // ["d3a-invoic-1"],
-        ["edi-214"]
     ];
 }
 

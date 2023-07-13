@@ -26,7 +26,7 @@ isolated function readSegment(EdiSegSchema segMapping, string[] fields, EdiSchem
                 Segment: ${fields[0]}, Required minimum field count (excluding the segment code): ${minFields}. Available fields: ${fields.length() - 1}, 
                 Segment mapping: ${segMapping.toJsonString()} | Segment text: ${segmentDesc}`);
         }
-    } else if segMapping.fields.length() + 1 != fields.length() {
+    } else if segMapping.fields.length() != fields.length() {
         return error Error(string `Segment schema's field count does not match with the input segment.
                 Segment: ${fields[0]}, Segment schema: ${segMapping.toJsonString()}, Input segment: ${segmentDesc}`);
     }
