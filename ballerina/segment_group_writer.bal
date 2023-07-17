@@ -21,6 +21,9 @@ isolated function writeSegmentGroup(map<json> segGroup, EdiSegGroupSchema|EdiSch
     int mapIndex = 0;
     while mapIndex < sgmap.segments.length() {
         EdiUnitSchema umap = sgmap.segments[mapIndex];
+        if umap is EdiUnitRef {
+            return error Error(string `Segment references are not supported. Segment: ${umap.toString()}`);
+        }
         if msgIndex >= keys.length() {
             if umap.minOccurances > 0 {
                 return error Error(string `Mandatory segment not found in input message. Segment: ${umap.tag}`);

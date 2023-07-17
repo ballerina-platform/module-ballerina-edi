@@ -50,9 +50,13 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
             context.rawIndex += 1;
             continue;
 
-        } else {
+        } else if segSchema is EdiSegGroupSchema {
             log:printDebug(string `Trying to match with segment group mapping ${printSegGroupMap(segSchema)}`);
             EdiUnitSchema firstSegSchema = segSchema.segments[0];
+            if firstSegSchema is EdiUnitRef {
+                return error Error("First item of segment group must be a segment. " +
+                    "Segment references are not supported at runtime. Found a segment reference.\nSegment group: " + printSegGroupMap(segSchema));
+            }
             if firstSegSchema is EdiSegGroupSchema {
                 return error Error("First item of segment group must be a segment. Found a segment group.\nSegment group: " + printSegGroupMap(segSchema));
             }
@@ -95,10 +99,16 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
 # + return - Return error if the given mapping cannot be ignored
 isolated function ignoreSchema(EdiUnitSchema segSchema, SegmentGroupContext sgContext, EdiContext context) returns Error? {
 
+    if segSchema is EdiUnitRef {
+        return error Error("Segment references are not supported at runtime. " +
+            "Found a segment reference.\nSegment ref: " + segSchema.toString());
+    }
+
     // If the current segment mapping is optional, we can ignore the current mapping and compare the 
     // current segment with the next mapping.
     if segSchema.minOccurances == 0 {
-        log:printDebug(string `Ignoring optional segment: ${printEDIUnitMapping(segSchema)} | Segment text: ${context.rawIndex < context.ediText.length() ? context.ediText[context.rawIndex] : "-- EOF --"}`);
+        log:printDebug(string `Ignoring optional segment: ${printEDIUnitMapping(segSchema)} | 
+            Segment text: ${context.rawIndex < context.ediText.length() ? context.ediText[context.rawIndex] : "-- EOF --"}`);
         sgContext.schemaIndex += 1;
         return;
     }
@@ -112,14 +122,16 @@ isolated function ignoreSchema(EdiUnitSchema segSchema, SegmentGroupContext sgCo
             if segments.length() > 0 {
                 // This repeatable segment has already occured at least once. So move to the next mapping.
                 sgContext.schemaIndex += 1;
-                log:printDebug(string `Completed reading repeatable segment: ${printEDIUnitMapping(segSchema)} | Segment text: ${context.rawIndex < context.ediText.length() ? context.ediText[context.rawIndex] : "-- EOF --"}`);
+                log:printDebug(string `Completed reading repeatable segment: ${printEDIUnitMapping(segSchema)} | 
+                    Segment text: ${context.rawIndex < context.ediText.length() ? context.ediText[context.rawIndex] : "-- EOF --"}`);
                 return;
             }
         }
     }
 
     return error Error(string `Mandatory unit is missing in the EDI.
-        Unit: ${printEDIUnitMapping(segSchema)}, Current segment text: ${context.ediText[context.rawIndex]}, Current mapping index: ${sgContext.schemaIndex}`);
+        Unit: ${printEDIUnitMapping(segSchema)}, Current segment text: ${context.ediText[context.rawIndex]}, 
+            Current mapping index: ${sgContext.schemaIndex}`);
 }
 
 isolated function placeEDISegment(EdiSegment segment, EdiSegSchema segSchema, SegmentGroupContext sgContext, EdiContext context) returns Error? {
