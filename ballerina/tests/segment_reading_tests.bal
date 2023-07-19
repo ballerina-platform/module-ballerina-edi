@@ -6,7 +6,6 @@ import ballerina/test;
 }
 function testSegments(string testName) returns error? {
     EdiSchema schema = check getTestSchema(testName);
-    // schema.preserveEmptyFields = true;
     string ediIn = check getEDIMessage(testName);
     json message = check fromEdiString(ediIn, schema);
     check saveJsonMessage(testName, message);
