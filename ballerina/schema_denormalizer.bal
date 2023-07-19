@@ -35,6 +35,10 @@ isolated function denormalizeSegments(json[] segments, map<json> defs) returns E
                 return error Error(string `Segement reference not found. Reference: ${segmentRef}`);
             }
             map<json> segmentInstance = segmentDef.clone();
+            json? tag = segment["tag"];
+            if tag is string {
+                segmentInstance["tag"] = tag;
+            }
             json? min = segment["minOccurances"];
             if min is int {
                 segmentInstance["minOccurances"] = min;

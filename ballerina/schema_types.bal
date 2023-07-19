@@ -79,6 +79,7 @@ public type EdiSegSchema record {|
 
 public type EdiUnitRef record {|
     string ref;
+    string tag?;
     int minOccurances = 0;
     int maxOccurances = 1;
 |};
