@@ -23,35 +23,26 @@ isolated function writeSegment(map<json> seg, EdiSegSchema segMap, EdiContext co
         return error Error(string `Input field count does not match with the field count of the (non-truncatable) segment schema.
         Segment: ${segMap.code}, Segment schema field count: ${segMap.fields.length()}, Input segment's field count: ${fTags.length()}`);
     }
-    int fIndex = context.schema.includeSegmentCode? 1 : 0;
-    while fIndex < segMap.fields.length() {
-        EdiFieldSchema fieldSchema = segMap.fields[fIndex];
-        if fIndex >= fTags.length() {
-            // Input segment is truncated. So all remaining feilds must be optional
-            if fieldSchema.required {
-                return error Error(string `Mandatory field not found in the input segment.
-                Field: ${fieldSchema.tag}, Segment: ${segMap.tag}, Input segment: ${seg.toString()}`);
-            }
-            fIndex += 1;
-            continue;
-        }
-        string fTag = fTags[fIndex];
-        if fieldSchema.tag != fTag {
+    int sIndex = context.schema.includeSegmentCode? 1 : 0;
+    while sIndex < segMap.fields.length() {
+        EdiFieldSchema fieldSchema = segMap.fields[sIndex];
+        if !seg.hasKey(fieldSchema.tag) {
             if fieldSchema.required {
                 return error Error(string `Required field is not found in the input. Segment: ${segMap.tag}, Field: ${fieldSchema.tag}`);
             }
-            fIndex += 1;
+            segLine += fd != "FL"? fd : "";
+            sIndex += 1;
             continue;
         }
         if !fieldSchema.repeat && fieldSchema.components.length() > 0 {
-            string|error componentGroupText = writeComponentGroup(seg.get(fTag), segMap, fieldSchema, context);
+            string|error componentGroupText = writeComponentGroup(seg.get(fieldSchema.tag), segMap, fieldSchema, context);
             if componentGroupText is error {
                 return error Error(string `Failed to serialize component group. Segment: ${segMap.tag}, Field: ${fieldSchema.toString()}, Input segment ${seg.toString()}
                 ${componentGroupText.message()}`);
             }
             segLine += fd + componentGroupText;
         } else if fieldSchema.repeat {
-            json fdata = seg.get(fTag);
+            json fdata = seg.get(fieldSchema.tag);
             if !(fdata is json[]) {
                 return error Error(string `Repeatable field must contain an array as the value.
                 Segment: ${segMap.code}, Field: ${fieldSchema.tag}, Input value: ${fdata.toString()}`);
@@ -61,7 +52,7 @@ isolated function writeSegment(map<json> seg, EdiSegSchema segMap, EdiContext co
                     return error Error(string `Mandatory field is not provided. Field: ${fieldSchema.tag}, Segment: ${segMap.code}`);
                 }
                 segLine += fd + "";
-                fIndex += 1;
+                sIndex += 1;
                 continue;
             }
             string rd = context.schema.delimiters.repetition;
@@ -82,15 +73,44 @@ isolated function writeSegment(map<json> seg, EdiSegSchema segMap, EdiContext co
             }
             segLine += fd + repeatingText;
         } else {
-            var fdata = seg.get(fTag);
+            var fdata = seg.get(fieldSchema.tag);
             if !(fdata is SimpleType) {
                 return error Error(string `Field must contain a primitive value.
                 Field: ${fieldSchema.tag}, Segment: ${segMap.tag}, Input value: ${fdata.toString()}`);
             }
             segLine += (segLine.length() > 0 && fd != "FL"? fd : "") + serializeSimpleType(fdata, context.schema, fd == "FL" ? fieldSchema.length : -1);
         }
-        fIndex += 1;
+        sIndex += 1;
     }
     segLine += context.schema.delimiters.segment;
+    segLine = truncate(segLine, segMap, context.schema);
     context.ediText.push(segLine);
+}
+
+isolated function truncate(string segLine, EdiSegSchema segSchema, EdiSchema schema) returns string {
+    if !segSchema.truncatable {
+        return segLine;
+    }
+    int trailLength = 0;
+    int segDelimiterLength = 0;
+    string segDelimiter = "";
+    foreach int k in (0...(segLine.length() - 1)) {
+        int i = segLine.length() - 1 - k;
+        if segLine[i] == schema.delimiters.segment && i == segLine.length() - 1 {
+            segDelimiter = segLine[i];
+            segDelimiterLength = 1;
+            continue;
+        }
+        if segLine[i] == schema.delimiters.'field || segLine[i] == " " {
+            trailLength += 1;
+        } else {
+            break;
+        }
+    }
+    if trailLength == 0 {
+        return segLine;
+    }
+    trailLength += segDelimiterLength;
+    string truncatedSegLine = segLine.substring(0, segLine.length() - trailLength) + segDelimiter;
+    return truncatedSegLine;
 }

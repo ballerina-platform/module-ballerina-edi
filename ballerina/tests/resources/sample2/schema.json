@@ -23,6 +23,7 @@
             "code": "ITM",
             "tag" : "items",
             "maxOccurances" : -1,
+            "truncatable" : false,
             "fields" : [
                 {"tag" : "code"}, 
                 {"tag" : "item"}, 
