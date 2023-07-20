@@ -127,7 +127,7 @@ isolated function splitSegments(string text, string delimiter) returns string[] 
 isolated function validateDelimiter(string delimeter) returns string {
     match delimeter {
         "*" => {
-            return "\\*";
+            return "[*]";
         }
         "^" => {
             return "\\^";
