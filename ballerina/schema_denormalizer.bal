@@ -8,9 +8,12 @@ isolated function denormalizeSchema(json schema) returns Error? {
     }
     json segmentDefinitions = schema.get("segmentDefinitions");
     if !(segmentDefinitions is map<json>) {
-        return error Error("Provided segment definitions is not valid. Definitions: " + segmentDefinitions.toString());
+        return error Error("Provided segment definitions are not valid. Definitions: " + segmentDefinitions.toString());
     }
-
+    if segmentDefinitions.length() == 0 {
+        // This should be a normalized schema
+        return;
+    }
     json segments = schema.get("segments");
     if !(segments is json[]) {
         return error Error("Schema does not contain segments.");
@@ -31,16 +34,20 @@ isolated function denormalizeSegments(json[] segments, map<json> defs) returns E
             if !(segmentDef is map<json>) {
                 return error Error(string `Segement reference not found. Reference: ${segmentRef}`);
             }
+            map<json> segmentInstance = segmentDef.clone();
+            json? tag = segment["tag"];
+            if tag is string {
+                segmentInstance["tag"] = tag;
+            }
             json? min = segment["minOccurances"];
             if min is int {
-                segmentDef["minOccurances"] = min;
+                segmentInstance["minOccurances"] = min;
             }
             json? max = segment["maxOccurances"];
             if max is int {
-                segmentDef["maxOccurances"] = max;
+                segmentInstance["maxOccurances"] = max;
             }
-            _ = segment.remove("ref");
-            segments[i] = segmentDef;
+            segments[i] = segmentInstance;
         }
         json? childSegments = segment["segments"];
         if childSegments is json[] {

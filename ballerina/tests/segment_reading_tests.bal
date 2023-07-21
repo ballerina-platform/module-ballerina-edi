@@ -6,7 +6,6 @@ import ballerina/test;
 }
 function testSegments(string testName) returns error? {
     EdiSchema schema = check getTestSchema(testName);
-    schema.preserveEmptyFields = true;
     string ediIn = check getEDIMessage(testName);
     json message = check fromEdiString(ediIn, schema);
     check saveJsonMessage(testName, message);
@@ -43,7 +42,14 @@ function testFixedLengthEDIs(string testName) returns error? {
 function testDenormalization() returns error? {
     json schemaJson = check io:fileReadJson("tests/resources/denormalization/normalized_schema.json");
     EdiSchema schema = check getSchema(schemaJson);
-    check io:fileWriteJson("tests/resources/denormalization/normalized_schema_output.json", schema.toJson());
+    check io:fileWriteJson("tests/resources/denormalization/denormalized_schema_output.json", schema.toJson());
+}
+
+@test:Config
+function testDenormalization2() returns error? {
+    json schemaJson = check io:fileReadJson("tests/resources/denormalization2/normalized_schema.json");
+    EdiSchema schema = check getSchema(schemaJson);
+    check io:fileWriteJson("tests/resources/denormalization2/denormalized_schema_output.json", schema.toJson());
 }
 
 function segmentTestDataProvider() returns string[][] {
@@ -54,9 +60,10 @@ function segmentTestDataProvider() returns string[][] {
         ["sample4"],
         ["sample5"],
         ["sample6"],
+        ["sample7"],
+        ["edi-214"]
         // ["edi-837"],
         // ["d3a-invoic-1"],
-        ["edi-214"]
     ];
 }
 
