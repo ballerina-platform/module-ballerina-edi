@@ -33,12 +33,21 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
         }
         string sDesc = context.ediText[context.rawIndex];
         string segmentDesc = regex:replaceAll(sDesc, "\n", "");
-        string[] fields = check splitFields(segmentDesc, ediSchema.delimiters.'field, segSchema);
-        if ediSchema.ignoreSegments.indexOf(fields[0], 0) != () {
+        
+        // There can be segments that do not follow standard EDI format (e.g. EDIFACT UNA segment).
+        // Therefore, it is necessary to check and skip ignore segments before spliting into fields.
+        boolean ignoreCurrentSegment = false;
+        foreach string ignoreSegment in ediSchema.ignoreSegments {
+            if segmentDesc.startsWith(ignoreSegment) {
+                ignoreCurrentSegment = true;
+                break;
+            }
+        }
+        if ignoreCurrentSegment {
             context.rawIndex += 1;
             continue;
         }
-        
+        string[] fields = check splitFields(segmentDesc, ediSchema.delimiters.'field, segSchema);
         if segSchema is EdiSegSchema {
             log:printDebug(string `Trying to match with segment mapping ${printSegMap(segSchema)}`);
             if segSchema.code != fields[0] {
