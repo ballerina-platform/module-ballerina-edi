@@ -6,7 +6,7 @@ EDI module provides functionality to convert EDI text to json and json to EDI te
 
 |                                   | Version               |
 |:---------------------------------:|:---------------------:|
-| Ballerina Language                | 2201.5.0              |
+| Ballerina Language                | 2201.8.0              |
 | Java Development Kit (JDK)        | 17                    |
 
 ## Example
