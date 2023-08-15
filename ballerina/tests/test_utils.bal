@@ -14,6 +14,11 @@ function getEDIMessage(string testName) returns string|error {
     return check io:fileReadString(inputPath);
 }
 
+function getOutputEDI(string testName) returns string|error {
+    string inputPath = check file:joinPath("tests", "resources", testName, "output.edi");
+    return check io:fileReadString(inputPath);
+}
+
 function saveEDIMessage(string testName, string message) returns error? {
     string path = check file:joinPath("tests", "resources", testName, "output.edi");
     check io:fileWriteString(path, message);
