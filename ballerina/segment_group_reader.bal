@@ -50,7 +50,7 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
         string[] fields = check splitFields(segmentDesc, ediSchema.delimiters.'field, segSchema);
         if segSchema is EdiSegSchema {
             log:printDebug(string `Trying to match with segment mapping ${printSegMap(segSchema)}`);
-            if segSchema.code != fields[0] {
+            if segSchema.code != fields[0].trim() {
                 check ignoreSchema(segSchema, sgContext, context);
                 continue;
             }
@@ -69,7 +69,7 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
             if firstSegSchema is EdiSegGroupSchema {
                 return error Error("First item of segment group must be a segment. Found a segment group.\nSegment group: " + printSegGroupMap(segSchema));
             }
-            if firstSegSchema.code != fields[0] {
+            if firstSegSchema.code != fields[0].trim() {
                 check ignoreSchema(segSchema, sgContext, context);
                 continue;
             }
