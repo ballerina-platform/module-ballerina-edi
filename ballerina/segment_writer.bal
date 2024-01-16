@@ -74,8 +74,8 @@ isolated function writeSegment(map<json> seg, EdiSegSchema segMap, EdiContext co
             segLine += fd + repeatingText;
         } else {
             var fdata = seg.get(fieldSchema.tag);
-            if fieldSchema.length is EdiFieldLength {
-                EdiFieldLength fieldLength = <EdiFieldLength>fieldSchema.length;
+            if fieldSchema.length is Range {
+                Range fieldLength = <Range>fieldSchema.length;
                 if fieldLength.min > fdata.toString().length() {
                     return error Error(string `Field length is less than the minimum length.
                     Field: ${fieldSchema.tag}, Segment: ${segMap.tag}, Input value: ${fdata.toString()}, Minimum length: ${fieldLength.min}`);

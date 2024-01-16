@@ -61,8 +61,8 @@ isolated function readSegment(EdiSegSchema segMapping, string[] fields, EdiSchem
                 continue;
             }
         }
-        if fieldMapping.length is EdiFieldLength {
-            EdiFieldLength lenConstraints = <EdiFieldLength>fieldMapping.length;
+        if fieldMapping.length is Range {
+            Range lenConstraints = <Range>fieldMapping.length;
             if fieldText.length() > lenConstraints.max && lenConstraints.max != -1 {
                 return error Error(string `Input field length exceeds the maximum length specified in the segment schema.
                         Input field: ${fieldText}, Max length: ${lenConstraints.max},
