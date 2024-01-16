@@ -91,8 +91,13 @@ public type EdiFieldSchema record {|
     boolean truncatable = true;
     EdiDataType dataType = STRING;
     int startIndex = -1;
-    int length = -1;
+    EdiFieldLength|int length = -1;
     EdiComponentSchema[] components = [];
+|};
+
+public type EdiFieldLength record {|
+    int min = 0;
+    int max = -1;
 |};
 
 public type EdiComponentSchema record {|
