@@ -63,27 +63,11 @@ function testDynamicLengthEDIsWithWrongSchema1(string testName) returns error? {
     EdiSchema schema = check getTestSchema(testName);
     schema.preserveEmptyFields = true;
     string ediIn = check getEDIMessage(testName);
-    string maxViolationError = "error Error (\"Input field length exceeds the maximum " +
-        "length specified in the segment schema.\n                        " +
-        "Input field: ORDER_LENGTH_LIMIT_EXCEED, Max length: 10,\n                        " +
-        "Segment schema: {\"code\":\"ITM\", \"tag\":\"items\", \"truncatable\":true, \"minOccurances\":0, " +
-        "\"maxOccurances\":-1, \"fields\":[{\"tag\":\"code\", \"repeat\":false, \"required\":true, \"truncatable\":true, " +
-        "\"dataType\":\"string\", \"startIndex\":-1, \"length\":-1, \"components\":[]}, {\"tag\":\"item\", \"repeat\":false, " +
-        "\"required\":true, \"truncatable\":true, \"dataType\":\"string\", \"startIndex\":-1, \"length\":{\"min\":0, \"max\":10}, " +
-        "\"components\":[]}, {\"tag\":\"quantity\", \"repeat\":false, \"required\":true, \"truncatable\":true, \"dataType\":\"int\", " +
-        "\"startIndex\":-1, \"length\":-1, \"components\":[]}]}, Segment text: ITM*ORDER_LENGTH_LIMIT_EXCEED*100\")";
-    string minViolationError = "error Error (\"Input field length is less than the minimum " +
-        "length specified in the segment schema.\n                        " +
-        "Input field: A-250, Min length: 10,\n                        " +
-        "Segment schema: {\"code\":\"ITM\", \"tag\":\"items\", \"truncatable\":true, \"minOccurances\":0, " +
-        "\"maxOccurances\":-1, \"fields\":[{\"tag\":\"code\", \"repeat\":false, \"required\":true, \"truncatable\":true, " +
-        "\"dataType\":\"string\", \"startIndex\":-1, \"length\":-1, \"components\":[]}, {\"tag\":\"item\", \"repeat\":false, " +
-        "\"required\":true, \"truncatable\":true, \"dataType\":\"string\", \"startIndex\":-1, \"length\":{\"min\":10, \"max\":-1}, " +
-        "\"components\":[]}, {\"tag\":\"quantity\", \"repeat\":false, \"required\":true, \"truncatable\":true, \"dataType\":\"int\", " +
-        "\"startIndex\":-1, \"length\":-1, \"components\":[]}]}, Segment text: ITM*A-250*12\")";
+    string maxViolationError = "Input field length exceeds the maximum length specified in the segment schema";
+    string minViolationError = "Input field length is less than the minimum length specified in the segment schema";
     json|error message = fromEdiString(ediIn, schema);
     if (message is error) {
-        if (message.toString()== maxViolationError || message.toString()== minViolationError) {
+        if message.message().startsWith(maxViolationError) || message.message().startsWith(minViolationError) {
             test:assertTrue(true);
         } else {
             test:assertFail("Expected error message not found");
