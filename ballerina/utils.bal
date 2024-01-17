@@ -91,11 +91,12 @@ isolated function splitFields(string segmentText, string fieldDelimiter, EdiUnit
         }
         string[] fields = [];
         foreach EdiFieldSchema fieldSchema in segSchema.fields {
-            if fieldSchema.startIndex < 0 || fieldSchema.length < 0 {
+            int feildLength = <int>fieldSchema.length;
+            if fieldSchema.startIndex < 0 || feildLength < 0 {
                 return error Error(string `Start index and field length is not provided for fixed length schema field. Segment: ${segSchema.code}, Field: ${fieldSchema.tag}`);
             }
             int startIndex = fieldSchema.startIndex - 1;
-            int endIndex = startIndex + fieldSchema.length;
+            int endIndex = startIndex +  feildLength;
             if startIndex >= segmentText.length() {
                 break;
             }
