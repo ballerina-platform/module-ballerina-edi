@@ -23,14 +23,14 @@ isolated function writeSegment(map<json> seg, EdiSegSchema segMap, EdiContext co
         return error Error(string `Input field count does not match with the field count of the (non-truncatable) segment schema.
         Segment: ${segMap.code}, Segment schema field count: ${segMap.fields.length()}, Input segment's field count: ${fTags.length()}`);
     }
-    int sIndex = context.schema.includeSegmentCode? 1 : 0;
+    int sIndex = context.schema.includeSegmentCode ? 1 : 0;
     while sIndex < segMap.fields.length() {
         EdiFieldSchema fieldSchema = segMap.fields[sIndex];
         if !seg.hasKey(fieldSchema.tag) {
             if fieldSchema.required {
                 return error Error(string `Required field is not found in the input. Segment: ${segMap.tag}, Field: ${fieldSchema.tag}`);
             }
-            segLine += fd != "FL"? fd : "";
+            segLine += fd != "FL" ? fd : "";
             sIndex += 1;
             continue;
         }
@@ -74,11 +74,22 @@ isolated function writeSegment(map<json> seg, EdiSegSchema segMap, EdiContext co
             segLine += fd + repeatingText;
         } else {
             var fdata = seg.get(fieldSchema.tag);
+            if fieldSchema.length is Range {
+                Range fieldLength = <Range>fieldSchema.length;
+                if fieldLength.min > fdata.toString().length() {
+                    return error Error(string `Field length is less than the minimum length.
+                    Field: ${fieldSchema.tag}, Segment: ${segMap.tag}, Input value: ${fdata.toString()}, Minimum length: ${fieldLength.min}`);
+                }
+                if fieldLength.max < fdata.toString().length() && fieldLength.max != -1{
+                    return error Error(string `Field length is greater than the maximum length.
+                    Field: ${fieldSchema.tag}, Segment: ${segMap.tag}, Input value: ${fdata.toString()}, Maximum length: ${fieldLength.max}`);
+                }
+            }
             if !(fdata is SimpleType) {
                 return error Error(string `Field must contain a primitive value.
                 Field: ${fieldSchema.tag}, Segment: ${segMap.tag}, Input value: ${fdata.toString()}`);
             }
-            segLine += (segLine.length() > 0 && fd != "FL"? fd : "") + serializeSimpleType(fdata, context.schema, fd == "FL" ? fieldSchema.length : -1);
+            segLine += (segLine.length() > 0 && fd != "FL" ? fd : "") + serializeSimpleType(fdata, context.schema, fd == "FL" && fieldSchema.length is int ? <int>fieldSchema.length : -1);
         }
         sIndex += 1;
     }
@@ -94,7 +105,7 @@ isolated function truncate(string segLine, EdiSegSchema segSchema, EdiSchema sch
     int trailLength = 0;
     int segDelimiterLength = 0;
     string segDelimiter = "";
-    foreach int k in (0...(segLine.length() - 1)) {
+    foreach int k in (0 ... (segLine.length() - 1)) {
         int i = segLine.length() - 1 - k;
         if segLine[i] == schema.delimiters.segment && i == segLine.length() - 1 {
             segDelimiter = segLine[i];

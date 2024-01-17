@@ -13,7 +13,6 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-
 import ballerina/log;
 
 isolated function readSegment(EdiSegSchema segMapping, string[] fields, EdiSchema schema, string segmentDesc)
@@ -31,7 +30,7 @@ isolated function readSegment(EdiSegSchema segMapping, string[] fields, EdiSchem
                 Segment: ${fields[0]}, Segment schema: ${segMapping.toJsonString()}, Input segment: ${segmentDesc}`);
     }
     EdiSegment segment = {};
-    int fieldNumber = schema.includeSegmentCode? 0 : 1;
+    int fieldNumber = schema.includeSegmentCode ? 0 : 1;
     // while fieldNumber < fields.length() - 1 {
     while fieldNumber < fields.length() {
         if fieldNumber >= segMapping.fields.length() {
@@ -60,6 +59,19 @@ isolated function readSegment(EdiSegSchema segMapping, string[] fields, EdiSchem
                 }
                 fieldNumber = fieldNumber + 1;
                 continue;
+            }
+        }
+        if fieldMapping.length is Range {
+            Range lenConstraints = <Range>fieldMapping.length;
+            if fieldText.length() > lenConstraints.max && lenConstraints.max != -1 {
+                return error Error(string `Input field length exceeds the maximum length specified in the segment schema.
+                        Input field: ${fieldText}, Max length: ${lenConstraints.max},
+                        Segment schema: ${segMapping.toJsonString()}, Segment text: ${segmentDesc}`);
+            }
+            if fieldText.length() < lenConstraints.min {
+                return error Error(string `Input field length is less than the minimum length specified in the segment schema.
+                        Input field: ${fieldText}, Min length: ${lenConstraints.min},
+                        Segment schema: ${segMapping.toJsonString()}, Segment text: ${segmentDesc}`);
             }
         }
         if fieldMapping.repeat {
