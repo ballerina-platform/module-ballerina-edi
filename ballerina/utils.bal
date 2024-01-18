@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/regex;
+import ballerina/lang.regexp;
 
 isolated function convertToType(string value, EdiDataType dataType, string? decimalSeparator) returns SimpleType|error {
     string v = value.trim();
@@ -22,11 +22,19 @@ isolated function convertToType(string value, EdiDataType dataType, string? deci
         STRING => {
             return v;
         }
-        INT => {
-            return int:fromString(decimalSeparator != () ? regex:replace(v, decimalSeparator, ".") : v);
-        }
-        FLOAT => {
-            return float:fromString(decimalSeparator != () ? regex:replace(v, decimalSeparator, ".") : v);
+        INT|FLOAT => {
+            if decimalSeparator != () {
+                string:RegExp decimalSep = check regexp:fromString(decimalSeparator);
+                v = decimalSep.replace(v, ".");
+            }
+            match dataType {
+                INT => {
+                    return int:fromString(v);
+                }
+                FLOAT => {
+                    return float:fromString(v);
+                }
+            }
         }
     }
     return error("Undefined type for value:" + value);
@@ -96,13 +104,13 @@ isolated function splitFields(string segmentText, string fieldDelimiter, EdiUnit
                 return error Error(string `Start index and field length is not provided for fixed length schema field. Segment: ${segSchema.code}, Field: ${fieldSchema.tag}`);
             }
             int startIndex = fieldSchema.startIndex - 1;
-            int endIndex = startIndex +  feildLength;
+            int endIndex = startIndex + feildLength;
             if startIndex >= segmentText.length() {
                 break;
             }
-            endIndex = segmentText.length() < endIndex? segmentText.length() : endIndex;
+            endIndex = segmentText.length() < endIndex ? segmentText.length() : endIndex;
             string fieldText = segmentText.substring(startIndex, endIndex);
-            fields.push(fieldText);    
+            fields.push(fieldText);
         }
         return fields;
     } else {
@@ -110,17 +118,27 @@ isolated function splitFields(string segmentText, string fieldDelimiter, EdiUnit
     }
 }
 
-isolated function split(string text, string delimiter) returns string[] {
+isolated function split(string text, string delimiter) returns string[]|Error {
     string preparedText = prepareToSplit(text, delimiter);
-    string validatedDelimiter = validateDelimiter(delimiter);
-    return regex:split(preparedText, validatedDelimiter);
+    string:RegExp|error validatedDelimiter = regexp:fromString(validateDelimiter(delimiter));
+    if validatedDelimiter is error {
+        return error Error("Invalid delimiter: " + delimiter);
+    }
+    return validatedDelimiter.split(preparedText);
 }
 
-isolated function splitSegments(string text, string delimiter) returns string[] {
-    string validatedDelimiter = validateDelimiter(delimiter);
-    string[] segmentLines = regex:split(text, validatedDelimiter);
+isolated function splitSegments(string text, string delimiter) returns string[]|Error {
+    string:RegExp|error validatedDelimiter = regexp:fromString(validateDelimiter(delimiter));
+    if validatedDelimiter is error {
+        return error Error("Invalid delimiter: " + delimiter);
+    }
+    string[] segmentLines = validatedDelimiter.split(text);
+    if segmentLines[segmentLines.length() - 1] == "" {
+        string _ = segmentLines.remove(segmentLines.length() - 1);
+    }
+    string:RegExp newline = re `\n`;
     foreach int i in 0 ... (segmentLines.length() - 1) {
-        segmentLines[i] = regex:replaceAll(segmentLines[i], "\n", "");
+        segmentLines[i] = newline.replaceAll(segmentLines[i], "");
     }
     return segmentLines;
 }
@@ -227,7 +245,8 @@ isolated function serializeSimpleType(SimpleType v, EdiSchema schema, int fixedL
         if sv.endsWith(".0") {
             sv = sv.substring(0, sv.length() - 2);
         } else if schema.delimiters.decimalSeparator != "." {
-            sv = regex:replace(sv, "\\.", schema.delimiters.decimalSeparator ?: ".");
+            string:RegExp separator = re `\\.`;
+            sv = separator.replace(sv, schema.delimiters.decimalSeparator ?: ".");
         }
     }
     return fixedLength > 0 ? addPadding(sv, fixedLength) : sv;
@@ -236,7 +255,7 @@ isolated function serializeSimpleType(SimpleType v, EdiSchema schema, int fixedL
 isolated function addPadding(string value, int requiredLength) returns string {
     string paddedValue = value;
     int lengthDiff = requiredLength - value.length();
-    foreach int i in 1...lengthDiff {
+    foreach int i in 1 ... lengthDiff {
         paddedValue += " ";
     }
     return paddedValue;

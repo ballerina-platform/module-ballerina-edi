@@ -30,7 +30,7 @@ type EdiContext record {|
 public isolated function fromEdiString(string ediText, EdiSchema schema) returns json|Error {
     EdiContext context = {schema};
     EdiUnitSchema[] currentMapping = context.schema.segments;
-    context.ediText = splitSegments(ediText, context.schema.delimiters.segment);
+    context.ediText = check splitSegments(ediText, context.schema.delimiters.segment);
     EdiSegmentGroup rootGroup = check readSegmentGroup(currentMapping, context, true);
     return rootGroup;
 }

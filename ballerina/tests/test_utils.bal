@@ -1,6 +1,6 @@
 import ballerina/io;
-import ballerina/regex;
 import ballerina/file;
+import ballerina/lang.regexp;
 
 function getTestSchema(string testName) returns EdiSchema|error {
     string schemaPath = check file:joinPath("tests", "resources", testName, "schema.json");
@@ -37,11 +37,11 @@ function saveJsonMessage(string testName, json message) returns error? {
     check io:fileWriteJson(path, message);
 }
 
-function prepareEDI(string edi, EdiSchema schema) returns string {
-    string e1 = regex:replaceAll(edi, " ", "");
-    e1 = regex:replaceAll(e1, "\n", "");
-    e1 = regex:replaceAll(e1, validateDelimiter((schema.delimiters.decimalSeparator ?: ".")) + "0", "");
-    e1 = regex:replaceAll(e1, "0", "");
-    return e1;
+function prepareEDI(string edi, EdiSchema schema) returns string|error {
+    string:RegExp decSeprator = check regexp:fromString(schema.delimiters.decimalSeparator ?: ".");
+    string:RegExp nulSpaces = re ` |\n|0`;
+    string preparedEDI = nulSpaces.replaceAll(edi, "");
+    preparedEDI = decSeprator.replaceAll(preparedEDI, "");
+    return preparedEDI;
 }
 
