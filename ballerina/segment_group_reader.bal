@@ -15,7 +15,6 @@
 // under the License.
 
 import ballerina/log;
-import ballerina/regex;
 
 type SegmentGroupContext record {|
     int schemaIndex = 0;
@@ -31,9 +30,7 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
         if segSchema is () {
             return error Error("Segment schema cannot be empty.");
         }
-        string sDesc = context.ediText[context.rawIndex];
-        string segmentDesc = regex:replaceAll(sDesc, "\n", "");
-        
+        string segmentDesc = removeLineBreaks(context.ediText[context.rawIndex]);
         // There can be segments that do not follow standard EDI format (e.g. EDIFACT UNA segment).
         // Therefore, it is necessary to check and skip ignore segments before spliting into fields.
         boolean ignoreCurrentSegment = false;
@@ -81,11 +78,11 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
         }
     }
     if rootGroup && ediSchema.delimiters.'field != "FL" {
-        foreach int i in context.rawIndex...(context.ediText.length() - 1) {
+        foreach int i in context.rawIndex ... (context.ediText.length() - 1) {
             string unmatchedRaw = context.ediText[context.rawIndex];
-            string[] unmatchedSegFields = split(unmatchedRaw, ediSchema.delimiters.'field);
+            string[] unmatchedSegFields = check split(unmatchedRaw, ediSchema.delimiters.'field);
             if ediSchema.ignoreSegments.indexOf(unmatchedSegFields[0], 0) == () {
-               return error Error(string `Segment text does not match with the schema. 
+                return error Error(string `Segment text does not match with the schema. 
                     Segment: ${context.ediText[context.rawIndex]}, Curren row: ${context.rawIndex}`);
             }
         }
