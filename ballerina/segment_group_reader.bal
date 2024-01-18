@@ -30,9 +30,7 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
         if segSchema is () {
             return error Error("Segment schema cannot be empty.");
         }
-        string sDesc = context.ediText[context.rawIndex];
-        string:RegExp newline = re `\n`;
-        string segmentDesc = newline.replaceAll(sDesc, "");
+        string segmentDesc = removeLineBreaks(context.ediText[context.rawIndex]);
         // There can be segments that do not follow standard EDI format (e.g. EDIFACT UNA segment).
         // Therefore, it is necessary to check and skip ignore segments before spliting into fields.
         boolean ignoreCurrentSegment = false;

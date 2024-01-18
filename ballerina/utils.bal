@@ -136,9 +136,8 @@ isolated function splitSegments(string text, string delimiter) returns string[]|
     if segmentLines[segmentLines.length() - 1] == "" {
         string _ = segmentLines.remove(segmentLines.length() - 1);
     }
-    string:RegExp newline = re `\n`;
     foreach int i in 0 ... (segmentLines.length() - 1) {
-        segmentLines[i] = newline.replaceAll(segmentLines[i], "");
+        segmentLines[i] = removeLineBreaks(segmentLines[i]);
     }
     return segmentLines;
 }
@@ -261,3 +260,7 @@ isolated function addPadding(string value, int requiredLength) returns string {
     return paddedValue;
 }
 
+isolated function removeLineBreaks(string value) returns string {
+    string:RegExp newline = re `\n`;
+    return newline.replaceAll(value, "");
+}
