@@ -9,7 +9,7 @@
 
 ## Overview
 
-Electronic Data Interchange (EDI) is a technology that facilitates the electronic exchange of business documents between different organizations. It allows businesses to exchange standard business transactions, such as purchase orders, invoices, shipping notices, and other documents, in a structured and computer-readable format. EDI eliminates the need for paper-based transactions and manual data entry, improving efficiency and reducing errors in the business-to-business (B2B) communication process.
+Electronic Data Interchange (EDI) is a technology designed to facilitate the electronic transfer of business documents among various organizations. This system empowers businesses to seamlessly exchange standard business transactions like purchase orders, invoices, and shipping notices. These transactions are formatted in a structured, computer-readable manner, eliminating the reliance on paper-based processes and manual data entry. Consequently, EDI technology significantly boosts efficiency and minimizes errors in the business-to-business (B2B) communication landscape.
 
 The Ballerina EDI module offers powerful functionality for seamlessly converting EDI (Electronic Data Interchange) text to JSON and vice versa. This module is designed to enhance your integration capabilities, providing a streamlined and efficient way to handle EDI data within your Ballerina applications.
 
