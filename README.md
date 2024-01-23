@@ -80,7 +80,7 @@ In this example, the EDI file (`sample.edi`) is read, and its content is convert
 
 ## Writing EDI Files
 
-Ballerina also provides functionality to convert JSON data into EDI text using a specified schema. The following code snippet demonstrates how to create a JSON variable representing an order and convert it into an EDI string:
+Furthermore, edi module provides functionality to convert JSON data into EDI text using a specified schema. The following code snippet demonstrates how to create a JSON variable representing an order and convert it into an EDI string:
 
 ```ballerina
 import ballerina/io;
