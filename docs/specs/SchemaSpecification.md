@@ -1,4 +1,4 @@
-# Ballerina EDI Schema Specification [DARFT]
+# Ballerina EDI Schema Specification
 
 ## Introduction
 Ballerina facilitates seamless handling of EDI (Electronic Data Interchange) data by converting it into Ballerina records. To define the structure of EDI data, developers can utilize the Ballerina EDI Schema Specification. This specification outlines the essential elements needed to describe an EDI schema, including the name, delimiters, segments, field definitions, components, subcomponents, and additional configuration options.

@@ -1,7 +1,7 @@
-# Specification: Ballerina EDI Module [DARFT]
+# Specification: Ballerina EDI Module
 
-_Owners_: @sample_user
-_Reviewers_: @sample_user
+_Owners_: @chathurace @RDPerera
+_Reviewers_: @niveathika @chathurace
 _Created_: 2024/01/19
 _Updated_: 2024/01/19
 _Edition_: Swan Lake
@@ -15,21 +15,26 @@ If you have any feedback or suggestions about the module, start a discussion via
 ## Contents
 
 1. [Overview](#1-overview)
-2. [Functions](#2-functions)
-    * 2.1 [`getSchema` function](#21-getschema-function)
-    * 2.2 [`fromEdiString` function](#22-fromedistring-function)
-    * 2.3 [`toEdiString` function](#23-toedistring-function)
-3. [`EdiSchema` Record](#3-edischema-record)
+2. [`EdiSchema` Record](#2-edischema-record)
+3. [Functions](#3-functions)
+    * 3.1 [`getSchema` function](#21-getschema-function)
+    * 3.2 [`fromEdiString` function](#22-fromedistring-function)
+    * 3.3 [`toEdiString` function](#23-toedistring-function)
+
 
 ## 1. Overview
 
 The Ballerina language offers first-class support for handling network-structured data, and the `edi` module leverages these features to facilitate the conversion between EDI text and JSON, with the ability to define the EDI schema in JSON format.
 
-## 2. Functions
+## 2. `EdiSchema` Record
+
+The `EdiSchema` record represents the schema of the EDI text. To define the structure of EDI data, developers can utilize the [Ballerina EDI Schema Specification](./SchemaSpecification.md). 
+
+## 3. Functions
 
 This section outlines the functions provided by the Ballerina `edi` module.
 
-### 2.1 `getSchema` function
+### 3.1 `getSchema` function
 
 Creates an EDI schema from a string or a JSON.
 
@@ -78,7 +83,7 @@ public function main() returns error? {
 }
 ```
 
-### 2.2 `fromEdiString` function
+### 3.2 `fromEdiString` function
 
 Reads the given EDI text according to the provided schema.
 
@@ -111,7 +116,7 @@ public function main() returns error? {
 }
 ```
 
-### 2.3 `toEdiString` function
+### 3.3 `toEdiString` function
 
 Writes the given JSON variable into EDI text according to the provided schema.
 
@@ -142,8 +147,3 @@ public function main() returns error? {
     io:println(orderEDI);
 }
 ```
-
-## 3. `EdiSchema` Record
-
-The `EdiSchema` record represents the schema of the EDI text. To define the structure of EDI data, developers can utilize the [Ballerina EDI Schema Specification](link). 
-
