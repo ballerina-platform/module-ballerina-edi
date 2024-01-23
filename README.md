@@ -55,7 +55,7 @@ ITM*T-46*28~
 
 ## Reading EDI Files
 
-The Ballerina EDI module allows you to read Electronic Data Interchange (EDI) files and convert them into JSON data. Here's a quick example demonstrating how to read an EDI file, parse it using a defined schema, and print the resulting JSON data:
+The utility functions in EDI package allows you to read Electronic Data Interchange (EDI) files and convert them into JSON data. Here's a quick example demonstrating how to read an EDI file, parse it using a defined schema, and print the resulting JSON data:
 
 ```ballerina
 import ballerina/io;
