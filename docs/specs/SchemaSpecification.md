@@ -147,11 +147,12 @@ The `length` object provides the following constraints:
   - If the actual length is less than `N`, Ballerina pads the field with spaces until it fulfills the fixed length.
   - If the actual length exceeds `N`, an error is produced.
 
-- **Minimum Length:**
-  - Specifies the minimum length of the field.
-  - If the length is below the specified minimum, an error is produced.
+- **Length within a Range**
+  - **Minimum Length:**
+    - Specifies the minimum length of the field.
+    - If the length is below the specified minimum, an error is produced.
 
-- **Maximum Length:**
+  - **Maximum Length:**
   - Specifies the maximum length of the field.
   - If the length exceeds the specified maximum, an error is produced.
 
