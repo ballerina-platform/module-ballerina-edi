@@ -15,7 +15,7 @@ The Ballerina EDI module offers robust functionality for the effortless conversi
 
 ## Define EDI Schema
 
-Before utilizing the EDI parser, it is imperative to establish the structure of the EDI data intended for import. Developers can leverage the [Ballerina EDI Schema Specification](./docs/specs/SchemaSpecification.md) for guidance. This specification delineates the fundamental elements necessary to describe an EDI schema, encompassing attributes such as name, delimiters, segments, field definitions, components, sub-components, and additional configuration options.
+Before utilizing the EDI parser, it is crucial to define the structure of the EDI data intended for import. Developers can refer the [Ballerina EDI Schema Specification](./docs/specs/SchemaSpecification.md) for guidance. This specification outlines the essential elements necessary to describe an EDI schema, covering attributes such as name, delimiters, segments, field definitions, components, sub-components, and additional configuration options.
 
 As an illustrative example, consider the following EDI schema definition for a _simple order_, assumed to be stored as "schema.json":
 
@@ -40,7 +40,7 @@ As an illustrative example, consider the following EDI schema definition for a _
 }
 ```
 
-This schema can be employed to parse EDI documents featuring one HDR segment, mapped to _header_, and any number of ITM segments, mapped to _items_. The HDR segment incorporates three _fields_, corresponding to _orderId_, _organization_, and _date_. Each ITM segment comprises two fields, mapped to _item_ and _quantity_.
+This schema can be used to parse EDI documents featuring one HDR segment, mapped to _header_, and any number of ITM segments, mapped to _items_. The HDR segment incorporates three _fields_, corresponding to _orderId_, _organization_, and _date_. Each ITM segment comprises two fields, mapped to _item_ and _quantity_.
 
 Below is an example of an EDI document that can be parsed using the aforementioned schema. Let's assume that the following EDI information is saved in a file named 'sample.edi':
 
