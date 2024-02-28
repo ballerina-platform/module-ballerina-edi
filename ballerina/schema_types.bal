@@ -48,6 +48,7 @@ public type EdiSchema record {|
         string subcomponent = "NOT_USED";
         string repetition = "NOT_USED";
         string decimalSeparator?;
+        string escapeCharacter = "`";
     |} delimiters;
 
     string[] ignoreSegments = [];

@@ -44,7 +44,7 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
             context.rawIndex += 1;
             continue;
         }
-        string[] fields = check splitFields(segmentDesc, ediSchema.delimiters.'field, segSchema);
+        string[] fields = check splitFields(segmentDesc, ediSchema.delimiters.'field, segSchema, ediSchema.delimiters.escapeCharacter);
         if segSchema is EdiSegSchema {
             log:printDebug(string `Trying to match with segment mapping ${printSegMap(segSchema)}`);
             if segSchema.code != fields[0].trim() {
@@ -79,8 +79,7 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
     }
     if rootGroup && ediSchema.delimiters.'field != "FL" {
         foreach int i in context.rawIndex ... (context.ediText.length() - 1) {
-            string unmatchedRaw = context.ediText[context.rawIndex];
-            string[] unmatchedSegFields = check split(unmatchedRaw, ediSchema.delimiters.'field);
+            string[] unmatchedSegFields = split(context.ediText[context.rawIndex], ediSchema.delimiters.'field, ediSchema.delimiters.escapeCharacter);
             if ediSchema.ignoreSegments.indexOf(unmatchedSegFields[0], 0) == () {
                 return error Error(string `Segment text does not match with the schema. 
                     Segment: ${context.ediText[context.rawIndex]}, Curren row: ${context.rawIndex}`);

@@ -19,7 +19,7 @@ isolated function readSubcomponentGroup(string scGroupText, EdiSchema schema, Ed
         return ();
     }
 
-    string[] subcomponents = check split(scGroupText, schema.delimiters.subcomponent);
+    string[] subcomponents = split(scGroupText, schema.delimiters.subcomponent, schema.delimiters.escapeCharacter);
     if compSchema.truncatable {
         int minFields = getMinimumSubcomponentFields(compSchema);
         if subcomponents.length() < minFields {

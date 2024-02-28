@@ -78,7 +78,7 @@ public function getDataType(string typeString) returns EdiDataType {
     return STRING;
 }
 
-isolated function splitFields(string segmentText, string fieldDelimiter, EdiUnitSchema unitSchema) returns string[]|Error {
+isolated function splitFields(string segmentText, string fieldDelimiter, EdiUnitSchema unitSchema, string escapeCharacter) returns string[]|Error {
     if unitSchema is EdiUnitRef {
         return error Error("Segment reference is not supported at runtime.");
     }
@@ -114,25 +114,36 @@ isolated function splitFields(string segmentText, string fieldDelimiter, EdiUnit
         }
         return fields;
     } else {
-        return split(segmentText, fieldDelimiter);
+        return split(prepareToSplit(segmentText, fieldDelimiter), fieldDelimiter, escapeCharacter);
     }
 }
 
-isolated function split(string text, string delimiter) returns string[]|Error {
-    string preparedText = prepareToSplit(text, delimiter);
-    string:RegExp|error validatedDelimiter = regexp:fromString(validateDelimiter(delimiter));
-    if validatedDelimiter is error {
-        return error Error("Invalid delimiter: " + delimiter);
+isolated function split(string str, string delimiter, string escapeChar) returns string[] {
+    string[] parts = [];
+    string currentPart = "";
+    boolean skipNext = false;
+    int length = str.length() - 1;
+    foreach int index in 0 ... length {
+        string currentChar = str[index];
+        if currentChar == delimiter && !skipNext {
+            parts.push(currentPart);
+            currentPart = "";
+        } else if currentChar == escapeChar && str[index + 1] == delimiter{
+            skipNext = true;
+        } else {
+            skipNext = false;
+            currentPart += currentChar;
+        
+        }
     }
-    return validatedDelimiter.split(preparedText);
+    if currentPart.length() > 0 || parts.length() == 0 {
+        parts.push(currentPart);
+    }
+    return parts;
 }
 
-isolated function splitSegments(string text, string delimiter) returns string[]|Error {
-    string:RegExp|error validatedDelimiter = regexp:fromString(validateDelimiter(delimiter));
-    if validatedDelimiter is error {
-        return error Error("Invalid delimiter: " + delimiter);
-    }
-    string[] segmentLines = validatedDelimiter.split(text);
+isolated function splitSegments(string text, string delimiter, string escapeCharacter) returns string[] {
+    string[] segmentLines = split(text, delimiter, escapeCharacter);
     if segmentLines[segmentLines.length() - 1] == "" {
         string _ = segmentLines.remove(segmentLines.length() - 1);
     }
@@ -140,24 +151,6 @@ isolated function splitSegments(string text, string delimiter) returns string[]|
         segmentLines[i] = removeLineBreaks(segmentLines[i]);
     }
     return segmentLines;
-}
-
-isolated function validateDelimiter(string delimeter) returns string {
-    match delimeter {
-        "*" => {
-            return "[*]";
-        }
-        "^" => {
-            return "\\^";
-        }
-        "+" => {
-            return "\\+";
-        }
-        "." => {
-            return "\\.";
-        }
-    }
-    return delimeter;
 }
 
 isolated function prepareToSplit(string content, string delimeter) returns string {
@@ -263,4 +256,47 @@ isolated function addPadding(string value, int requiredLength) returns string {
 isolated function removeLineBreaks(string value) returns string {
     string:RegExp newline = re `\n`;
     return newline.replaceAll(value, "");
+}
+
+isolated function addEscapeCharacters(map<json> jsonInput, EdiSchema schema) returns map<json> {
+    map<json> modifiedJson = {};
+    foreach var [key, value] in jsonInput.entries() {
+        if (value is map<json>) {
+            modifiedJson[key] = addEscapeCharacters(value, schema);
+        } else {
+            if value is string {
+                modifiedJson[key] = insertCharactersAfterChars(value, schema.delimiters.escapeCharacter, [
+                    schema.delimiters.repetition,
+                    schema.delimiters.segment,
+                    schema.delimiters.'field,
+                    schema.delimiters.component,
+                    schema.delimiters.subcomponent
+                ]);
+            } else if value is json[] {
+                json[] modifiedArray = [];
+                foreach var item in value {
+                    if (item is map<json>) {
+                        modifiedArray.push(addEscapeCharacters(item, schema));
+                    } else {
+                        modifiedArray.push(item);
+                    }
+                }
+                modifiedJson[key] = modifiedArray;
+            } else {
+                modifiedJson[key] = value;
+            }
+        }
+    }
+    return modifiedJson;
+}
+
+isolated function insertCharactersAfterChars(string str, string inChar, string[] afterChars) returns string {
+    string modifiedStr = "";
+    foreach var char in str {
+        if afterChars.indexOf(char) != () {
+            modifiedStr += inChar;
+        }
+        modifiedStr += char;
+    }
+    return modifiedStr;
 }

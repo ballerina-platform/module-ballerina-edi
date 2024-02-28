@@ -20,7 +20,7 @@ isolated function readComponentGroup(string compositeText, EdiSchema ediSchema, 
         return ();
     }
 
-    string[] components = check split(compositeText, ediSchema.delimiters.component);
+    string[] components = split(compositeText, ediSchema.delimiters.component, ediSchema.delimiters.escapeCharacter);
     if fieldSchema.truncatable {
         int minFields = getMinimumCompositeFields(fieldSchema);
         if components.length() < minFields {
