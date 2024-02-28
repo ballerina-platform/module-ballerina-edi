@@ -128,12 +128,12 @@ isolated function split(string str, string delimiter, string escapeChar) returns
         if currentChar == delimiter && !skipNext {
             parts.push(currentPart);
             currentPart = "";
-        } else if currentChar == escapeChar && str[index + 1] == delimiter{
+        } else if currentChar == escapeChar && str[index + 1] == delimiter {
             skipNext = true;
         } else {
             skipNext = false;
             currentPart += currentChar;
-        
+
         }
     }
     if currentPart.length() > 0 || parts.length() == 0 {
@@ -268,9 +268,7 @@ isolated function addEscapeCharacters(map<json> jsonInput, EdiSchema schema) ret
                 modifiedJson[key] = insertCharactersAfterChars(value, schema.delimiters.escapeCharacter, [
                     schema.delimiters.repetition,
                     schema.delimiters.segment,
-                    schema.delimiters.'field,
-                    schema.delimiters.component,
-                    schema.delimiters.subcomponent
+                    schema.delimiters.'field
                 ]);
             } else if value is json[] {
                 json[] modifiedArray = [];

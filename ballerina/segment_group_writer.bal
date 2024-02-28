@@ -15,8 +15,7 @@
 // under the License.
 
 isolated function writeSegmentGroup(map<json> segGroup, EdiSegGroupSchema|EdiSchema sgmap, EdiContext context) returns Error? {
-    map<json> preprocessedSegGroup = segGroup;
-    string[] keys = preprocessedSegGroup.keys();
+    string[] keys = segGroup.keys();
     int msgIndex = 0;
     int mapIndex = 0;
     while mapIndex < sgmap.segments.length() {
