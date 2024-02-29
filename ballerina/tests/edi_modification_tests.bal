@@ -12,8 +12,8 @@ function testSegmentModification(string testName) returns error? {
     string ediOut = check toEdiString(message, schema);
     string ediExpected = check getOutputEDI(testName);
 
-    ediOut = prepareEDI(ediOut, schema);
-    ediIn = prepareEDI(ediExpected, schema);
+    ediOut = check prepareEDI(ediOut, schema);
+    ediIn = check prepareEDI(ediExpected, schema);
 
     test:assertEquals(ediOut, ediIn);
 }

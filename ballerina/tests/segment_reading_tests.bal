@@ -13,8 +13,8 @@ function testSegments(string testName) returns error? {
     string ediOut = check toEdiString(message, schema);
     check saveEDIMessage(testName, ediOut);
 
-    ediOut = prepareEDI(ediOut, schema);
-    ediIn = prepareEDI(ediIn, schema);
+    ediOut = check prepareEDI(ediOut, schema);
+    ediIn = check prepareEDI(ediIn, schema);
 
     test:assertEquals(ediOut, ediIn);
 }
@@ -32,8 +32,8 @@ function testFixedLengthEDIs(string testName) returns error? {
     string ediOut = check toEdiString(message, schema);
     check saveEDIMessage(testName, ediOut);
 
-    ediOut = prepareEDI(ediOut, schema);
-    ediIn = prepareEDI(ediIn, schema);
+    ediOut = check prepareEDI(ediOut, schema);
+    ediIn = check prepareEDI(ediIn, schema);
 
     test:assertEquals(ediOut, ediIn);
 }
@@ -51,8 +51,8 @@ function testDynamicLengthEDIs(string testName) returns error? {
     string ediOut = check toEdiString(message, schema);
     check saveEDIMessage(testName, ediOut);
 
-    ediOut = prepareEDI(ediOut, schema);
-    ediIn = prepareEDI(ediIn, schema);
+    ediOut = check prepareEDI(ediOut, schema);
+    ediIn = check prepareEDI(ediIn, schema);
 
     test:assertEquals(ediOut, ediIn);
 }
