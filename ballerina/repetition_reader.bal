@@ -18,7 +18,7 @@ import ballerina/log;
 
 isolated function readRepetition(string repeatText, string repeatDelimiter, EdiSchema mapping, EdiFieldSchema fieldMapping)
         returns SimpleArray|EdiComponentGroup[]|Error {
-    string[] fields = check split(repeatText, repeatDelimiter);
+    string[] fields = split(repeatText, repeatDelimiter, mapping.delimiters.escapeCharacter);
     SimpleArray|EdiComponentGroup[] repeatValues = getArray(fieldMapping.dataType);
     if fields.length() == 0 {
         // None of the repeating values are provided. Return an empty array.
