@@ -1,8 +1,7 @@
 name: GraalVM Check
 
 on:
-
-  workflow_dispatch:
+    workflow_dispatch:
         inputs:
             lang_tag:
                 description: Branch/Release Tag of the Ballerina Lang
