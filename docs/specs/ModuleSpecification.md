@@ -10,7 +10,7 @@ _Edition_: Swan Lake
 
 This is the specification for the `edi` module of the [Ballerina language](https://ballerina.io). The `edi` module provides functionality to convert EDI text to JSON and JSON to EDI text. Additionally, it supports defining the schema of EDI files in JSON format. The module includes three functions: `fromEdiString`, `toEdiString` and `getSchema`.
 
-If you have any feedback or suggestions about the module, start a discussion via a [GitHub issue](https://github.com/ballerina-platform/ballerina-standard-library/issues) or in the [Discord server](https://discord.gg/ballerinalang). Based on the outcome of the discussion, the specification and implementation can be updated. Community feedback is always welcome. Any accepted proposal, which affects the specification, is stored under `/docs/proposals`. Proposals under discussion can be found with the label `type/proposal` on GitHub.
+If you have any feedback or suggestions about the module, start a discussion via a [GitHub issue](https://github.com/ballerina-platform/ballerina-library/issues) or in the [Discord server](https://discord.gg/ballerinalang). Based on the outcome of the discussion, the specification and implementation can be updated. Community feedback is always welcome. Any accepted proposal, which affects the specification, is stored under `/docs/proposals`. Proposals under discussion can be found with the label `type/proposal` on GitHub.
 
 ## Contents
 
