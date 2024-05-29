@@ -1,6 +1,7 @@
 # Ballerina EDI Schema Specification
 
 ## Introduction
+
 Ballerina facilitates seamless handling of EDI (Electronic Data Interchange) data by converting it into Ballerina records. To define the structure of EDI data, developers can utilize the Ballerina EDI Schema Specification. This specification outlines the essential elements needed to describe an EDI schema, including the name, delimiters, segments, field definitions, components, subcomponents, and additional configuration options.
 
 ## Understanding Structure of EDI
@@ -30,14 +31,17 @@ This diagram illustrates the hierarchical structure of an EDI file. Segments con
 ## Specification
 
 ### 1. Name
+
 The `name` field specifies the name of the EDI schema.
 
 ### 2. Delimiters
+
 The `delimiters` field defines the delimiters used in the EDI data. It includes the following subfields:
    - **segment:** The delimiter used to separate segments.
    - **field:** The delimiter used to separate fields within a segment.
    - **component:** The delimiter used to separate components within a field.
    - **repetition:** The delimiter used to indicate repetition of a field or component.
+   - **escapeCharacter:** The escape/release character used to treat delimiters as literals instead.
 
 **Example:**
 ```json
@@ -45,11 +49,13 @@ The `delimiters` field defines the delimiters used in the EDI data. It includes 
     "segment": "~",
     "field": "*",
     "component": ":",
-    "repetition": "^"
+    "repetition": "^",
+    "escapeCharacter": "?"
 }
 ```
 
 ### 3. Segments
+
 The `segments` field is an array of segment definitions. Each segment definition includes the following subfields:
    - **code:** The code representing the segment.
    - **tag:** A user-friendly tag or name for the segment.
@@ -58,34 +64,38 @@ The `segments` field is an array of segment definitions. Each segment definition
    - **fields:** An array of field definitions within the segment.
 
 **Example:**
-```json
-"segments": [
-    {
-        "code": "HDR",
-        "tag": "header",
-        "minOccurances": 1,
-        "maxOccurances": 1,
-        "fields": [
-            {"tag": "code", "required": true},
-            {"tag": "orderId", "required": true},
-            {"tag": "organization"},
-            {"tag": "date"}
-        ]
-    },
-    {
-        "code": "ITM",
-        "tag": "items",
-        "minOccurances": 0,
-        "maxOccurances": -1,
-        "fields": [
-            {"tag": "code", "required": true},
-            {"tag": "item", "required": true},
-            {"tag": "quantity", "required": true, "dataType": "int"}
-        ]
-    }
-]
-```
 
+```json
+{
+    "name": "SimpleOrder",
+    "delimiters": {"segment": "~", "field": "*", "component": ":", "repetition": "^"},
+    "segments": [
+        {
+            "code": "HDR",
+            "tag": "header",
+            "minOccurances": 1,
+            "maxOccurances": 1,
+            "fields": [
+                {"tag": "code", "required": true},
+                {"tag": "orderId", "required": true},
+                {"tag": "organization"},
+                {"tag": "date"}
+            ]
+        },
+        {
+            "code": "ITM",
+            "tag": "items",
+            "minOccurances": 0,
+            "maxOccurances": -1,
+            "fields": [
+                {"tag": "code", "required": true},
+                {"tag": "item", "required": true},
+                {"tag": "quantity", "required": true, "dataType": "int"}
+            ]
+        }
+    ]
+}
+```
 
 ### 4. Definition for Fields
 
@@ -113,6 +123,7 @@ The `dataType` parameter accepts the following types:
 If the `dataType` parameter is not specified, the field is assumed to be of type "string."
 
 #### Example Usage
+
 ```json
 "fields": [
     {"tag": "CustomerName", "dataType": "string", "length": 50},
@@ -157,6 +168,7 @@ The `length` object provides the following constraints:
   - If the length exceeds the specified maximum, an error is produced.
 
 #### Example Usage
+
 ```json
 "fields": [
     {"tag": "DocumentNameCode", "length": 10},
@@ -171,7 +183,9 @@ For each component within a field, the following sub-definitions are provided:
    - **tag:** A user-friendly tag or name for the component.
    - **required:** Indicates whether the field is required.
    - **dataType:** The data type of the component.
+
 #### Example Usage
+
 ```json
 "code": "ORG",
 "tag": "organization",
@@ -190,12 +204,15 @@ For each component within a field, the following sub-definitions are provided:
     }
 ]
 ```
+
 ### 6. Definition for Sub-components 
 For each sub-component within a component, the following sub-definitions are provided:
    - **tag:** A user-friendly tag or name for the sub-component.
    - **required:** Indicates whether the field is required.
    - **dataType:** The data type of the sub-component.
+
 #### Example Usage
+
 ```json        
 "code": "ORG",
 "tag": "organization",
@@ -210,12 +227,14 @@ For each sub-component within a component, the following sub-definitions are pro
     }
 ]
 ```
+
 ### 7. Additional Configuration (Optional)
    - **ignoreSegments:** An array of segments to be ignored during processing.
    - **preserveEmptyFields:** Indicates whether empty fields should be preserved.
    - **includeSegmentCode:** Indicates whether the segment code should be included in the Ballerina record.
 
 #### Example Usage
+
 ```json
 {
     "name": "SimpleOrder",

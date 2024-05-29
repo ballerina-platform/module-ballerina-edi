@@ -24,14 +24,6 @@ function saveEDIMessage(string testName, string message) returns error? {
     check io:fileWriteString(path, message);
 }
 
-function getJSONPath(string testName) returns string|error {
-    return file:joinPath("tests", "resources", testName, "message.json");
-}
-
-function getJSONMessage(string testName) returns json|error {
-    return io:fileReadJson(check getJSONPath(testName));
-}
-
 function saveJsonMessage(string testName, json message) returns error? {
     string path = check file:joinPath("tests", "resources", testName, "output.json");
     check io:fileWriteJson(path, message);

@@ -30,7 +30,7 @@ type EdiContext record {|
 public isolated function fromEdiString(string ediText, EdiSchema schema) returns json|Error {
     EdiContext context = {schema};
     EdiUnitSchema[] currentMapping = context.schema.segments;
-    context.ediText = check splitSegments(ediText, context.schema.delimiters.segment);
+    context.ediText = splitSegments(ediText, context.schema.delimiters.segment, context.schema.delimiters.escapeCharacter);
     EdiSegmentGroup rootGroup = check readSegmentGroup(currentMapping, context, true);
     return rootGroup;
 }
@@ -45,7 +45,8 @@ public isolated function toEdiString(json msg, EdiSchema schema) returns string|
         return error(string `Input is not compatible with the schema.`);
     }
     EdiContext context = {schema};
-    check writeSegmentGroup(msg, schema, context);
+    map<json> preProcessedMsg = addEscapeCharacters(msg,schema);
+    check writeSegmentGroup(preProcessedMsg , schema, context);
     string ediOutput = "";
     foreach string s in context.ediText {
         ediOutput += s + (schema.delimiters.segment == "\n" ? "" : "\n");

@@ -31,7 +31,6 @@ isolated function readSegment(EdiSegSchema segMapping, string[] fields, EdiSchem
     }
     EdiSegment segment = {};
     int fieldNumber = schema.includeSegmentCode ? 0 : 1;
-    // while fieldNumber < fields.length() - 1 {
     while fieldNumber < fields.length() {
         if fieldNumber >= segMapping.fields.length() {
             return error Error(string `Segment in the input message containes more fields than the segment schema.
@@ -40,9 +39,7 @@ isolated function readSegment(EdiSegSchema segMapping, string[] fields, EdiSchem
         }
         EdiFieldSchema fieldMapping = segMapping.fields[fieldNumber];
         string tag = fieldMapping.tag;
-
-        // EDI segment starts with the segment name. So we have to skip the first field.
-        // string fieldText = fields[fieldNumber + 1];
+        
         string fieldText = fields[fieldNumber];
         if fieldText.trim().length() == 0 {
             if fieldMapping.required {

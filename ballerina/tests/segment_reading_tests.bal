@@ -99,9 +99,9 @@ function segmentTestDataProvider() returns string[][] {
         ["sample5"],
         ["sample6"],
         ["sample7"],
-        ["edi-214"]
-        // ["edi-837"],
-        // ["d3a-invoic-1"],
+        ["edi-214"],
+        ["escape-char1"],
+        ["escape-char2"]
     ];
 }
 
