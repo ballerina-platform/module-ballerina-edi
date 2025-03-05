@@ -146,7 +146,23 @@ This repository only contains the source code for the package.
 
     > **Note**: Ensure that the Docker daemon is running before executing any tests.
 
-### Build options
+## Building from the source
+
+### Set up the prerequisites
+
+1. Download and install Java SE Development Kit (JDK) version 21 (from one of the following locations).
+   * [Oracle](https://www.oracle.com/java/technologies/downloads/)
+   * [OpenJDK](https://adoptium.net/)
+
+2. Download and install [Docker](https://www.docker.com/get-started).
+    > **Note**: Start the Docker daemon before running tests.
+
+3. Export your GitHub personal access token with the read package permissions as follows.
+        
+        export packageUser=<Username>
+        export packagePAT=<Personal access token>
+
+### Building the source
 
 Execute the commands below to build from the source.
 
