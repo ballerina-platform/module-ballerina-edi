@@ -56,6 +56,7 @@ function testDynamicLengthEDIs(string testName) returns error? {
 
     test:assertEquals(ediOut, ediIn);
 }
+
 @test:Config {
     dataProvider: wrongDynamicLengthSchemaTestDataProvider
 }
@@ -76,6 +77,7 @@ function testDynamicLengthEDIsWithWrongSchema1(string testName) returns error? {
         test:assertFail("Expected an error but got a json message");
     }
 }
+
 @test:Config
 function testDenormalization() returns error? {
     json schemaJson = check io:fileReadJson("tests/resources/denormalization/normalized_schema.json");
@@ -99,7 +101,8 @@ function segmentTestDataProvider() returns string[][] {
         ["sample5"],
         ["sample6"],
         ["sample7"],
-        ["edi-214"]
+        ["edi-214"],
+        ["x12-278"]
         // ["edi-837"],
         // ["d3a-invoic-1"],
     ];
@@ -116,6 +119,7 @@ function dynamicLengthTestDataProvider() returns string[][] {
         ["dynamic-length1"]
     ];
 }
+
 function wrongDynamicLengthSchemaTestDataProvider() returns string[][] {
     return [
         ["dynamic-length2"],

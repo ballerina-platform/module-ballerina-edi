@@ -46,7 +46,7 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
         }
         string[] fields = check splitFields(segmentDesc, ediSchema.delimiters.'field, segSchema);
         if segSchema is EdiSegSchema {
-            log:printDebug(string `Trying to match with segment mapping ${printSegMap(segSchema)}`);
+            log:printDebug(string `Trying to match [Segment]: ${context.ediText[context.rawIndex]} with segment mapping ${printSegMap(segSchema)}`);
             if segSchema.code != fields[0].trim() {
                 check ignoreSchema(segSchema, sgContext, context);
                 continue;
@@ -57,7 +57,7 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
             continue;
 
         } else if segSchema is EdiSegGroupSchema {
-            log:printDebug(string `Trying to match with segment group mapping ${printSegGroupMap(segSchema)}`);
+            log:printDebug(string `Trying to match [Segment]: ${context.ediText[context.rawIndex]} with segment group mapping ${printSegGroupMap(segSchema)}`);
             EdiUnitSchema firstSegSchema = segSchema.segments[0];
             if firstSegSchema is EdiUnitRef {
                 return error Error("First item of segment group must be a segment. " +
@@ -66,8 +66,10 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
             if firstSegSchema is EdiSegGroupSchema {
                 return error Error("First item of segment group must be a segment. Found a segment group.\nSegment group: " + printSegGroupMap(segSchema));
             }
-            if firstSegSchema.code != fields[0].trim() {
-                check ignoreSchema(segSchema, sgContext, context);
+            // Before proceeding with going through the segment group, check whether the first field value matches the criteria of the segment group.
+            boolean firstFieldMatchesResult = firstFieldMatches(segSchema, fields[0].trim());
+            if !firstFieldMatchesResult {
+                check ignoreSchemaGroup(segSchema, sgContext, context);
                 continue;
             }
             EdiSegmentGroup segmentGroup = check readSegmentGroup(segSchema.segments, context, false);
@@ -83,12 +85,80 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
             string[] unmatchedSegFields = check split(unmatchedRaw, ediSchema.delimiters.'field);
             if ediSchema.ignoreSegments.indexOf(unmatchedSegFields[0], 0) == () {
                 return error Error(string `Segment text does not match with the schema. 
-                    Segment: ${context.ediText[context.rawIndex]}, Curren row: ${context.rawIndex}`);
+                    Segment: ${context.ediText[context.rawIndex]}, Current row: ${context.rawIndex}`);
             }
         }
     }
     check validateRemainingSchemas(sgContext);
     return sgContext.segmentGroup;
+}
+
+# Checks whether any appropriate segment of the given segment group schema matches with the first field of the given segment.
+#
+# + segSchema - Segment group schema
+# + firstField - First field of the given segment
+# + return - Return true if the first field matches with an appropriate segment of the given segment group schema
+isolated function firstFieldMatches(EdiSegGroupSchema segSchema, string firstField) returns boolean {
+    foreach EdiUnitSchema seg in segSchema.segments {
+        if seg is EdiSegSchema {
+            if (seg.minOccurances == 1 && seg.code == firstField) {
+                // if the segment is mandatory, then the first field must match with the segment code.
+                return true;
+            }
+            if (seg.minOccurances == 0 && seg.code == firstField) {
+                // if the segment is optional, and if the first field matches the segment code.
+                return true;
+            }
+        }
+        if seg is EdiSegGroupSchema {
+            // FIXME is this a possible path?
+        }
+    }
+    return false;
+}
+
+# Ignores the given segment group schema if any of the below two conditions are satisfied.
+# This function will be called if a schema cannot be mapped with the next available segment text.
+#
+# 1. Given schema group is optional
+# 2. Given schema group is a repeatable one and it has already occured at least once
+#
+# If above conditions are not met, schema cannot be ignored, and should result in an error.
+#
+# + segGroupSchema - Segment group schema to be ignored
+# + sgContext - Segment group parsing context
+# + context - EDI parsing context
+# + return - Return error if the given mapping cannot be ignored
+isolated function ignoreSchemaGroup(EdiSegGroupSchema segGroupSchema, SegmentGroupContext sgContext, EdiContext context) returns Error? {
+
+    // If the current segment group mapping is optional, we can ignore the current mapping and compare the
+    // current segment with the next mapping.
+    if segGroupSchema.minOccurances == 0 {
+        log:printDebug(string `Ignoring optional segment group: ${printSegGroupMap(segGroupSchema)} |
+            Segment text: ${context.rawIndex < context.ediText.length() ? context.ediText[context.rawIndex] : "-- EOF --"}`);
+        sgContext.schemaIndex += 1;
+        return;
+    }
+
+    // If the current segment mapping represents a repeatable segment group, and we have already encountered
+    // at least one such segment group, we can ignore the current mapping and compare the current segment with
+    // the next mapping.
+    if segGroupSchema.maxOccurances != 1 {
+        var segments = sgContext.segmentGroup[segGroupSchema.tag];
+        if segments is EdiSegment[]|EdiSegmentGroup[] {
+            if segments.length() > 0 {
+                // This repeatable segment has already occured at least once. So move to the next mapping.
+                sgContext.schemaIndex += 1;
+                log:printDebug(string `Completed reading repeatable segment: ${printSegGroupMap(segGroupSchema)} |
+                    Segment text: ${context.rawIndex < context.ediText.length() ? context.ediText[context.rawIndex] : "-- EOF --"}`);
+                return;
+            }
+        }
+    }
+
+    return error Error(string `Mandatory segment group is missing in the EDI.
+        Unit: ${printSegGroupMap(segGroupSchema)}, Current segment text: ${context.ediText[context.rawIndex]},
+            Current mapping index: ${sgContext.schemaIndex}`);
 }
 
 # Ignores the given segment of segment group schema if any of the below two conditions are satisfied. 
@@ -113,7 +183,7 @@ isolated function ignoreSchema(EdiUnitSchema segSchema, SegmentGroupContext sgCo
     // If the current segment mapping is optional, we can ignore the current mapping and compare the 
     // current segment with the next mapping.
     if segSchema.minOccurances == 0 {
-        log:printDebug(string `Ignoring optional segment: ${printEDIUnitMapping(segSchema)} | 
+        log:printDebug(string `Ignoring optional segment: ${printEDIUnitMapping(segSchema)} |
             Segment text: ${context.rawIndex < context.ediText.length() ? context.ediText[context.rawIndex] : "-- EOF --"}`);
         sgContext.schemaIndex += 1;
         return;
