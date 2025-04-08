@@ -1,7 +1,7 @@
 import ballerina/test;
 
 @test:Config {
-    dataProvider:  ediModificationsDataProvider
+    dataProvider: ediModificationsDataProvider
 }
 function testSegmentModification(string testName) returns error? {
     EdiSchema schema = check getTestSchema(testName);
