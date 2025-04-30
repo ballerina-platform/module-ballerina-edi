@@ -194,7 +194,7 @@ isolated function printSegMap(EdiSegSchema smap) returns string {
 }
 
 isolated function printSegGroupMap(EdiSegGroupSchema sgmap) returns string {
-    string sgcode = "";
+    string sgcode = "[Tag: " + sgmap.tag + "] ";
     foreach EdiUnitSchema umap in sgmap.segments {
         if umap is EdiSegSchema {
             sgcode += umap.code + "-";
