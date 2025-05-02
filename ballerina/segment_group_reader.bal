@@ -58,6 +58,7 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
 
         } else if segSchema is EdiSegGroupSchema {
             log:printDebug(string `Trying to match [Segment]: ${context.ediText[context.rawIndex]} with segment group mapping ${printSegGroupMap(segSchema)}`);
+
             EdiUnitSchema firstSegSchema = segSchema.segments[0];
             if firstSegSchema is EdiUnitRef {
                 return error Error("First item of segment group must be a segment. " +
@@ -69,6 +70,14 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
             // Before proceeding with going through the segment group, check whether the first field value matches the criteria of the segment group.
             boolean firstFieldMatchesResult = firstFieldMatches(segSchema, fields[0].trim());
             if !firstFieldMatchesResult {
+                check ignoreSchemaGroup(segSchema, sgContext, context);
+                continue;
+            }
+            // This logic is very specific to X12 278 dependent loop - 2000D.
+            // Made the logic very specific to X12 to avoid any side effects to other messages.
+            // FIXME - This is a temporary fix. Need to find a better way to handle this.
+            if context.ediText[0].startsWith("ST*278") && segSchema.tag == "Loop_2000D" && !(context.ediText[context.rawIndex][3] == "23") {
+                log:printDebug(string `X12 dependent loop 2000D is detected but the current HL segment does not indicate that there is a dependent. Hence, ignoring the dependent loop.`);
                 check ignoreSchemaGroup(segSchema, sgContext, context);
                 continue;
             }
