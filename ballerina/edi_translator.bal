@@ -44,11 +44,17 @@ public isolated function toEdiString(json msg, EdiSchema schema) returns string|
     if !(msg is map<json>) {
         return error(string `Input is not compatible with the schema.`);
     }
-    EdiContext context = {schema};
-    check writeSegmentGroup(msg, schema, context);
+    // Skip check here since return type must be edi:Error.
+    // Clone schema to prevent modifying originals with references.
+    EdiSchema|error clonedSchema = schema.cloneWithType();
+    if clonedSchema is error {
+        return <Error> clonedSchema;
+    }
+    EdiContext context = {schema: clonedSchema};
+    check writeSegmentGroup(msg, clonedSchema, context);
     string ediOutput = "";
     foreach string s in context.ediText {
-        ediOutput += s + (schema.delimiters.segment == "\n" ? "" : "\n");
+        ediOutput += s + (clonedSchema.delimiters.segment == "\n" ? "" : "\n");
     }
     return ediOutput;
 }
