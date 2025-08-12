@@ -74,8 +74,10 @@ public isolated function getSchema(string|json schema) returns EdiSchema|error {
     } else {
         schemaJson = schema;
     }
-    check denormalizeSchema(schemaJson);
-    return schemaJson.cloneWithType(EdiSchema);
+    // Clone schema to prevent modifying originals with references.
+    json clonedSchema = check schemaJson.cloneWithType();
+    check denormalizeSchema(clonedSchema);
+    return clonedSchema.cloneWithType(EdiSchema);
 }
 
 # Represents EDI module related errors
