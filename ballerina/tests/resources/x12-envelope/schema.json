@@ -1,0 +1,62 @@
+{
+    "name": "X12_278_Envelope",
+    "tag": "X12_278_Envelope",
+    "delimiters": {
+        "segment": "~",
+        "field": "*",
+        "component": ":",
+        "subcomponent": "NOT_USED",
+        "repetition": "NOT_USED"
+    },
+    "ignoreSegments": [],
+    "preserveEmptyFields": true,
+    "includeSegmentCode": true,
+    "headerSegments": [
+        {
+            "code": "ST",
+            "tag": "TransactionSetHeader",
+            "truncatable": true,
+            "minOccurances": 1,
+            "maxOccurances": 1,
+            "fields": [
+                {"tag": "code", "repeat": false, "required": true, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []},
+                {"tag": "transaction_set_identifier_code", "repeat": false, "required": true, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []},
+                {"tag": "transaction_set_control_number", "repeat": false, "required": true, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []},
+                {"tag": "implementation_convention_reference", "repeat": false, "required": false, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []}
+            ]
+        }
+    ],
+    "segments": [
+        {
+            "code": "BHT",
+            "tag": "BeginningOfHierarchicalTransaction",
+            "truncatable": true,
+            "minOccurances": 1,
+            "maxOccurances": 1,
+            "fields": [
+                {"tag": "code", "repeat": false, "required": true, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []},
+                {"tag": "hierarchical_structure_code", "repeat": false, "required": true, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []},
+                {"tag": "transaction_set_purpose_code", "repeat": false, "required": true, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []},
+                {"tag": "reference_identification", "repeat": false, "required": false, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []},
+                {"tag": "date", "repeat": false, "required": false, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []},
+                {"tag": "time", "repeat": false, "required": false, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []},
+                {"tag": "transaction_type_code", "repeat": false, "required": false, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []}
+            ]
+        }
+    ],
+    "trailerSegments": [
+        {
+            "code": "SE",
+            "tag": "TransactionSetTrailer",
+            "truncatable": true,
+            "minOccurances": 1,
+            "maxOccurances": 1,
+            "fields": [
+                {"tag": "code", "repeat": false, "required": true, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []},
+                {"tag": "number_of_included_segments", "repeat": false, "required": true, "truncatable": true, "dataType": "int", "startIndex": -1, "length": -1, "components": []},
+                {"tag": "transaction_set_control_number", "repeat": false, "required": true, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []}
+            ]
+        }
+    ],
+    "segmentDefinitions": {}
+}

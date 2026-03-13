@@ -1,0 +1,70 @@
+{
+    "name": "ORDERS_Envelope",
+    "delimiters": {
+        "segment": "'",
+        "field": "+",
+        "component": ":",
+        "repetition": "^",
+        "decimalSeparator": "."
+    },
+    "preserveEmptyFields": false,
+    "headerSegments": [
+        {
+            "code": "UNH",
+            "tag": "MessageHeader",
+            "truncatable": true,
+            "minOccurances": 1,
+            "maxOccurances": 1,
+            "fields": [
+                {"tag": "code", "repeat": false, "required": true, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []},
+                {"tag": "message_reference_number", "repeat": false, "required": true, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []},
+                {
+                    "tag": "message_identifier",
+                    "repeat": false,
+                    "required": true,
+                    "truncatable": true,
+                    "dataType": "composite",
+                    "startIndex": -1,
+                    "length": -1,
+                    "components": [
+                        {"tag": "message_type", "required": true, "dataType": "string", "subcomponents": []},
+                        {"tag": "version", "required": false, "dataType": "string", "subcomponents": []},
+                        {"tag": "release", "required": false, "dataType": "string", "subcomponents": []},
+                        {"tag": "controlling_agency", "required": false, "dataType": "string", "subcomponents": []},
+                        {"tag": "association_assigned_code", "required": false, "dataType": "string", "subcomponents": []}
+                    ]
+                }
+            ]
+        }
+    ],
+    "segments": [
+        {
+            "code": "BGM",
+            "tag": "BeginningOfMessage",
+            "truncatable": true,
+            "minOccurances": 1,
+            "maxOccurances": 1,
+            "fields": [
+                {"tag": "code", "repeat": false, "required": true, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []},
+                {"tag": "document_message_number", "repeat": false, "required": false, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []},
+                {"tag": "document_message_name", "repeat": false, "required": false, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []},
+                {"tag": "message_function_code", "repeat": false, "required": false, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []}
+            ]
+        }
+    ],
+    "trailerSegments": [
+        {
+            "code": "UNT",
+            "tag": "MessageTrailer",
+            "truncatable": true,
+            "minOccurances": 1,
+            "maxOccurances": 1,
+            "fields": [
+                {"tag": "code", "repeat": false, "required": true, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []},
+                {"tag": "number_of_segments", "repeat": false, "required": true, "truncatable": true, "dataType": "int", "startIndex": -1, "length": -1, "components": []},
+                {"tag": "message_reference_number", "repeat": false, "required": true, "truncatable": true, "dataType": "string", "startIndex": -1, "length": -1, "components": []}
+            ]
+        }
+    ],
+    "segmentDefinitions": {}
+}
