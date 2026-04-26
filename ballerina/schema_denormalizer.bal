@@ -19,6 +19,14 @@ isolated function denormalizeSchema(json schema) returns Error? {
         return error Error("Schema does not contain segments.");
     }
     check denormalizeSegments(segments, segmentDefinitions);
+    json headerSegs = schema["headerSegments"];
+    if headerSegs is json[] {
+        check denormalizeSegments(headerSegs, segmentDefinitions);
+    }
+    json trailerSegs = schema["trailerSegments"];
+    if trailerSegs is json[] {
+        check denormalizeSegments(trailerSegs, segmentDefinitions);
+    }
     _ = schema.remove("segmentDefinitions");
 }
 

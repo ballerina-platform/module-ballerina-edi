@@ -288,15 +288,15 @@ isolated function getSegmentCodes(EdiUnitSchema[] schemas) returns string[] {
 // (avoids the overhead and escape issues of regex-based split for single chars).
 isolated function splitByDelimiter(string text, string delimiter) returns string[] {
     string[] parts = [];
-    int start = 0;
+    int startIdx = 0;
     int i = 0;
     while i < text.length() {
         if text.substring(i, i + 1) == delimiter {
-            parts.push(text.substring(start, i));
-            start = i + 1;
+            parts.push(text.substring(startIdx, i));
+            startIdx = i + 1;
         }
         i += 1;
     }
-    parts.push(text.substring(start));
+    parts.push(text.substring(startIdx));
     return parts;
 }

@@ -168,7 +168,7 @@ function testEnvelopeBodyCanBeDeepParsed() returns error? {
     EdiEnvelope envelope = check envelopeFromEdiString(txBody, envelopeSchema);
 
     // Re-assemble body as a minimal EDI string and confirm it's parseable
-    string bodyEdi = string:join("~\n", ...envelope.body) + "~";
+    string bodyEdi = string:'join("~\n", ...envelope.body) + "~";
     // We won't run fromEdiString on it (no matching body-only schema here),
     // but verify the body strings are well-formed segments
     foreach string seg in envelope.body {
