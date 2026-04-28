@@ -214,6 +214,44 @@ For each sub-component within a component, the following sub-definitions are pro
    - **ignoreSegments:** An array of segments to be ignored during processing.
    - **preserveEmptyFields:** Indicates whether empty fields should be preserved.
    - **includeSegmentCode:** Indicates whether the segment code should be included in the Ballerina record.
+   - **headerSegments:** An array of envelope-header segment definitions parsed before the message body. Same shape as `segments`. Used by `headersFromEdiString` and `envelopeFromEdiString` to demarcate the envelope. Defaults to `[]`.
+   - **trailerSegments:** An array of envelope-trailer segment definitions parsed after the message body. Same shape as `segments`. Used by `envelopeFromEdiString` to terminate the body. Defaults to `[]`.
+
+**Example (with envelope):**
+```json
+{
+    "name": "ORDERS_Envelope",
+    "delimiters": {"segment": "'", "field": "+", "component": ":", "decimalSeparator": "."},
+    "headerSegments": [
+        {
+            "code": "UNH",
+            "tag": "MessageHeader",
+            "minOccurances": 1,
+            "maxOccurances": 1,
+            "fields": [
+                {"tag": "code", "dataType": "string"},
+                {"tag": "messageRef", "dataType": "string"}
+            ]
+        }
+    ],
+    "segments": [
+        {"code": "BGM", "tag": "BeginningOfMessage", "minOccurances": 1, "maxOccurances": 1, "fields": [{"tag": "code"}, {"tag": "documentNumber"}]}
+    ],
+    "trailerSegments": [
+        {
+            "code": "UNT",
+            "tag": "MessageTrailer",
+            "minOccurances": 1,
+            "maxOccurances": 1,
+            "fields": [
+                {"tag": "code", "dataType": "string"},
+                {"tag": "segmentCount", "dataType": "int"},
+                {"tag": "messageRef", "dataType": "string"}
+            ]
+        }
+    ]
+}
+```
 
 #### Example Usage
 ```json

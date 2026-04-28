@@ -1,4 +1,4 @@
-// Copyright (c) 2026 WSO2 LLC. (http://www.wso2.org) All Rights Reserved.
+// Copyright (c) 2026 WSO2 LLC. (http://www.wso2.org).
 //
 // WSO2 LLC. licenses this file to you under the Apache License,
 // Version 2.0 (the "License"); you may not use this file except
@@ -93,6 +93,55 @@ public type X12Trailers record {|
 
 // ── EDIFACT Envelope Types ────────────────────────────────────────────────────
 
+# Represents the EDIFACT syntax identifier composite (UNB S001).
+#
+# + syntaxId - Controlling agency syntax identifier (e.g. UNOA, UNOB)
+# + syntaxVersion - Syntax version number
+public type EdifactSyntaxIdentifier record {|
+    string syntaxId;
+    string syntaxVersion;
+|};
+
+# Represents the EDIFACT interchange sender composite (UNB S002).
+#
+# + id - Sender identification
+# + qualifier - Identification code qualifier
+public type EdifactInterchangeSender record {|
+    string id;
+    string qualifier;
+|};
+
+# Represents the EDIFACT interchange recipient composite (UNB S003).
+#
+# + id - Recipient identification
+# + qualifier - Identification code qualifier
+public type EdifactInterchangeRecipient record {|
+    string id;
+    string qualifier;
+|};
+
+# Represents the EDIFACT date/time of preparation composite (UNB S004).
+#
+# + date - Date of preparation (YYMMDD)
+# + time - Time of preparation (HHMM)
+public type EdifactDateTime record {|
+    string date;
+    string time;
+|};
+
+# Represents the EDIFACT message identifier composite (UNH S009).
+#
+# + messageType - Message type identifier (e.g. ORDERS, INVOIC)
+# + version - Message type version number
+# + release - Message type release number
+# + controlAgency - Controlling agency
+public type EdifactMessageIdentifier record {|
+    string messageType;
+    string version;
+    string release;
+    string controlAgency;
+|};
+
 # Represents the EDIFACT UNB (Interchange Header) segment.
 #
 # + syntaxIdentifier - Syntax identifier (UNB S001)
@@ -101,22 +150,10 @@ public type X12Trailers record {|
 # + dateAndTime - Date/time of preparation (UNB S004)
 # + controlRef - Interchange control reference (UNB 0020)
 public type EdifactUNB record {|
-    record {|
-        string syntaxId;
-        string syntaxVersion;
-    |} syntaxIdentifier;
-    record {|
-        string id;
-        string qualifier;
-    |} sender;
-    record {|
-        string id;
-        string qualifier;
-    |} recipient;
-    record {|
-        string date;
-        string time;
-    |} dateAndTime;
+    EdifactSyntaxIdentifier syntaxIdentifier;
+    EdifactInterchangeSender sender;
+    EdifactInterchangeRecipient recipient;
+    EdifactDateTime dateAndTime;
     string controlRef;
 |};
 
@@ -126,12 +163,7 @@ public type EdifactUNB record {|
 # + messageIdentifier - Message identifier (UNH S009)
 public type EdifactUNH record {|
     string messageRef;
-    record {|
-        string messageType;
-        string version;
-        string release;
-        string controlAgency;
-    |} messageIdentifier;
+    EdifactMessageIdentifier messageIdentifier;
 |};
 
 # Represents parsed EDIFACT interchange and message envelope headers.
