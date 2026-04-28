@@ -23,9 +23,11 @@ isolated function convertToType(string value, EdiDataType dataType, string? deci
             return v;
         }
         INT|FLOAT => {
-            if decimalSeparator != () {
-                string:RegExp decimalSep = check regexp:fromString(decimalSeparator);
-                v = decimalSep.replace(v, ".");
+            if decimalSeparator != () && decimalSeparator != "." {
+                // Wrap in a character class so regex metacharacters in
+                // decimalSeparator (e.g. ".") are matched literally.
+                string:RegExp decimalSep = check regexp:fromString(string `[${decimalSeparator}]`);
+                v = decimalSep.replaceAll(v, ".");
             }
             match dataType {
                 INT => {

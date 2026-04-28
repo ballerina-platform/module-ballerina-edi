@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- [Fix `convertToType` corrupting numeric values when `decimalSeparator` is a regex metacharacter](https://github.com/ballerina-platform/ballerina-library/issues/8771)
 
 ## [1.5.3] 
 
