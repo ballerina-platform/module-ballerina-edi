@@ -130,7 +130,9 @@ public isolated function peekEdifactHeaders(string ediText) returns EdifactHeade
     string unbText = remaining.substring(0, unbEnd);
     string[] unbFields = splitByDelimiter(unbText, fieldDelim);
 
-    if unbFields.length() < 5 {
+    if unbFields.length() < 6 {
+        // UNB requires S001 syntax id, S002 sender, S003 recipient,
+        // S004 date/time, and 0020 interchange control reference.
         return error Error(string `UNB segment has fewer fields than expected. Found ${unbFields.length()} fields.`);
     }
 
@@ -157,7 +159,7 @@ public isolated function peekEdifactHeaders(string ediText) returns EdifactHeade
             date: dateTimeParts.length() > 0 ? dateTimeParts[0].trim() : "",
             time: dateTimeParts.length() > 1 ? dateTimeParts[1].trim() : ""
         },
-        controlRef: unbFields.length() > 5 ? unbFields[5].trim() : ""
+        controlRef: unbFields[5].trim()
     };
 
     // Try to find UNH
@@ -192,7 +194,7 @@ public isolated function peekEdifactHeaders(string ediText) returns EdifactHeade
 # `headerSegments` definition, and returns immediately without scanning the body.
 # Use this when you need envelope routing information quickly.
 #
-# Requires `schema.headerSegments` to be non-empty. Returns an `EdiError` if called
+# Requires `schema.headerSegments` to be non-empty. Returns an `Error` if called
 # with a schema that has no `headerSegments` (i.e. an older schema.json file).
 #
 # + ediText - EDI text to read
@@ -217,7 +219,7 @@ public isolated function headersFromEdiString(string ediText, EdiSchema schema) 
 # the cost of a full deep parse.
 #
 # Requires both `schema.headerSegments` and `schema.trailerSegments` to be non-empty.
-# Returns an `EdiError` if called with an older schema that lacks these fields.
+# Returns an `Error` if called with an older schema that lacks these fields.
 #
 # + ediText - EDI text to read
 # + schema - Schema containing both `headerSegments` and `trailerSegments` definitions

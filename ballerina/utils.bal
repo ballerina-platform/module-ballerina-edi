@@ -24,10 +24,11 @@ isolated function convertToType(string value, EdiDataType dataType, string? deci
         }
         INT|FLOAT => {
             if decimalSeparator != () && decimalSeparator != "." {
-                // Wrap in a character class so regex metacharacters in
-                // decimalSeparator (e.g. ".") are matched literally.
-                string:RegExp decimalSep = check regexp:fromString(string `[${decimalSeparator}]`);
-                v = decimalSep.replaceAll(v, ".");
+                // Replace the configured decimal separator with "." via a
+                // literal char scan rather than regex — the separator may be
+                // a regex metacharacter (".", "^", "]", "\\", "-") and any
+                // form of regex compilation would have to escape it.
+                v = replaceLiteral(v, decimalSeparator, ".");
             }
             match dataType {
                 INT => {
@@ -40,6 +41,28 @@ isolated function convertToType(string value, EdiDataType dataType, string? deci
         }
     }
     return error("Undefined type for value:" + value);
+}
+
+// Replaces every occurrence of `target` in `text` with `replacement` using a
+// straight character scan. Used in places where the search string may contain
+// regex metacharacters and a regex-based replacement would need escaping.
+isolated function replaceLiteral(string text, string target, string replacement) returns string {
+    if target.length() == 0 {
+        return text;
+    }
+    string result = "";
+    int i = 0;
+    int targetLen = target.length();
+    while i < text.length() {
+        if i + targetLen <= text.length() && text.substring(i, i + targetLen) == target {
+            result += replacement;
+            i += targetLen;
+        } else {
+            result += text.substring(i, i + 1);
+            i += 1;
+        }
+    }
+    return result;
 }
 
 isolated function getArray(EdiDataType dataType) returns SimpleArray|EdiComponentGroup[] {

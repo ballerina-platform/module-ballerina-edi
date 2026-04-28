@@ -22,7 +22,7 @@ import ballerina/io;
 @test:Config {}
 function testPeekX12HeadersValid() returns error? {
     string ediText = check io:fileReadString("tests/resources/x12-envelope/message.edi");
-    // Strip the header (ISA..~) from the test file — message.edi starts with ISA
+    // message.edi starts with an ISA segment; pass the full X12 payload to peekX12Headers
     X12Headers headers = check peekX12Headers(ediText);
     test:assertEquals(headers.isa.senderQualifier, "ZZ");
     test:assertEquals(headers.isa.senderId, "SENDAPP");
@@ -167,10 +167,13 @@ function testEnvelopeBodyCanBeDeepParsed() returns error? {
     string txBody = ediText.substring(stIdx);
     EdiEnvelope envelope = check envelopeFromEdiString(txBody, envelopeSchema);
 
-    // Re-assemble body as a minimal EDI string and confirm it's parseable
+    // Re-assemble body as a minimal EDI string and verify the joined content is
+    // well-formed (ends with a segment terminator) and individual body segments
+    // are non-empty. We don't run fromEdiString here — there is no body-only
+    // schema in the test resources to deep-parse against.
     string bodyEdi = string:'join("~\n", ...envelope.body) + "~";
-    // We won't run fromEdiString on it (no matching body-only schema here),
-    // but verify the body strings are well-formed segments
+    test:assertTrue(bodyEdi.length() > 0, "Re-assembled body EDI should not be empty");
+    test:assertTrue(bodyEdi.endsWith("~"), "Re-assembled body EDI should end with the segment terminator");
     foreach string seg in envelope.body {
         test:assertTrue(seg.length() > 0, "Body segment should not be empty");
     }

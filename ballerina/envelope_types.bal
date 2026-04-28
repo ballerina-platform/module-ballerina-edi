@@ -55,7 +55,7 @@ public type X12ISA record {|
 # + date - Date (GS04)
 # + time - Time (GS05)
 # + controlNumber - Group control number (GS06)
-# + version - Responsible agency code + version/release/industry identifier code (GS07+GS08)
+# + version - Version/release/industry identifier code (GS08)
 public type X12GS record {|
     string functionalIdentifier;
     string senderId;

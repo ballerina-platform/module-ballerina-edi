@@ -35,10 +35,10 @@
 # 
 # + includeSegmentCode - Indicates whether or not to include the segment code as a field in output JSON values.
 #
-# + headerSegments - Array of segment schemas for interchange/group envelope header segments (e.g. ISA, GS for X12;
+# + headerSegments - Array of segment schemas for envelope/control header segments (for example ISA, GS, ST for X12;
 # UNB, UNH for EDIFACT). Parsed before body segments. Required by headersFromEdiString and envelopeFromEdiString.
 # + segments - Array of segment and segment group schemas
-# + trailerSegments - Array of segment schemas for interchange/group envelope trailer segments (e.g. IEA, GE for X12;
+# + trailerSegments - Array of segment schemas for envelope/control trailer segments (for example IEA, GE, SE for X12;
 # UNZ, UNT for EDIFACT). Parsed after body segments. Required by envelopeFromEdiString.
 # + segmentDefinitions - Map of segment definitions indexed by the segment code
 public type EdiSchema record {|
