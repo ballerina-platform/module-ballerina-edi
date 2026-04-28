@@ -30,16 +30,20 @@ This diagram illustrates the hierarchical structure of an EDI file. Segments con
 ## Specification
 
 ### 1. Name
-The `name` field specifies the name of the EDI schema.
+The `name` field specifies the name of the EDI schema. Code-generation tools use this as the main record name in the generated Ballerina code.
+
+The optional `tag` field gives the root JSON object a different key when the schema is parsed (defaults to `Root_mapping`).
 
 ### 2. Delimiters
 The `delimiters` field defines the delimiters used in the EDI data. It includes the following subfields:
-   - **segment:** The delimiter used to separate segments.
-   - **field:** The delimiter used to separate fields within a segment.
-   - **component:** The delimiter used to separate components within a field.
-   - **repetition:** The delimiter used to indicate repetition of a field or component.
+   - **segment** *(required)*: The delimiter used to separate segments.
+   - **field** *(required)*: The delimiter used to separate fields within a segment.
+   - **component** *(required)*: The delimiter used to separate components within a field.
+   - **subcomponent** *(optional)*: The delimiter used to separate sub-components within a component. Use the literal value `"NOT_USED"` (also the default) when the format does not have sub-components.
+   - **repetition** *(optional)*: The delimiter used to indicate repetition of a field. Use `"NOT_USED"` (default) when the format does not use a separate repetition delimiter.
+   - **decimalSeparator** *(optional)*: Character used as the decimal separator inside numeric fields, e.g. `","` for European-style numerics. The parser normalises the value to `"."` before converting to `int` / `float`. Omit (or set to `"."`) when the values already use the standard decimal point.
 
-**Example:**
+**Example (X12 — typical):**
 ```json
 "delimiters": {
     "segment": "~",
@@ -49,13 +53,55 @@ The `delimiters` field defines the delimiters used in the EDI data. It includes 
 }
 ```
 
+**Example (EDIFACT — typical):**
+```json
+"delimiters": {
+    "segment": "'",
+    "field": "+",
+    "component": ":",
+    "decimalSeparator": "."
+}
+```
+
 ### 3. Segments
-The `segments` field is an array of segment definitions. Each segment definition includes the following subfields:
+The `segments` field is an array of segment definitions and segment groups. Three forms are supported:
+
+#### 3.1 Segment definition
+Each segment definition includes the following subfields:
    - **code:** The code representing the segment.
-   - **tag:** A user-friendly tag or name for the segment.
-   - **minOccurances:** The minimum number of times the segment must occur.
-   - **maxOccurances:** The maximum number of times the segment can occur (-1 indicates unlimited occurrences).
+   - **tag:** A user-friendly tag or name for the segment (becomes the JSON key).
+   - **minOccurances:** The minimum number of times the segment must occur (default `0`).
+   - **maxOccurances:** The maximum number of times the segment can occur (default `1`, `-1` indicates unlimited occurrences).
+   - **truncatable:** Whether trailing empty fields can be omitted on serialization (default `true`).
    - **fields:** An array of field definitions within the segment.
+
+#### 3.2 Segment group
+Used to group related segments that repeat together (e.g. an X12 line-item loop). A segment group has:
+   - **tag:** A user-friendly tag or name for the group.
+   - **minOccurances** / **maxOccurances:** As above.
+   - **segments:** An array of nested segments and/or further segment groups.
+
+**Example:**
+```json
+{
+    "tag": "lineItems",
+    "minOccurances": 1,
+    "maxOccurances": -1,
+    "segments": [
+        {"code": "LIN", "tag": "lineItem", "fields": [...]},
+        {"code": "PIA", "tag": "additionalProductId", "fields": [...]}
+    ]
+}
+```
+
+#### 3.3 Segment reference
+For schemas with many repeated segment shapes (typical of EDIFACT), define a segment once in `segmentDefinitions` (see §8) and reference it elsewhere using `ref`:
+
+```json
+{"ref": "BGM", "tag": "BeginningOfMessage", "minOccurances": 1, "maxOccurances": 1}
+```
+
+The parser expands references into full segment definitions before reading EDI text.
 
 **Example:**
 ```json
@@ -92,11 +138,13 @@ The `segments` field is an array of segment definitions. Each segment definition
 Within the `fields` sub-definition, the `length` attribute is used to specify the length constraints for a field. This object includes parameters for fixed length, minimum length, and maximum length, offering comprehensive control over the size of the field.
 
 - **tag:** A user-friendly tag or name for the field.
-- **repeat:** Indicates whether the field can be repeated.
-- **required:** Indicates whether the field is required.
-- **dataType:** The data type of the field.
-- **startIndex:** The starting index of the field within the segment.
-- **length:** An object specifying length constraints for the field.
+- **repeat:** Indicates whether the field can be repeated (default `false`).
+- **required:** Indicates whether the field is required (default `false`).
+- **truncatable:** Whether trailing empty subfields can be omitted on serialization (default `true`).
+- **dataType:** The data type of the field (default `string`).
+- **startIndex:** The starting index of the field within the segment (used only for fixed-length records; default `-1` = positional parsing).
+- **length:** An object specifying length constraints for the field (default `-1` = unconstrained).
+- **components:** An array of component definitions when `dataType` is `composite`.
 
 #### 4.1 Type Constraints
 
@@ -212,10 +260,46 @@ For each sub-component within a component, the following sub-definitions are pro
 ```
 ### 7. Additional Configuration (Optional)
    - **ignoreSegments:** An array of segments to be ignored during processing.
-   - **preserveEmptyFields:** Indicates whether empty fields should be preserved.
-   - **includeSegmentCode:** Indicates whether the segment code should be included in the Ballerina record.
+   - **preserveEmptyFields:** Indicates whether empty fields should be preserved (default `true`). When `false`, fields/components/sub-components with empty values are omitted from the output JSON.
+   - **includeSegmentCode:** Indicates whether the segment code should be included in the Ballerina record (default `true`).
    - **headerSegments:** An array of envelope-header segment definitions parsed before the message body. Same shape as `segments`. Used by `headersFromEdiString` and `envelopeFromEdiString` to demarcate the envelope. Defaults to `[]`.
    - **trailerSegments:** An array of envelope-trailer segment definitions parsed after the message body. Same shape as `segments`. Used by `envelopeFromEdiString` to terminate the body. Defaults to `[]`.
+
+### 8. Segment Definitions (Optional)
+The `segmentDefinitions` field is a map of segment definitions keyed by segment code. It lets you define a segment shape once and reference it from multiple places via the [`ref` form](#33-segment-reference) of a segment entry. EDIFACT schemas generated by `convertEdifactSchema` use this pattern heavily — each EDIFACT segment (BGM, DTM, NAD, …) is declared once in `segmentDefinitions` and referenced from `segments` / `headerSegments` / `trailerSegments` as needed.
+
+**Example:**
+```json
+{
+    "segments": [
+        {"ref": "BGM", "tag": "BeginningOfMessage", "minOccurances": 1, "maxOccurances": 1},
+        {"ref": "DTM", "tag": "DateTime", "minOccurances": 0, "maxOccurances": -1}
+    ],
+    "segmentDefinitions": {
+        "BGM": {
+            "code": "BGM",
+            "tag": "BGM",
+            "fields": [
+                {"tag": "code"},
+                {"tag": "documentNameCode"},
+                {"tag": "documentNumber"}
+            ]
+        },
+        "DTM": {
+            "code": "DTM",
+            "tag": "DTM",
+            "fields": [
+                {"tag": "code"},
+                {"tag": "dateTimePeriod", "dataType": "composite", "components": [
+                    {"tag": "qualifier"},
+                    {"tag": "value"},
+                    {"tag": "format"}
+                ]}
+            ]
+        }
+    }
+}
+```
 
 **Example (with envelope):**
 ```json

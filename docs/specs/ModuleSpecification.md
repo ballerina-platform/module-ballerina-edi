@@ -8,7 +8,13 @@ _Edition_: Swan Lake
 
 ## Introduction
 
-This is the specification for the `edi` module of the [Ballerina language](https://ballerina.io). The `edi` module provides functionality to convert EDI text to JSON and JSON to EDI text. Additionally, it supports defining the schema of EDI files in JSON format. The module includes three functions: `fromEdiString`, `toEdiString` and `getSchema`.
+This is the specification for the `edi` module of the [Ballerina language](https://ballerina.io). The `edi` module provides functionality to:
+
+- Convert EDI text to JSON and JSON to EDI text driven by an EDI schema (`fromEdiString`, `toEdiString`, `getSchema`).
+- Inspect X12 / EDIFACT envelope headers without a schema (`peekX12Headers`, `peekEdifactHeaders`).
+- Parse just the envelope, or split an envelope from its body, against a schema (`headersFromEdiString`, `envelopeFromEdiString`).
+
+EDI schemas are themselves defined in JSON and validated against the [Ballerina EDI Schema Specification](./SchemaSpecification.md).
 
 If you have any feedback or suggestions about the module, start a discussion via a [GitHub issue](https://github.com/ballerina-platform/ballerina-library/issues) or in the [Discord server](https://discord.gg/ballerinalang). Based on the outcome of the discussion, the specification and implementation can be updated. Community feedback is always welcome. Any accepted proposal, which affects the specification, is stored under `/docs/proposals`. Proposals under discussion can be found with the label `type/proposal` on GitHub.
 
@@ -24,6 +30,10 @@ If you have any feedback or suggestions about the module, start a discussion via
     * 3.5 [`peekEdifactHeaders` function](#35-peekedifactheaders-function)
     * 3.6 [`headersFromEdiString` function](#36-headersfromedistring-function)
     * 3.7 [`envelopeFromEdiString` function](#37-envelopefromedistring-function)
+4. [Envelope Types](#4-envelope-types)
+    * 4.1 [`X12Headers` / `X12Trailers`](#41-x12-envelope-types)
+    * 4.2 [`EdifactHeaders` / `EdifactTrailers`](#42-edifact-envelope-types)
+    * 4.3 [`EdiEnvelope`](#43-edienvelope)
 
 
 ## 1. Overview
@@ -251,3 +261,46 @@ public function main() returns error? {
     io:println("Trailer segments: ", env.trailers);
 }
 ```
+
+## 4. Envelope Types
+
+The envelope-aware functions return strongly-typed records that mirror the structure of standard X12 and EDIFACT envelope segments. Field tags inside these records use the segment's standard component names so the data is self-describing without needing the underlying spec.
+
+### 4.1 X12 Envelope Types
+
+| Type | Represents |
+|------|------------|
+| `X12ISA` | The Interchange Control Header (ISA) segment — sender / receiver identifiers, control number, version, usage indicator. |
+| `X12GS` | The Functional Group Header (GS) segment. |
+| `X12Headers` | `{ isa: X12ISA, gs?: X12GS }` — return type of `peekX12Headers`. |
+| `X12SE` | The Transaction Set Trailer (SE) segment. |
+| `X12Trailers` | `{ se: X12SE }`. |
+
+### 4.2 EDIFACT Envelope Types
+
+| Type | Represents |
+|------|------------|
+| `EdifactSyntaxIdentifier` | UNB S001 — controlling agency syntax id and version. |
+| `EdifactInterchangeSender` | UNB S002 — sender identification + qualifier. |
+| `EdifactInterchangeRecipient` | UNB S003 — recipient identification + qualifier. |
+| `EdifactDateTime` | UNB S004 — date / time of preparation. |
+| `EdifactMessageIdentifier` | UNH S009 — message type, version, release, controlling agency. |
+| `EdifactUNB` | The Interchange Header segment (composes the four UNB composites + control reference). |
+| `EdifactUNH` | The Message Header segment (`messageRef` + `EdifactMessageIdentifier`). |
+| `EdifactHeaders` | `{ unb: EdifactUNB, unh?: EdifactUNH }` — return type of `peekEdifactHeaders`. |
+| `EdifactUNT` | The Message Trailer segment (`segmentCount` + `messageRef`). |
+| `EdifactTrailers` | `{ unt: EdifactUNT }`. |
+
+### 4.3 EdiEnvelope
+
+Return type of `envelopeFromEdiString`:
+
+```ballerina
+public type EdiEnvelope record {|
+    json headers;     // parsed against schema.headerSegments
+    string[] body;    // raw, unparsed segment strings between headers and trailers
+    json trailers;    // parsed against schema.trailerSegments
+|};
+```
+
+The body strings can be reassembled and passed to `fromEdiString` against a body-only schema for deeper parsing.
