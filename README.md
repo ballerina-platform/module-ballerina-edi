@@ -65,10 +65,10 @@ The module exposes four families of operations. Pick the one that matches your u
 
 | Operation | Function | Use when |
 |-----------|----------|----------|
-| **Peek headers (no schema)** | [`peekX12Headers`](./docs/specs/ModuleSpecification.md#34-peekx12headers-function) / [`peekEdifactHeaders`](./docs/specs/ModuleSpecification.md#35-peekedifactheaders-function) | You only need ISA/UNB info for routing or partner identification — fastest path. |
-| **Parse envelope** | [`headersFromEdiString`](./docs/specs/ModuleSpecification.md#36-headersfromedistring-function) / [`envelopeFromEdiString`](./docs/specs/ModuleSpecification.md#37-envelopefromedistring-function) | You need parsed envelope headers + raw body segments — typical for routing then conditional deep-parse. |
-| **Parse body / full message** | [`fromEdiString`](./docs/specs/ModuleSpecification.md#32-fromedistring-function) | You have a schema covering the segments you care about and want JSON / records back. |
-| **Write EDI text** | [`toEdiString`](./docs/specs/ModuleSpecification.md#33-toedistring-function) | You need to serialize JSON / records into EDI text for an outbound flow. |
+| **Peek headers (no schema)** | [`peekX12Headers`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md#34-peekx12headers-function) / [`peekEdifactHeaders`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md#35-peekedifactheaders-function) | You only need ISA/UNB info for routing or partner identification — fastest path. |
+| **Parse envelope** | [`headersFromEdiString`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md#36-headersfromedistring-function) / [`envelopeFromEdiString`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md#37-envelopefromedistring-function) | You need parsed envelope headers + raw body segments — typical for routing then conditional deep-parse. |
+| **Parse body / full message** | [`fromEdiString`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md#32-fromedistring-function) | You have a schema covering the segments you care about and want JSON / records back. |
+| **Write EDI text** | [`toEdiString`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md#33-toedistring-function) | You need to serialize JSON / records into EDI text for an outbound flow. |
 
 ### 2.1 Inspecting envelopes (no schema)
 
@@ -108,7 +108,7 @@ io:println("Trailers: ", env.trailers);
 
 If you only need the headers, use `headersFromEdiString` — it stops as soon as the header segments are consumed.
 
-> See [`headerSegments` / `trailerSegments`](./docs/specs/SchemaSpecification.md#7-additional-configuration-optional) in the schema spec for how to declare envelope segments.
+> See [`headerSegments` / `trailerSegments`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md#7-additional-configuration-optional) in the schema spec for how to declare envelope segments.
 
 ### 2.3 Parsing a message body
 
@@ -210,7 +210,7 @@ This produces an importable package with one module per schema, plus a REST conn
 
 ## 5. Defining a custom EDI schema
 
-For partner-specific formats — or when you want to hand-tune a generated schema — define the EDI structure as JSON. The full grammar is documented in the [Schema Specification](./docs/specs/SchemaSpecification.md).
+For partner-specific formats — or when you want to hand-tune a generated schema — define the EDI structure as JSON. The full grammar is documented in the [Schema Specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md).
 
 ### Minimal example
 
@@ -254,13 +254,13 @@ ITM*A-45*100~
 
 ### What the schema controls
 
-- [Delimiters](./docs/specs/SchemaSpecification.md#2-delimiters) — segment / field / component / sub-component / repetition / decimal separators.
-- [Segments and segment groups](./docs/specs/SchemaSpecification.md#3-segments) — including occurrence cardinality and `truncatable` behaviour.
-- [Fields, components, sub-components](./docs/specs/SchemaSpecification.md#4-definition-for-fields) — types (`string` / `int` / `float` / `composite`), required flag, length constraints.
-- [Envelope header / trailer segments](./docs/specs/SchemaSpecification.md#7-additional-configuration-optional) — used by `headersFromEdiString` / `envelopeFromEdiString`.
-- [Other configuration](./docs/specs/SchemaSpecification.md#7-additional-configuration-optional) — `ignoreSegments`, `preserveEmptyFields`, `includeSegmentCode`, `segmentDefinitions` (for ref-based reuse).
+- [Delimiters](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md#2-delimiters) — segment / field / component / sub-component / repetition / decimal separators.
+- [Segments and segment groups](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md#3-segments) — including occurrence cardinality and `truncatable` behaviour.
+- [Fields, components, sub-components](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md#4-definition-for-fields) — types (`string` / `int` / `float` / `composite`), required flag, length constraints.
+- [Envelope header / trailer segments](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md#7-additional-configuration-optional) — used by `headersFromEdiString` / `envelopeFromEdiString`.
+- [Other configuration](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md#7-additional-configuration-optional) — `ignoreSegments`, `preserveEmptyFields`, `includeSegmentCode`, `segmentDefinitions` (for ref-based reuse).
 
-For the full record-level API, see the [Module Specification](./docs/specs/ModuleSpecification.md).
+For the full record-level API, see the [Module Specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md).
 
 ## Issues and projects
 

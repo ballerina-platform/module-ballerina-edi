@@ -14,7 +14,7 @@ This is the specification for the `edi` module of the [Ballerina language](https
 - Inspect X12 / EDIFACT envelope headers without a schema (`peekX12Headers`, `peekEdifactHeaders`).
 - Parse just the envelope, or split an envelope from its body, against a schema (`headersFromEdiString`, `envelopeFromEdiString`).
 
-EDI schemas are themselves defined in JSON and validated against the [Ballerina EDI Schema Specification](./SchemaSpecification.md).
+EDI schemas are themselves defined in JSON and validated against the [Ballerina EDI Schema Specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md).
 
 If you have any feedback or suggestions about the module, start a discussion via a [GitHub issue](https://github.com/ballerina-platform/ballerina-library/issues) or in the [Discord server](https://discord.gg/ballerinalang). Based on the outcome of the discussion, the specification and implementation can be updated. Community feedback is always welcome. Any accepted proposal, which affects the specification, is stored under `/docs/proposals`. Proposals under discussion can be found with the label `type/proposal` on GitHub.
 
@@ -42,7 +42,7 @@ The Ballerina language offers first-class support for handling network-structure
 
 ## 2. `EdiSchema` Record
 
-The `EdiSchema` record represents the schema of the EDI text. To define the structure of EDI data, developers can utilize the [Ballerina EDI Schema Specification](./SchemaSpecification.md). 
+The `EdiSchema` record represents the schema of the EDI text. To define the structure of EDI data, developers can utilize the [Ballerina EDI Schema Specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md). 
 
 ## 3. Functions
 

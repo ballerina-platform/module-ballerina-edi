@@ -84,7 +84,10 @@ public isolated function peekX12Headers(string ediText) returns X12Headers|Error
             };
         }
     }
-    return {isa, gs};
+    if gs is X12GS {
+        return {isa, gs};
+    }
+    return {isa};
 }
 
 # Reads the EDIFACT UNB interchange header and (if present) the UNH message
@@ -96,10 +99,11 @@ public isolated function peekX12Headers(string ediText) returns X12Headers|Error
 public isolated function peekEdifactHeaders(string ediText) returns EdifactHeaders|Error {
     string trimmed = ediText.trim();
 
-    // EDIFACT defaults
+    // EDIFACT defaults (per UN/EDIFACT spec when UNA is absent)
     string fieldDelim = "+";
     string componentDelim = ":";
     string segmentTerminator = "'";
+    string releaseChar = "?";
 
     string remaining = trimmed;
 
@@ -111,6 +115,7 @@ public isolated function peekEdifactHeaders(string ediText) returns EdifactHeade
         // UNA: positions 3-8 define: component(3), field(4), decimal(5), release(6), reserved(7), segment(8)
         componentDelim = trimmed.substring(3, 4);
         fieldDelim = trimmed.substring(4, 5);
+        releaseChar = trimmed.substring(6, 7);
         segmentTerminator = trimmed.substring(8, 9);
         // Skip past UNA (9 chars) + optional segment terminator
         remaining = trimmed.substring(9).trim();
@@ -120,8 +125,8 @@ public isolated function peekEdifactHeaders(string ediText) returns EdifactHeade
         return error Error("EDI text does not contain a UNB segment after UNA (or at the start).");
     }
 
-    // Find end of UNB segment
-    int unbEnd = remaining.indexOf(segmentTerminator) ?: remaining.length();
+    // Find end of UNB segment, honouring the release (escape) character
+    int unbEnd = indexOfUnescaped(remaining, segmentTerminator, releaseChar);
     string unbText = remaining.substring(0, unbEnd);
     string[] unbFields = splitByDelimiter(unbText, fieldDelim);
 
@@ -160,7 +165,7 @@ public isolated function peekEdifactHeaders(string ediText) returns EdifactHeade
     string afterUNB = remaining.length() > unbEnd + 1 ? remaining.substring(unbEnd + 1) : "";
     string nextSeg = afterUNB.trim();
     if nextSeg.startsWith("UNH") {
-        int unhEnd = nextSeg.indexOf(segmentTerminator) ?: nextSeg.length();
+        int unhEnd = indexOfUnescaped(nextSeg, segmentTerminator, releaseChar);
         string unhText = nextSeg.substring(0, unhEnd);
         string[] unhFields = splitByDelimiter(unhText, fieldDelim);
         if unhFields.length() >= 3 {
@@ -177,7 +182,10 @@ public isolated function peekEdifactHeaders(string ediText) returns EdifactHeade
         }
     }
 
-    return {unb, unh};
+    if unh is EdifactUNH {
+        return {unb, unh};
+    }
+    return {unb};
 }
 
 # Parses only the header segments of the given EDI text according to the schema's
@@ -238,14 +246,17 @@ public isolated function envelopeFromEdiString(string ediText, EdiSchema schema)
     EdiSegmentGroup headers = check readSegmentGroup(schema.headerSegments, headerContext, false);
     int bodyStart = headerContext.rawIndex;
 
-    // Collect body segments (everything before the first trailer segment code)
+    // Collect body segments (everything before the first trailer segment code).
+    // Match the segment code exactly so a body code that shares a prefix with a
+    // trailer code (e.g. body "SEG*..." vs trailer "SE") does not terminate early.
     string[] body = [];
     int bodyEnd = bodyStart;
     while bodyEnd < allSegments.length() {
         string segText = allSegments[bodyEnd].trim();
+        string segCode = getSegmentCode(segText, schema.delimiters.'field);
         boolean isTrailer = false;
         foreach string trailerCode in trailerCodes {
-            if segText.startsWith(trailerCode) {
+            if segCode == trailerCode {
                 isTrailer = true;
                 break;
             }
@@ -282,6 +293,33 @@ isolated function getSegmentCodes(EdiUnitSchema[] schemas) returns string[] {
         }
     }
     return codes;
+}
+
+// Returns the leading segment code from a segment string (the substring up to
+// the first occurrence of the field delimiter).
+isolated function getSegmentCode(string segText, string fieldDelim) returns string {
+    int? delimPos = segText.indexOf(fieldDelim);
+    return delimPos is int ? segText.substring(0, delimPos) : segText;
+}
+
+// Returns the index of the first unescaped occurrence of `terminator` in `text`,
+// or `text.length()` if none is found. Characters preceded by `release` are
+// treated as escaped and skipped — used for EDIFACT where the release character
+// (default `?`) escapes embedded delimiters/terminators.
+isolated function indexOfUnescaped(string text, string terminator, string release) returns int {
+    int i = 0;
+    while i < text.length() {
+        string ch = text.substring(i, i + 1);
+        if ch == release && i + 1 < text.length() {
+            i += 2;
+            continue;
+        }
+        if ch == terminator {
+            return i;
+        }
+        i += 1;
+    }
+    return text.length();
 }
 
 // Splits a string by a single-character delimiter without using regex
