@@ -23,6 +23,10 @@ type EdiContext record {|
 |};
 
 # Reads the given EDI text according to the provided schema.
+# When `schema.envelope` is set (new envelope-aware schemas), envelope segments
+# are skipped and only `schema.segments` is parsed — old call sites that passed
+# in raw envelope-bearing text continue to receive the same body output. When
+# `schema.envelope` is nil (older schemas), behaviour is unchanged.
 #
 # + ediText - EDI text to be read
 # + schema - Schema of the EDI text
@@ -31,6 +35,12 @@ public isolated function fromEdiString(string ediText, EdiSchema schema) returns
     EdiContext context = {schema};
     EdiUnitSchema[] currentMapping = context.schema.segments;
     context.ediText = check splitSegments(ediText, context.schema.delimiters.segment);
+
+    EdiEnvelopeSchema? env = schema.envelope;
+    if env is EdiEnvelopeSchema {
+        context.ediText = stripEnvelopeSegments(context.ediText, env, schema.delimiters.'field);
+    }
+
     EdiSegmentGroup rootGroup = check readSegmentGroup(currentMapping, context, true);
     return rootGroup;
 }
