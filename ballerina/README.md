@@ -1,114 +1,255 @@
 ## Overview
 
-Electronic Data Interchange (EDI) is a technology designed to facilitate the electronic transfer of business documents among various organizations. This system empowers businesses to seamlessly exchange standard business transactions like purchase orders, invoices, and shipping notices. These transactions are formatted in a structured, computer-readable manner, eliminating the reliance on paper-based processes and manual data entry. Consequently, EDI technology significantly boosts efficiency and minimizes errors in the business-to-business (B2B) communication landscape.
+Electronic Data Interchange (EDI) is a standard for exchanging business documents — purchase orders, invoices, shipping notices — between trading partners in a structured, machine-readable format. The two most widely used standards are **X12** (North America) and **EDIFACT** (international).
 
-The Ballerina EDI module offers robust functionality for the effortless conversion of EDI text to JSON, and inversely, JSON to EDI. Tailored to augment integration capabilities, this module is a key component in enhancing the handling of EDI data within Ballerina applications. It provides a more streamlined, efficient approach, ensuring seamless data management and integration in business processes.
+The Ballerina `edi` module lets you:
 
-## Define EDI Schema
+- **Inspect envelope headers** without a schema — fastest path for routing and partner identification (X12 ISA/GS, EDIFACT UNB/UNH).
+- **Parse the full envelope hierarchy** into typed `EdiInterchange` / `EdiFunctionalGroup` / `EdiTransaction` records, with fail-safe per-transaction body — process what you can and quarantine what you can't.
+- **Parse a transaction body into JSON or typed Ballerina records** (X12, EDIFACT, or any custom format).
+- **Serialize JSON / records back to EDI text** for outbound flows.
+- **Drive parsing from a JSON schema** — either hand-written, [generated from an X12 / EDIFACT spec](#3-working-with-standard-edi-formats-x12--edifact), or [defined manually](#5-defining-a-custom-edi-schema) for partner-specific formats.
 
-Before utilizing the EDI parser, it is crucial to define the structure of the EDI data intended for import. Developers can refer the [Ballerina EDI Schema Specification](./docs/specs/SchemaSpecification.md) for guidance. This specification outlines the essential elements necessary to describe an EDI schema, covering attributes such as name, delimiters, segments, field definitions, components, sub-components, and additional configuration options.
+The companion [`edi-tools` CLI](https://github.com/ballerina-platform/edi-tools) generates Ballerina records and ready-to-use parser code from a schema, so most users never have to call the low-level functions in this module directly.
 
-As an illustrative example, consider the following EDI schema definition for a _simple order_, assumed to be stored as "schema.json":
+## 1. Quick start
+
+The fastest path is to generate a typed parser from an EDIFACT or X12 spec using `edi-tools` and call the generated functions from your code.
+
+### Install
+
+The `edi` module is pulled in automatically when you import it. Install the CLI tool:
+
+```bash
+$ bal tool pull edi
+```
+
+### Generate a parser from an EDIFACT spec
+
+```bash
+# 1. Convert the EDIFACT D03A ORDERS spec into a Ballerina EDI schema
+$ bal edi convertEdifactSchema -v d03a -t ORDERS -o resources/orders-schema.json
+
+# 2. Generate Ballerina records and parser functions from the schema
+$ bal edi codegen -i resources/orders-schema.json -o modules/orders/orders.bal
+```
+
+For X12 use `bal edi convertX12Schema` — see [Working with standard EDI formats](#3-working-with-standard-edi-formats-x12--edifact).
+
+### Use the generated code
+
+```ballerina
+import ballerina/io;
+import sample.orders;
+
+public function main() returns error? {
+    string ediText = check io:fileReadString("resources/order.edi");
+    orders:OrdersInterchange interchange = check orders:interchangeFromEdiString(ediText);
+    foreach var txn in interchange.transactions {
+        if txn.body is error {
+            io:println("Quarantined: ", (<error>txn.body).message());
+            continue;
+        }
+        io:println(txn.body);
+    }
+}
+```
+
+## 2. Processing EDI
+
+The module exposes operations spanning schema-free and schema-driven usage. Pick the one that matches your use case:
+
+| # | Function | Schema needed? | Error behavior | Primary use case |
+|---|----------|---------------|----------------|------------------|
+| 1 | [`x12HeadersFromEdiString`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md#34-x12headersfromedistring-function) / [`x12HeadersFromEdiFile`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md#35-x12headersfromedifile-function) | No | Fail fast | Routing, filtering, schema selection (X12) |
+| 2 | [`edifactHeadersFromEdiString`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md#36-edifactheadersfromedistring-function) / [`edifactHeadersFromEdiFile`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md#37-edifactheadersfromedifile-function) | No | Fail fast | Routing, filtering, schema selection (EDIFACT) |
+| 3 | [`headersFromEdiString`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md#38-headersfromedistring-function) / [`headersFromEdiFile`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md#39-headersfromedifile-function) | Yes (`envelope`) | Fail fast | Header-only inspection inside generated libs |
+| 4 | [`interchangeFromEdiString`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md#310-interchangefromedistring-function) | Yes (`envelope`) | **Fail safe** (body only) | Batch splitting, partial recovery, body forwarding |
+| 5 | [`fromEdiString`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md#32-fromedistring-function) | Yes | Fail fast | Transaction body parsing into typed records |
+| 6 | [`toEdiString`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md#33-toedistring-function) | Yes | Fail fast | Serialize JSON / records into EDI text |
+
+### 2.1 Inspecting envelopes (no schema)
+
+Cheapest — pulls just the interchange / message headers off the wire so you can route or audit before deciding whether to parse the body.
+
+```ballerina
+import ballerina/edi;
+import ballerina/io;
+
+public function main() returns error? {
+    string ediText = check io:fileReadString("resources/sample.edi");
+
+    // X12 — fixed-width parse of ISA (and GS if present)
+    edi:X12Headers x12 = check edi:x12HeadersFromEdiString(ediText);
+    io:println("Sender: ", x12.isa.senderId, " Control#: ", x12.isa.controlNumber);
+
+    // EDIFACT — UNA + UNB (and UNH if present)
+    edi:EdifactHeaders ed = check edi:edifactHeadersFromEdiString(ediText);
+    io:println("Message type: ", ed.unh?.messageIdentifier?.messageType);
+}
+```
+
+The file variants (`x12HeadersFromEdiFile`, `edifactHeadersFromEdiFile`) read only the first 512 characters from the file, which is enough for any conforming ISA / UNB plus the next header.
+
+### 2.2 Parsing the envelope hierarchy
+
+When you have a schema with an `envelope` declaration, `interchangeFromEdiString` returns the full `EdiInterchange`. Each transaction's body is parsed independently: if one is malformed, only its `body` field becomes an `error` — sibling transactions and the surrounding envelope continue to parse.
+
+```ballerina
+edi:EdiSchema schema = check edi:getSchema(check io:fileReadJson("schema.json"));
+edi:EdiInterchange ix = check edi:interchangeFromEdiString(ediText, schema);
+
+foreach var grp in ix.groups ?: [] {
+    foreach var txn in grp.transactions {
+        if txn.body is error {
+            log:printError("Quarantined", body = txn.body);
+            continue;
+        }
+        // Forward the parsed body downstream.
+    }
+}
+```
+
+For EDIFACT messages without UNG/UNE, the schema omits the `group` level and `EdiInterchange.transactions` is set directly (no `groups` field).
+
+If you only need the headers, `headersFromEdiString` stops as soon as the envelope header segments are consumed. The file variant reads only the first 4096 characters.
+
+> See the [`envelope` field](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md#7-envelope) in the schema spec for how to declare envelope segments.
+
+### 2.3 Parsing a message body
+
+Given an EDI text and a matching schema, `fromEdiString` returns a JSON tree shaped per the schema's segment / field tags. When the schema declares an `envelope`, envelope segments are skipped automatically — the output contains only the parsed transaction body.
+
+```ballerina
+edi:EdiSchema schema = check edi:getSchema(check io:fileReadJson("resources/schema.json"));
+string ediText = check io:fileReadString("resources/sample.edi");
+json data = check edi:fromEdiString(ediText, schema);
+io:println(data.toJsonString());
+```
+
+For most schemas you won't call this directly — the [code generated by `edi-tools`](#4-generating-ballerina-records-from-a-schema) wraps it and gives you a typed record.
+
+### 2.4 Writing EDI text
+
+`toEdiString` is the inverse — given a JSON value matching the schema, it produces conforming EDI text.
+
+```ballerina
+json order = {
+    "header": {"code": "HDR", "orderId": "ORDER_1201", "organization": "ABC", "date": "2008-01-01"},
+    "items": [
+        {"code": "ITM", "item": "A-250", "quantity": 12},
+        {"code": "ITM", "item": "B-250", "quantity": 10}
+    ]
+};
+string ediText = check edi:toEdiString(order, schema);
+io:println(ediText);
+```
+
+## 3. Working with standard EDI formats (X12 / EDIFACT)
+
+You rarely write a schema for a standard EDI document by hand. The [`edi-tools`](https://github.com/ballerina-platform/edi-tools) CLI converts published X12 and EDIFACT specs into Ballerina EDI schemas:
+
+```bash
+# X12 (e.g. 850 Purchase Order, 810 Invoice)
+$ bal edi convertX12Schema -i input/850.xsd -o resources/850-schema.json
+
+# EDIFACT (version + message type, e.g. D03A ORDERS)
+$ bal edi convertEdifactSchema -v d03a -t ORDERS -o resources/orders-schema.json
+```
+
+Generated schemas include a populated `envelope` field — three levels for X12 (interchange / group / transaction) and two for EDIFACT (interchange / transaction; no group). Trading-partner deviations (different field lengths, optional segments, custom code lists) are handled by editing the generated schema — see [Defining a custom EDI schema](#5-defining-a-custom-edi-schema) for the schema fields you can tweak.
+
+## 4. Generating Ballerina records from a schema
+
+Once you have a schema (generated or hand-written), `edi-tools` produces typed Ballerina records and parser / serializer functions for it.
+
+### Single schema — `codegen`
+
+```bash
+$ bal edi codegen -i resources/schema.json -o modules/orders/orders.bal
+```
+
+When the schema includes an `envelope`, the generated module emits typed wrappers — no `json` fields visible to the user:
+
+```ballerina
+public type OrdersInterchange record {|
+    InterchangeHeader interchangeHeader;
+    OrdersTransaction[] transactions;
+    InterchangeTrailer interchangeTrailer;
+|};
+
+public type OrdersTransaction record {|
+    MessageHeader transactionHeader;
+    Orders|error body;     // fail-safe: per-transaction body
+    MessageTrailer transactionTrailer;
+|};
+
+public function interchangeFromEdiString(string ediText) returns OrdersInterchange|edi:Error;
+public function headersFromEdiString(string ediText) returns json|edi:Error;
+public function fromEdiString(string ediText) returns Orders|edi:Error;
+public function toEdiString(Orders msg) returns string|edi:Error;
+```
+
+### Multiple schemas as a package — `libgen`
+
+When you support a family of EDI documents (e.g. X12 850, 810, 820, 855), pack them into a single Ballerina library:
+
+```bash
+$ bal edi libgen -p citymart/porder -i CityMart/schemas -o CityMart/lib
+```
+
+This produces an importable package with one module per schema, plus a REST connector for service-style deployment. See the [edi-tools README](https://github.com/ballerina-platform/edi-tools#package-generation) for the full workflow.
+
+## 5. Defining a custom EDI schema
+
+For partner-specific formats — or when you want to hand-tune a generated schema — define the EDI structure as JSON. The full grammar is documented in the [Schema Specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md).
+
+### Minimal example
 
 ```json
 {
     "name": "SimpleOrder",
-    "delimiters" : {"segment" : "~", "field" : "*", "component": ":", "repetition": "^"},
-    "segments" : [
+    "delimiters": {"segment": "~", "field": "*", "component": ":", "repetition": "^"},
+    "segments": [
         {
             "code": "HDR",
-            "tag" : "header",
+            "tag": "header",
             "minOccurances": 1,
-            "fields" : [{"tag": "code"}, {"tag" : "orderId"}, {"tag" : "organization"}, {"tag" : "date"}]
+            "fields": [
+                {"tag": "code"},
+                {"tag": "orderId"},
+                {"tag": "organization"},
+                {"tag": "date"}
+            ]
         },
         {
             "code": "ITM",
-            "tag" : "items",
-            "maxOccurances" : -1,
-            "fields" : [{"tag": "code"}, {"tag" : "item"}, {"tag" : "quantity", "dataType" : "int"}]
+            "tag": "items",
+            "maxOccurances": -1,
+            "fields": [
+                {"tag": "code"},
+                {"tag": "item"},
+                {"tag": "quantity", "dataType": "int"}
+            ]
         }
     ]
 }
 ```
 
-This schema can be used to parse EDI documents featuring one HDR segment, mapped to _header_, and any number of ITM segments, mapped to _items_. The HDR segment incorporates three _fields_, corresponding to _orderId_, _organization_, and _date_. Each ITM segment comprises two fields, mapped to _item_ and _quantity_.
-
-Below is an example of an EDI document that can be parsed using the aforementioned schema. Let's assume that the following EDI information is saved in a file named 'sample.edi':
+Parses EDI text like:
 
 ```
 HDR*ORDER_1201*ABC_Store*2008-01-01~
 ITM*A-250*12~
 ITM*A-45*100~
-ITM*D-10*58~
-ITM*K-80*250~
-ITM*T-46*28~
 ```
 
-## Reading EDI Files
+### What the schema controls
 
-The utility functions in EDI package allows you to read Electronic Data Interchange (EDI) files and convert them into JSON data. Here's a quick example demonstrating how to read an EDI file, parse it using a defined schema, and print the resulting JSON data:
+- [Delimiters](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md#2-delimiters) — segment / field / component / sub-component / repetition / decimal separators.
+- [Segments and segment groups](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md#3-segments) — including occurrence cardinality and `truncatable` behaviour.
+- [Fields, components, sub-components](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md#4-definition-for-fields) — types (`string` / `int` / `float` / `composite`), required flag, length constraints.
+- [Envelope](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md#7-envelope) — hierarchical interchange / group? / transaction headers and trailers used by the envelope-aware APIs.
+- [Other configuration](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md#8-additional-configuration-optional) — `ignoreSegments`, `preserveEmptyFields`, `includeSegmentCode`, `segmentDefinitions` (for ref-based reuse).
 
-```ballerina
-import ballerina/io;
-import ballerina/edi;
-
-public function main() returns error? {
-    // Step 1: Load EDI schema from a JSON file
-    edi:EdiSchema schema = check edi:getSchema(check io:fileReadJson("resources/schema.json"));
-
-    // Step 2: Read the EDI file as a string
-    string ediText = check io:fileReadString("resources/sample.edi");
-
-    // Step 3: Convert EDI string to JSON using the specified schema
-    json orderData = check edi:fromEdiString(ediText, schema);
-
-    // Step 4: Print the resulting JSON data
-    io:println(orderData.toJsonString());
-}
-```
-
-In this example, the EDI file (`sample.edi`) is read, and its content is converted into a JSON variable named `orderData`. The JSON variable structure corresponds to the expected output.
-
-## Writing EDI Files
-
-Furthermore, edi module provides functionality to convert JSON data into EDI text using a specified schema. The following code snippet demonstrates how to create a JSON variable representing an order and convert it into an EDI string:
-
-```ballerina
-import ballerina/io;
-import ballerina/edi;
-
-public function main() returns error? {
-    // Step 1: Create a JSON variable representing an order
-    json order2 = {
-        "header": {
-            "code": "HDR",
-            "orderId": "ORDER_1201",
-            "organization": "ABC_Store",
-            "date": "2008-01-01"
-        },
-        "items": [
-            {
-                "code": "ITM",
-                "item": "A-250",
-                "quantity": 12
-            },
-            {
-                "code": "ITM",
-                "item": "B-250",
-                "quantity": 10
-            } // ... Additional items ...
-        ]
-    };
-
-    // Step 2: Load the EDI schema from a JSON file
-    edi:EdiSchema schema = check edi:getSchema(check io:fileReadJson("resources/schema.json"));
-
-    // Step 3: Convert the JSON order data to EDI string using the schema
-    string orderEDI = check edi:toEdiString(order2, schema);
-
-    // Step 4: Print the resulting EDI string
-    io:println(orderEDI);
-}
-```
-
-In this example, the `order2` JSON variable is converted into an EDI string using the specified schema, and the resulting EDI string is printed. This demonstrates the capability of the Ballerina EDI module to seamlessly convert JSON data into EDI format.
+For the full record-level API, see the [Module Specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md).
