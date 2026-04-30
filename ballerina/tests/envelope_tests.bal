@@ -494,6 +494,72 @@ function testConvertToTypeDecimalSeparatorDot() returns error? {
     }
 }
 
+// =============================================================================
+// interchangeToEdiString — write side (BEP-1441 follow-up)
+// =============================================================================
+
+@test:Config {}
+function testInterchangeToEdiStringX12RoundTrip() returns error? {
+    EdiSchema schema = check buildX12Schema();
+    EdiInterchange parsed = check interchangeFromEdiString(X12_MULTI_GROUP, schema);
+    string written = check interchangeToEdiString(parsed, schema);
+    EdiInterchange reparsed = check interchangeFromEdiString(written, schema);
+
+    EdiFunctionalGroup[]? groups = reparsed?.groups;
+    if groups is () {
+        test:assertFail("Round-tripped X12 interchange should keep its functional groups.");
+    }
+    test:assertEquals(groups.length(), 2, "Expected two functional groups after round-trip.");
+    test:assertEquals(groups[0].transactions.length(), 2, "First group should have two transactions.");
+    test:assertEquals(groups[1].transactions.length(), 2, "Second group should have two transactions.");
+}
+
+@test:Config {}
+function testInterchangeToEdiStringEdifactRoundTrip() returns error? {
+    EdiSchema schema = check buildEdifactOrdersSchema();
+    EdiInterchange parsed = check interchangeFromEdiString(EDIFACT_MULTI_MSG, schema);
+    string written = check interchangeToEdiString(parsed, schema);
+    EdiInterchange reparsed = check interchangeFromEdiString(written, schema);
+
+    EdiTransaction[]? transactions = reparsed?.transactions;
+    if transactions is () {
+        test:assertFail("EDIFACT round-trip should keep transactions on the interchange.");
+    }
+    test:assertEquals(transactions.length(), 2);
+}
+
+@test:Config {}
+function testInterchangeToEdiStringOldSchemaError() returns error? {
+    EdiSchema oldSchema = check buildOldX12Schema();
+    EdiInterchange dummy = {
+        interchangeHeader: {},
+        transactions: [],
+        interchangeTrailer: {}
+    };
+    string|Error result = interchangeToEdiString(dummy, oldSchema);
+    if !(result is Error) {
+        test:assertFail("Expected an Error for old schema without envelope.");
+    }
+}
+
+@test:Config {}
+function testInterchangeToEdiStringRefusesErrorBody() returns error? {
+    EdiSchema schema = check buildEdifactOrdersSchema();
+    EdiInterchange parsed = check interchangeFromEdiString(EDIFACT_MULTI_MSG, schema);
+    EdiTransaction[]? transactions = parsed?.transactions;
+    if transactions is () {
+        test:assertFail("Setup failed — expected transactions array.");
+    }
+    // Replace the first transaction's body with an error.
+    transactions[0].body = error("simulated bad body");
+    string|Error result = interchangeToEdiString(parsed, schema);
+    if !(result is Error) {
+        test:assertFail("Should refuse to serialise an interchange whose transaction body is an error.");
+    }
+    test:assertTrue(result.message().includes("error body"),
+            "Error message should mention the offending body.");
+}
+
 @test:Config {}
 function testConvertToTypeDecimalSeparatorComma() returns error? {
     // Comma is non-default in EDIFACT but used in some X12 / regional flavours.
