@@ -7,7 +7,7 @@ Ballerina facilitates seamless handling of EDI (Electronic Data Interchange) dat
 
 Electronic Data Interchange (EDI) is a standardized format for exchanging business data between different computer systems. An EDI file is organized into `segments`, where each `segment` represents a logical grouping of related data elements that convey specific information. Each segment is identified by a unique `code`, and it contains `fields` that hold the actual data. For example, in a _purchase order_, you might have segments for the _header_, _items_, and _summary_. Further, fields may contain `components`, and components may have `sub-components`, forming a hierarchical structure.
 
-```
+```text
 EDI File
 ├── Interchange envelope (e.g. ISA / IEA, UNB / UNZ)
 │   ├── Functional group (X12 only — GS / GE)

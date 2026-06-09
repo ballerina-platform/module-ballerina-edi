@@ -278,7 +278,7 @@ For partner-specific formats — or when you want to hand-tune a generated schem
 
 Parses EDI text like:
 
-```
+```text
 HDR*ORDER_1201*ABC_Store*2008-01-01~
 ITM*A-250*12~
 ITM*A-45*100~
