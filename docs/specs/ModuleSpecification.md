@@ -27,6 +27,7 @@ If you have any feedback or suggestions about the module, start a discussion via
     * 3.8 [`headersFromEdiString` function](#38-headersfromedistring-function)
     * 3.9 [`headersFromEdiFile` function](#39-headersfromedifile-function)
     * 3.10 [`interchangeFromEdiString` function](#310-interchangefromedistring-function)
+    * 3.11 [`interchangeToEdiString` function](#311-interchangetoedistring-function)
 4. [Types](#4-types)
     * 4.1 [X12 envelope types](#41-x12-envelope-types)
     * 4.2 [EDIFACT envelope types](#42-edifact-envelope-types)
@@ -35,7 +36,7 @@ If you have any feedback or suggestions about the module, start a discussion via
 
 ## 1. Overview
 
-The Ballerina language offers first-class support for handling network-structured data, and the `edi` module leverages these features to facilitate the conversion between EDI text and JSON, with the ability to define the EDI schema in JSON format. The module exposes eight public parsing functions plus `getSchema` and `toEdiString`. Five of the eight require a schema; the four schema-free header functions know the X12 / EDIFACT envelope structure intrinsically. See the [API summary table](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/README.md#2-processing-edi) in the README for a use-case-driven decision tree.
+The Ballerina language offers first-class support for handling network-structured data, and the `edi` module leverages these features to facilitate the conversion between EDI text and JSON, with the ability to define the EDI schema in JSON format. The module exposes eight public parsing functions and the envelope-aware writer `interchangeToEdiString`, plus `getSchema` and `toEdiString`. All but the four schema-free header functions require a schema; those four know the X12 / EDIFACT envelope structure intrinsically. See the [API summary table](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/README.md#2-processing-edi) in the README for a use-case-driven decision tree.
 
 ## 2. `EdiSchema` Record
 
@@ -254,6 +255,31 @@ foreach var grp in ix.groups ?: [] {
         // forward parsed body downstream
     }
 }
+```
+
+### 3.11 `interchangeToEdiString` function
+
+Schema-driven. The inverse of `interchangeFromEdiString` — serialises a fully populated `EdiInterchange` back into EDI text using the schema's `envelope` definition. The interchange / group / transaction headers and trailers are written from the corresponding `EdiInterchange` fields, and each transaction's body is written using `schema.segments` (the same fragment `fromEdiString` parses against), so a parse / serialise round-trip is structurally symmetric.
+
+Unlike `toEdiString`, which is body-only and writes just `schema.segments` even when the schema declares an `envelope`, `interchangeToEdiString` emits the envelope segments alongside the body without the caller having to hand-build them.
+
+```ballerina
+isolated function interchangeToEdiString(EdiInterchange msg, EdiSchema schema) returns string|Error
+```
+
+#### Parameters
+- `msg` EdiInterchange - The interchange to serialise.
+- `schema` EdiSchema - Schema with a non-nil `envelope`.
+
+#### Return Type
+- `string|Error` - EDI text for the interchange. `Error` when `schema.envelope` is `()`, when `groups` is unset for a group-bearing (X12) schema (or `transactions` is unset for a group-less EDIFACT schema), or when any transaction's `body` field holds an `error` (malformed bodies cannot be serialised — callers must filter or replace them first).
+
+#### Example
+
+```ballerina
+edi:EdiInterchange ix = check edi:interchangeFromEdiString(ediText, schema);
+// ... inspect or transform ix ...
+string ediOut = check edi:interchangeToEdiString(ix, schema);
 ```
 
 ## 4. Types

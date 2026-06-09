@@ -11,7 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   schema-free `x12HeadersFromEdiString`, `x12HeadersFromEdiFile`,
   `edifactHeadersFromEdiString`, `edifactHeadersFromEdiFile`; schema-driven
   `headersFromEdiString`, `headersFromEdiFile`, and the fail-safe
-  `interchangeFromEdiString`.
+  `interchangeFromEdiString`; and the symmetric, envelope-aware writer
+  `interchangeToEdiString` that serialises an `EdiInterchange` back into EDI text
+  (round-trips with `interchangeFromEdiString`).
 - Added X12 (`X12ISA`, `X12GS`, `X12Headers`), EDIFACT (`EdifactSyntaxIdentifier`,
   `EdifactInterchangeParty`, `EdifactDateTime`, `EdifactMessageIdentifier`,
   `EdifactUNB`, `EdifactUNH`, `EdifactHeaders`), and hierarchical

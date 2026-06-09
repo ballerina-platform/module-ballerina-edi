@@ -78,6 +78,7 @@ The module exposes four families of operations spanning schema-free and schema-d
 | 4 | [`interchangeFromEdiString`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md#310-interchangefromedistring-function) | Yes (`envelope`) | **Fail safe** (body only) | Batch splitting, partial recovery, body forwarding |
 | 5 | [`fromEdiString`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md#32-fromedistring-function) | Yes | Fail fast | Transaction body parsing into typed records |
 | 6 | [`toEdiString`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md#33-toedistring-function) | Yes | Fail fast | Serialize JSON / records into EDI text |
+| 7 | [`interchangeToEdiString`](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md#311-interchangetoedistring-function) | Yes (`envelope`) | Fail fast | Serialize a full interchange; round-trips with `interchangeFromEdiString` |
 
 ### 2.1 Inspecting envelopes (no schema)
 
@@ -155,6 +156,16 @@ json order = {
 string ediText = check edi:toEdiString(order, schema);
 io:println(ediText);
 ```
+
+`toEdiString` writes only the message body — even when the schema declares an `envelope`, the surrounding interchange / group / transaction segments are not emitted. To serialize a full envelope, use `interchangeToEdiString`, the inverse of `interchangeFromEdiString`: it writes the interchange, group, and transaction headers/trailers from the `EdiInterchange` together with each transaction's body. A parse / serialize round-trip is structurally symmetric.
+
+```ballerina
+edi:EdiInterchange ix = check edi:interchangeFromEdiString(ediText, schema);
+// ... inspect, filter, or transform ix ...
+string ediOut = check edi:interchangeToEdiString(ix, schema);
+```
+
+A transaction whose `body` is an `error` (a fail-safe parse result) cannot be serialized — filter or replace such transactions before calling `interchangeToEdiString`.
 
 ## 3. Working with standard EDI formats (X12 / EDIFACT)
 
