@@ -152,9 +152,13 @@ public type EdifactHeaders record {|
 |};
 
 # A parsed EDI interchange containing the full envelope hierarchy.
-# Exactly one of `groups` or `transactions` is set, depending on whether the
-# schema defines a group level (e.g., GS/GE for X12) or omits it (e.g., EDIFACT
-# without UNG/UNE).
+#
+# The schema's `envelope.group` selects which collection carries the
+# transactions: `groups` when a group level is defined (e.g., GS/GE for X12),
+# or `transactions` when it is absent (e.g., EDIFACT without UNG/UNE).
+# `interchangeFromEdiString` populates only the schema-selected field, and
+# `interchangeToEdiString` reads only that field — the other is ignored, so a
+# hand-built value that sets both serialises using the schema-selected one.
 #
 # + interchangeHeader - Parsed interchange header (e.g. ISA / UNB) as JSON
 # + groups - Parsed functional groups when `envelope.group` is defined
