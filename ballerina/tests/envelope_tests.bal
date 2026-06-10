@@ -289,6 +289,16 @@ function testX12HeadersTooShort() {
 }
 
 @test:Config {}
+function testX12HeadersMalformedGs() {
+    // GS is present but truncated to two fields; the parser must fail fast
+    // instead of silently returning only the ISA, which a caller could not
+    // distinguish from genuinely GS-less input.
+    string isa = X12_SAMPLE.substring(0, ISA_SEGMENT_LENGTH);
+    X12Headers|Error result = x12HeadersFromEdiString(isa + "GS*PO~");
+    test:assertTrue(result is Error, "Expected an Error for a truncated GS segment.");
+}
+
+@test:Config {}
 function testX12HeadersFromFile() returns error? {
     string path = check writeTemp(X12_SAMPLE);
     X12Headers headers = check x12HeadersFromEdiFile(path);
@@ -325,6 +335,24 @@ function testEdifactHeadersWithUNA() returns error? {
 function testEdifactHeadersNonConforming() {
     EdifactHeaders|Error result = edifactHeadersFromEdiString("ISA*00*...~");
     test:assertTrue(result is Error, "Expected an Error for non-EDIFACT input.");
+}
+
+@test:Config {}
+function testEdifactHeadersMissingUnbTerminator() {
+    // UNB has no segment terminator, so it cannot be bounded; the parser must
+    // error rather than consuming the remainder as a single garbage UNB.
+    EdifactHeaders|Error result = edifactHeadersFromEdiString(
+            "UNB+UNOA:3+SENDERID:14+RECEIVERID:14+210527:1200+REF1");
+    test:assertTrue(result is Error, "Expected an Error for a UNB without a terminator.");
+}
+
+@test:Config {}
+function testEdifactHeadersMalformedUnh() {
+    // UNB is well-formed but UNH is truncated; the parser must fail fast instead
+    // of silently dropping the UNH and returning only the UNB.
+    EdifactHeaders|Error result = edifactHeadersFromEdiString(
+            "UNB+UNOA:3+SENDERID:14+RECEIVERID:14+210527:1200+REF1'UNH+1'");
+    test:assertTrue(result is Error, "Expected an Error for a truncated UNH segment.");
 }
 
 @test:Config {}

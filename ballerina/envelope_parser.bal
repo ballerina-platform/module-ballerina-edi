@@ -75,20 +75,28 @@ public isolated function x12HeadersFromEdiString(string ediText) returns X12Head
     string afterISA = trimmed.length() > ISA_SEGMENT_LENGTH ? trimmed.substring(ISA_SEGMENT_LENGTH) : "";
     string remaining = afterISA.trim();
     if remaining.startsWith("GS") {
-        int segEnd = remaining.indexOf(segmentTerminator) ?: remaining.length();
+        // The text clearly begins with a GS segment, so a missing terminator or
+        // a short field count means the GS is broken/truncated. Fail fast rather
+        // than silently returning only the ISA, which callers cannot distinguish
+        // from genuinely GS-less input.
+        int? segEnd = remaining.indexOf(segmentTerminator);
+        if segEnd is () {
+            return error Error("GS segment is present but its segment terminator was not found.");
+        }
         string gsSegText = remaining.substring(0, segEnd);
         string[] gsFields = splitByDelimiter(gsSegText, fieldDelimiter);
-        if gsFields.length() >= 9 {
-            gs = {
-                functionalIdentifier: gsFields[1].trim(),
-                senderId: gsFields[2].trim(),
-                receiverId: gsFields[3].trim(),
-                date: gsFields[4].trim(),
-                time: gsFields[5].trim(),
-                controlNumber: gsFields[6].trim(),
-                version: gsFields[8].trim()
-            };
+        if gsFields.length() < 9 {
+            return error Error(string `GS segment has fewer fields than expected. Found ${gsFields.length()} fields.`);
         }
+        gs = {
+            functionalIdentifier: gsFields[1].trim(),
+            senderId: gsFields[2].trim(),
+            receiverId: gsFields[3].trim(),
+            date: gsFields[4].trim(),
+            time: gsFields[5].trim(),
+            controlNumber: gsFields[6].trim(),
+            version: gsFields[8].trim()
+        };
     }
     if gs is X12GS {
         return {isa, gs};
@@ -146,6 +154,12 @@ public isolated function edifactHeadersFromEdiString(string ediText) returns Edi
     }
 
     int unbEnd = indexOfUnescaped(remaining, segmentTerminator, releaseChar);
+    // `indexOfUnescaped` returns the text length when the terminator is absent.
+    // Without a terminator the UNB cannot be bounded, so the remainder (possibly
+    // including UNH/body) would be parsed as a single garbage UNB. Error instead.
+    if unbEnd == remaining.length() {
+        return error Error("UNB segment terminator was not found in the available EDI text.");
+    }
     string unbText = remaining.substring(0, unbEnd);
     string[] unbFields = splitByDelimiter(unbText, fieldDelim);
 
@@ -185,21 +199,28 @@ public isolated function edifactHeadersFromEdiString(string ediText) returns Edi
     string afterUNB = remaining.length() > unbEnd + 1 ? remaining.substring(unbEnd + 1) : "";
     string nextSeg = afterUNB.trim();
     if nextSeg.startsWith("UNH") {
+        // As with GS above: a UNH that is present but truncated/malformed must
+        // fail fast, so callers can distinguish it from a genuinely UNH-less
+        // interchange rather than silently receiving only the UNB.
         int unhEnd = indexOfUnescaped(nextSeg, segmentTerminator, releaseChar);
+        if unhEnd == nextSeg.length() {
+            return error Error("UNH segment is present but its segment terminator was not found.");
+        }
         string unhText = nextSeg.substring(0, unhEnd);
         string[] unhFields = splitByDelimiter(unhText, fieldDelim);
-        if unhFields.length() >= 3 {
-            string[] msgIdParts = splitByDelimiter(unhFields[2], componentDelim);
-            unh = {
-                messageRef: unhFields[1].trim(),
-                messageIdentifier: {
-                    messageType: msgIdParts.length() > 0 ? msgIdParts[0].trim() : "",
-                    version: msgIdParts.length() > 1 ? msgIdParts[1].trim() : "",
-                    release: msgIdParts.length() > 2 ? msgIdParts[2].trim() : "",
-                    controlAgency: msgIdParts.length() > 3 ? msgIdParts[3].trim() : ""
-                }
-            };
+        if unhFields.length() < 3 {
+            return error Error(string `UNH segment has fewer fields than expected. Found ${unhFields.length()} fields.`);
         }
+        string[] msgIdParts = splitByDelimiter(unhFields[2], componentDelim);
+        unh = {
+            messageRef: unhFields[1].trim(),
+            messageIdentifier: {
+                messageType: msgIdParts.length() > 0 ? msgIdParts[0].trim() : "",
+                version: msgIdParts.length() > 1 ? msgIdParts[1].trim() : "",
+                release: msgIdParts.length() > 2 ? msgIdParts[2].trim() : "",
+                controlAgency: msgIdParts.length() > 3 ? msgIdParts[3].trim() : ""
+            }
+        };
     }
 
     if unh is EdifactUNH {
