@@ -62,11 +62,14 @@ public isolated function toEdiString(json msg, EdiSchema schema) returns string|
     }
     EdiContext context = {schema: clonedSchema};
     check writeSegmentGroup(msg, clonedSchema, context);
-    string ediOutput = "";
-    foreach string s in context.ediText {
-        ediOutput += s + (clonedSchema.delimiters.segment == "\n" ? "" : "\n");
+    string[] ediText = context.ediText;
+    if ediText.length() == 0 {
+        return "";
     }
-    return ediOutput;
+    // A single join (suffix after every entry) avoids the quadratic cost of
+    // repeated `+=` concatenation when serialising large messages.
+    string suffix = clonedSchema.delimiters.segment == "\n" ? "" : "\n";
+    return string:'join(suffix, ...ediText) + suffix;
 }
 
 # Creates an EDI schema from a string or a JSON.

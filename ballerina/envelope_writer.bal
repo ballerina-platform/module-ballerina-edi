@@ -80,11 +80,15 @@ public isolated function interchangeToEdiString(EdiInterchange msg, EdiSchema sc
     // (appended by `writeSegment`); join them with newlines for readability,
     // matching the existing `toEdiString` convention.
     string segDelim = clonedSchema.delimiters.segment;
-    string ediOutput = "";
-    foreach string s in context.ediText {
-        ediOutput += s + (segDelim == "\n" ? "" : "\n");
+    string[] ediText = context.ediText;
+    if ediText.length() == 0 {
+        return "";
     }
-    return ediOutput;
+    // Append a readability newline after every entry (unless the segment
+    // delimiter is already a newline). A single join avoids the quadratic cost
+    // of repeated `+=` concatenation when serialising large interchanges.
+    string suffix = segDelim == "\n" ? "" : "\n";
+    return string:'join(suffix, ...ediText) + suffix;
 }
 
 // Writes the body of one transaction sandwiched between its header and trailer.
