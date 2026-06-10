@@ -296,7 +296,7 @@ public isolated function interchangeFromEdiString(string ediText, EdiSchema sche
     EdiSegmentGroup ihGroup = check readSegmentGroup(env.interchange.header, ihCtx, false);
     int bodyStart = ihCtx.rawIndex;
 
-    // Locate interchange trailer by its leading code(s), scanning from the end.
+    // Locate interchange trailer by its leading code(s), scanning forward from the end of the interchange header.
     string[] interchangeTrailerCodes = envelopeLevelCodes(env.interchange.trailer);
     int? trailerIdx = findFirstMatchingCode(segments, interchangeTrailerCodes,
             bodyStart, segments.length(), schema.delimiters.'field);
