@@ -105,6 +105,56 @@ isolated function indexOfUnescaped(string text, string terminator, string releas
     return text.length();
 }
 
+// Strips a single leading byte-order mark (U+FEFF) from the given text. Files
+// produced by some Windows tools are BOM-prefixed, which would otherwise make
+// envelope detection fail with a misleading "does not start with ..." error.
+isolated function stripBom(string text) returns string {
+    return text.startsWith("\u{FEFF}") ? text.substring(1) : text;
+}
+
+// Splits a string by a single-character delimiter, treating characters preceded
+// by the release character as escaped (EDIFACT release semantics, default `?`).
+// The returned parts still contain the release sequences — call
+// `unescapeReleased` on each part before using the values.
+isolated function splitUnescaped(string text, string delimiter, string release) returns string[] {
+    string[] parts = [];
+    int startIdx = 0;
+    int i = 0;
+    while i < text.length() {
+        string ch = text.substring(i, i + 1);
+        if ch == release && i + 1 < text.length() {
+            i += 2;
+            continue;
+        }
+        if ch == delimiter {
+            parts.push(text.substring(startIdx, i));
+            startIdx = i + 1;
+        }
+        i += 1;
+    }
+    parts.push(text.substring(startIdx));
+    return parts;
+}
+
+// Un-escapes EDIFACT release sequences: each occurrence of the release
+// character causes the following character to be taken literally
+// (`?+` -> `+`, `?:` -> `:`, `?'` -> `'`, `??` -> `?`).
+isolated function unescapeReleased(string text, string release) returns string {
+    string result = "";
+    int i = 0;
+    while i < text.length() {
+        string ch = text.substring(i, i + 1);
+        if ch == release && i + 1 < text.length() {
+            result += text.substring(i + 1, i + 2);
+            i += 2;
+            continue;
+        }
+        result += ch;
+        i += 1;
+    }
+    return result;
+}
+
 // Returns the leading segment code from a segment string — the substring up to
 // the first occurrence of the field delimiter. Used to compare segment codes
 // exactly so that body codes sharing a prefix with envelope codes

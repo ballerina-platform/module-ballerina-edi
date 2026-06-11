@@ -24,9 +24,15 @@ type EdiContext record {|
 
 # Reads the given EDI text according to the provided schema.
 # When `schema.envelope` is set (new envelope-aware schemas), envelope segments
-# are skipped and only `schema.segments` is parsed — old call sites that passed
-# in raw envelope-bearing text continue to receive the same body output. When
-# `schema.envelope` is nil (older schemas), behaviour is unchanged.
+# are skipped positionally — header segments at the start of the input and
+# trailer segments at the end — and only `schema.segments` is parsed. The input
+# must contain at most a single transaction; when more than one transaction
+# header segment is present, an `InvalidEnvelopeError` is returned directing
+# the caller to `interchangeFromEdiString`. A leading BOM is stripped and an
+# EDIFACT UNA service string advice is validated against the schema delimiters
+# and skipped. Envelope-aware processing does not support fixed-length ("FL")
+# schemas. When `schema.envelope` is nil (older schemas), behaviour is
+# unchanged.
 #
 # + ediText - EDI text to be read
 # + schema - Schema of the EDI text
@@ -34,11 +40,18 @@ type EdiContext record {|
 public isolated function fromEdiString(string ediText, EdiSchema schema) returns json|Error {
     EdiContext context = {schema};
     EdiUnitSchema[] currentMapping = context.schema.segments;
-    context.ediText = check splitSegments(ediText, context.schema.delimiters.segment);
 
+    string text = ediText;
     EdiEnvelopeSchema? env = schema.envelope;
     if env is EdiEnvelopeSchema {
-        context.ediText = stripEnvelopeSegments(context.ediText, env, schema.delimiters.'field);
+        check checkEnvelopeFixedLengthSupport(schema);
+        text = stripBom(text);
+        text = check stripUnaIfPresent(text, schema);
+    }
+    context.ediText = check splitSegments(text, context.schema.delimiters.segment);
+
+    if env is EdiEnvelopeSchema {
+        context.ediText = check stripEnvelopeSegmentsPositional(context.ediText, env, schema.delimiters.'field);
     }
 
     EdiSegmentGroup rootGroup = check readSegmentGroup(currentMapping, context, true);
@@ -95,3 +108,25 @@ public isolated function getSchema(string|json schema) returns EdiSchema|error {
 
 # Represents EDI module related errors
 public type Error distinct error;
+
+# Represents failures where the input EDI text does not conform to the expected
+# envelope structure. Examples: a mandatory envelope segment (ISA / GS / ST /
+# UNB / UNH or the corresponding trailers) is missing or does not match,
+# content remains after the interchange trailer (multiple interchanges per
+# call are not supported), the X12 ISA segment is malformed or truncated,
+# a UNA service string advice declares delimiters conflicting with the schema,
+# or the envelope headers exceed the file read window.
+public type InvalidEnvelopeError distinct Error;
+
+# Represents failures where the provided schema cannot support the requested
+# operation. Examples: a schema without an `envelope` declaration is passed to
+# an envelope-aware API (regenerate the schema with edi-tools 2.2.0 or later),
+# a fixed-length ("FL" field delimiter) schema is used with envelope-aware
+# APIs, or unresolved segment references (`ref`) surface at runtime.
+public type SchemaCompatibilityError distinct Error;
+
+# Represents refusals of `interchangeToEdiString` to serialize an
+# `EdiInterchange`. Examples: a transaction `body` holds an `error` (the
+# fail-safe result of a previous parse), or a body / envelope section is not
+# a JSON object.
+public type SerializationError distinct Error;
