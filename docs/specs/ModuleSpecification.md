@@ -32,6 +32,8 @@ If you have any feedback or suggestions about the module, start a discussion via
     * 4.1 [X12 envelope types](#41-x12-envelope-types)
     * 4.2 [EDIFACT envelope types](#42-edifact-envelope-types)
     * 4.3 [Hierarchical interchange types](#43-hierarchical-interchange-types)
+5. [Error types](#5-error-types)
+6. [Envelope processing semantics](#6-envelope-processing-semantics)
 
 
 ## 1. Overview
@@ -97,7 +99,7 @@ public function main() returns error? {
 
 ### 3.2 `fromEdiString` function
 
-Reads the given EDI text according to the provided schema. Fail-fast — any malformed segment aborts the parse with an `Error`. When the schema declares an `envelope`, envelope segments (interchange / group / transaction headers and trailers) are skipped automatically and only `schema.segments` is parsed; the output is identical to what callers received under the previous `ignoreSegments`-based workaround. For schemas without `envelope`, behaviour is unchanged.
+Reads the given EDI text according to the provided schema. Fail-fast — any malformed segment aborts the parse with an `Error`. When the schema declares an `envelope`, envelope segments are skipped **positionally**: header segments (interchange / group / transaction) at the start of the input and trailer segments at the end. Envelope-coded segments in the middle of the input are not removed and surface as body parse errors. The input must contain at most one transaction — an input with more than one transaction header segment is rejected with `InvalidEnvelopeError` directing the caller to [`interchangeFromEdiString`](#310-interchangefromedistring-function). A leading BOM is stripped, an EDIFACT UNA service string advice is validated against the schema delimiters and skipped (see [UNA semantics](#63-una-service-string-advice)), and fixed-length ("FL") schemas with an `envelope` are rejected with `SchemaCompatibilityError`. For schemas without `envelope`, behaviour is unchanged.
 
 ```ballerina
 function fromEdiString(string ediText, EdiSchema schema) returns json|Error
@@ -141,7 +143,7 @@ function toEdiString(json msg, EdiSchema schema) returns string|Error
 
 ### 3.4 `x12HeadersFromEdiString` function
 
-Schema-free. Parses the X12 ISA segment (fixed-width, 106 characters) and optionally the GS segment that follows. Useful for routing, partner identification, and schema selection without loading a schema.
+Schema-free. Parses the X12 ISA segment (fixed-width, 106 characters) and optionally the GS segment that follows. Useful for routing, partner identification, and schema selection without loading a schema. The ISA is validated strictly against the standard fixed element widths (ISA01..ISA16) — a non-conformant (e.g. unpadded) ISA is rejected with `InvalidEnvelopeError` instead of being part-parsed. A leading BOM is stripped.
 
 ```ballerina
 isolated function x12HeadersFromEdiString(string ediText) returns X12Headers|Error
@@ -151,7 +153,7 @@ isolated function x12HeadersFromEdiString(string ediText) returns X12Headers|Err
 - `ediText` string - Raw X12 EDI text.
 
 #### Return Type
-- `X12Headers|Error` - Parsed `X12Headers` (`isa` always present, `gs?` when a GS follows ISA). `Error` when the ISA cannot be located or is truncated.
+- `X12Headers|Error` - Parsed `X12Headers` (`isa` always present, `gs?` when a GS follows ISA). `InvalidEnvelopeError` when the ISA cannot be located, is truncated, or is not a conformant fixed-width ISA.
 
 ### 3.5 `x12HeadersFromEdiFile` function
 
@@ -169,7 +171,7 @@ isolated function x12HeadersFromEdiFile(string filePath) returns X12Headers|Erro
 
 ### 3.6 `edifactHeadersFromEdiString` function
 
-Schema-free. Parses the EDIFACT UNB segment and optionally the UNH that follows. Honours the optional UNA service string advice when present, picking up custom delimiters and the release character from UNA positions 3–8.
+Schema-free. Parses the EDIFACT UNB segment and optionally the UNH that follows. Honours the optional UNA service string advice when present, picking up custom delimiters and the release character from UNA positions 3–8. Field and component splitting is release-character aware: delimiters escaped by the release character are treated as data, and release sequences are un-escaped in the returned values (`?+` → `+`, `?:` → `:`, `?'` → `'`, `??` → `?`). A leading BOM is stripped.
 
 ```ballerina
 isolated function edifactHeadersFromEdiString(string ediText) returns EdifactHeaders|Error
@@ -179,7 +181,7 @@ isolated function edifactHeadersFromEdiString(string ediText) returns EdifactHea
 - `ediText` string - Raw EDIFACT EDI text (with or without UNA).
 
 #### Return Type
-- `EdifactHeaders|Error` - Parsed `EdifactHeaders` (`unb` always present, `unh?` when a UNH follows). `Error` when the UNB cannot be located.
+- `EdifactHeaders|Error` - Parsed `EdifactHeaders` (`unb` always present, `unh?` when a UNH follows). `InvalidEnvelopeError` when the UNB cannot be located.
 
 ### 3.7 `edifactHeadersFromEdiFile` function
 
@@ -197,7 +199,7 @@ isolated function edifactHeadersFromEdiFile(string filePath) returns EdifactHead
 
 ### 3.8 `headersFromEdiString` function
 
-Schema-driven. Parses only the envelope header segments declared by `schema.envelope` (interchange, optional group, transaction) and stops — the rest of the document is never processed. Returns a JSON map with `interchange`, `group?`, and `transaction` entries.
+Schema-driven. Parses only the envelope header segments declared by `schema.envelope` (interchange, optional group, transaction) and stops — the rest of the document is never processed. Returns a JSON map with `interchange`, `group?`, and `transaction` entries. The envelope header segments are treated as mandatory regardless of their declared `minOccurances` — non-matching input fails fast with `InvalidEnvelopeError` instead of producing empty header sections. A leading UNA service string advice is validated against the schema delimiters and skipped (see [UNA semantics](#63-una-service-string-advice)); a leading BOM is stripped.
 
 ```ballerina
 isolated function headersFromEdiString(string ediText, EdiSchema schema) returns json|Error
@@ -208,11 +210,11 @@ isolated function headersFromEdiString(string ediText, EdiSchema schema) returns
 - `schema` EdiSchema - Schema with a non-nil `envelope`.
 
 #### Return Type
-- `json|Error` - Parsed header sections. `Error` (with a *Regenerate the schema…* message) when `schema.envelope` is `()` (older schema).
+- `json|Error` - Parsed header sections. `SchemaCompatibilityError` (with a *Regenerate the schema…* message) when `schema.envelope` is `()` (older schema) or when the schema uses fixed-length ("FL") field delimiting; `InvalidEnvelopeError` when the input does not match the envelope headers.
 
 ### 3.9 `headersFromEdiFile` function
 
-File variant of [`headersFromEdiString`](#38-headersfromedistring-function). Reads only the first 4096 characters from the file via a `ReadableCharacterChannel`, which covers any reasonable envelope header section. Returns an `Error` if the headers exceed the read window.
+File variant of [`headersFromEdiString`](#38-headersfromedistring-function). Reads only the first 4096 characters from the file via a `ReadableCharacterChannel`, which covers any reasonable envelope header section. When the headers cannot be parsed and the read consumed the entire 4096-character window, an `InvalidEnvelopeError` mentioning the window size is returned — the envelope header section may exceed the read window.
 
 ```ballerina
 isolated function headersFromEdiFile(string filePath, EdiSchema schema) returns json|Error
@@ -227,7 +229,9 @@ isolated function headersFromEdiFile(string filePath, EdiSchema schema) returns 
 
 ### 3.10 `interchangeFromEdiString` function
 
-Schema-driven. Parses the full envelope hierarchy and returns an `EdiInterchange`. Envelope segments (interchange / group / transaction headers and trailers) are fail-fast — a malformed envelope segment aborts the parse. The transaction body is **fail-safe** — when a body cannot be parsed against `schema.segments`, the resulting `EdiTransaction.body` field holds the parse `error` and the rest of the interchange continues.
+Schema-driven. Parses the full envelope hierarchy and returns an `EdiInterchange`. Envelope segments (interchange / group / transaction headers and trailers) are fail-fast — a malformed envelope segment aborts the parse with `InvalidEnvelopeError`, and they are treated as mandatory regardless of the schema's declared `minOccurances`. The transaction body is **fail-safe** — when a body cannot be parsed against `schema.segments`, the resulting `EdiTransaction.body` field holds the parse `error` and the rest of the interchange continues. Envelope trailers are located by scanning backward (see [Trailer location](#64-trailer-location-fail-safe-guarantee)), so trailer-coded junk in a corrupted body cannot hijack the envelope.
+
+Trailer counts and control references are captured as-is and are **not validated** against the actual content; they are recomputed on write by [`interchangeToEdiString`](#311-interchangetoedistring-function) (see [Counts and control numbers](#61-counts-and-control-numbers)). Only a **single interchange per call** is supported — content after the interchange trailer or a second interchange header in the body produces `InvalidEnvelopeError` (see [Single interchange per call](#62-single-interchange-per-call)). A leading UNA service string advice is validated against the schema delimiters and skipped; a leading BOM is stripped.
 
 When `schema.envelope.group` is set (X12), transactions are nested inside `EdiFunctionalGroup` entries on the `groups` field. When it is absent (EDIFACT without UNG/UNE), transactions appear directly on the `transactions` field of `EdiInterchange`.
 
@@ -240,7 +244,7 @@ isolated function interchangeFromEdiString(string ediText, EdiSchema schema) ret
 - `schema` EdiSchema - Schema with a non-nil `envelope`.
 
 #### Return Type
-- `EdiInterchange|Error` - Parsed interchange tree. `Error` when an envelope segment is malformed, when `schema.envelope` is `()`, or when the envelope trailer cannot be located.
+- `EdiInterchange|Error` - Parsed interchange tree. `InvalidEnvelopeError` when an envelope segment is malformed or missing, when an envelope trailer cannot be located, or when the input carries more than one interchange; `SchemaCompatibilityError` when `schema.envelope` is `()` or the schema uses fixed-length ("FL") field delimiting.
 
 #### Example
 
@@ -261,6 +265,11 @@ foreach var grp in ix.groups ?: [] {
 
 Schema-driven. The inverse of `interchangeFromEdiString` — serialises a fully populated `EdiInterchange` back into EDI text using the schema's `envelope` definition. The interchange / group / transaction headers and trailers are written from the corresponding `EdiInterchange` fields, and each transaction's body is written using `schema.segments` (the same fragment `fromEdiString` parses against), so a parse / serialise round-trip is structurally symmetric.
 
+Two conformance adjustments are applied on write (see [Counts and control numbers](#61-counts-and-control-numbers)):
+
+- The X12 ISA interchange header is re-padded to its standard fixed element widths so the emitted ISA is exactly 106 characters (parsing trims the padding; receivers read the ISA positionally).
+- Trailer counts (SE01 / GE01 / IEA01 / UNT01 / UNZ01) are **recomputed** from the content being written, and trailer control references (SE02 / GE02 / IEA02 / UNT02 / UNZ02) are mirrored from the corresponding headers — stale values captured at parse time (e.g. after the caller mutates the transaction list) are ignored.
+
 Unlike `toEdiString`, which is body-only and writes just `schema.segments` even when the schema declares an `envelope`, `interchangeToEdiString` emits the envelope segments alongside the body without the caller having to hand-build them.
 
 ```ballerina
@@ -272,7 +281,7 @@ isolated function interchangeToEdiString(EdiInterchange msg, EdiSchema schema) r
 - `schema` EdiSchema - Schema with a non-nil `envelope`.
 
 #### Return Type
-- `string|Error` - EDI text for the interchange. `Error` when `schema.envelope` is `()`, when `groups` is unset for a group-bearing (X12) schema (or `transactions` is unset for a group-less EDIFACT schema), or when any transaction's `body` field holds an `error` (malformed bodies cannot be serialised — callers must filter or replace them first).
+- `string|Error` - EDI text for the interchange. `SchemaCompatibilityError` when `schema.envelope` is `()` or the schema uses fixed-length ("FL") field delimiting; `SerializationError` when `groups` is unset for a group-bearing (X12) schema (or `transactions` is unset for a group-less EDIFACT schema), or when any transaction's `body` field holds an `error` (malformed bodies cannot be serialised — callers must filter or replace them first).
 
 #### Example
 
@@ -379,3 +388,61 @@ public type EdiTransaction record {|
 ```
 
 The `body` field of `EdiTransaction` uses a `json|error` union so callers can inspect *why* a transaction failed (`error.message()`), log it, or route it to a dead-letter queue without aborting the rest of the interchange.
+
+## 5. Error types
+
+All module errors are subtypes of `edi:Error`, so every existing `returns ...|edi:Error` signature remains valid. The envelope-aware code paths additionally distinguish three failure classes:
+
+```ballerina
+# Parent of all EDI module errors.
+public type Error distinct error;
+
+# The input EDI text does not conform to the expected envelope structure.
+public type InvalidEnvelopeError distinct Error;
+
+# The schema cannot support the requested operation.
+public type SchemaCompatibilityError distinct Error;
+
+# interchangeToEdiString refuses to serialise the given EdiInterchange.
+public type SerializationError distinct Error;
+```
+
+- `InvalidEnvelopeError` — returned when a mandatory envelope segment is missing or does not match (envelope header / trailer segments are always treated as mandatory by envelope-aware APIs, regardless of the schema's declared `minOccurances`); when content remains after the interchange trailer or a second interchange header appears in the body (only a single interchange per call is supported); when the X12 ISA segment is malformed, truncated, or not the standard fixed width; when a UNA service string advice declares delimiters conflicting with the schema; when `fromEdiString` receives a multi-transaction interchange; or when the envelope headers exceed the file read window of `headersFromEdiFile`.
+- `SchemaCompatibilityError` — returned when a schema without `envelope` is passed to an envelope-aware API (regenerate the schema with edi-tools 2.2.0 or later); when a fixed-length (`"field": "FL"`) schema is used with any envelope-aware API (`headersFromEdiString`, `headersFromEdiFile`, `interchangeFromEdiString`, `interchangeToEdiString`, and the envelope path of `fromEdiString`); or when unresolved segment references (`ref`) surface at runtime in an envelope section.
+- `SerializationError` — returned when `interchangeToEdiString` refuses to serialise: a transaction `body` holds an `error` (the fail-safe result of a previous parse), a body or envelope section is not a JSON object, or the `groups` / `transactions` field required by the schema's envelope shape is unset.
+
+Legacy body-parsing internals (used by `fromEdiString` for schemas without `envelope`) continue to return the generic `edi:Error`.
+
+## 6. Envelope processing semantics
+
+### 6.1 Counts and control numbers
+
+Envelope trailer counts and control references (SE01 / GE01 / IEA01 / UNT01 / UNZ01 and SE02 / GE02 / IEA02 / UNT02 / UNZ02) are **not validated on read**: `interchangeFromEdiString` captures whatever values appear in the input. They are **recomputed on write** by `interchangeToEdiString`:
+
+- transaction trailer count (SE01 / UNT01) = number of segments in the transaction, inclusive of the transaction header and trailer segments;
+- group trailer count (GE01) = number of transaction sets in the group;
+- interchange trailer count (IEA01 / UNZ01) = number of functional groups (or number of messages when the schema has no group level);
+- trailer control references are mirrored from the corresponding headers: IEA02=ISA13, GE02=GS06, SE02=ST02, UNT02=UNH 0062, UNZ02=UNB 0020. The elements are identified positionally per the standard segment layouts (the count is the first element after the segment code; the control reference is the element after the count). When the schema-declared trailer has fewer fields, only what fits is written.
+
+The X12 ISA interchange header is re-padded on write to its standard fixed element widths (ISA01..ISA16 = 2, 10, 2, 10, 2, 15, 2, 15, 6, 4, 1, 5, 9, 1, 1, 1), producing the mandatory 106-character ISA. Schema-declared fixed field lengths take precedence over the standard widths.
+
+### 6.2 Single interchange per call
+
+`interchangeFromEdiString` processes exactly one interchange. Content after the interchange trailer, or a second interchange header segment inside the body, is rejected with `InvalidEnvelopeError`. Callers processing batched streams must split the input into individual interchanges first. Similarly, `fromEdiString` with an envelope schema parses a single transaction body — multi-transaction interchanges must use `interchangeFromEdiString`.
+
+### 6.3 UNA service string advice
+
+- **Schema-free functions** (`edifactHeadersFromEdiString` / `edifactHeadersFromEdiFile`) honour the UNA fully: all six service characters (component, field, decimal, release, reserved, segment terminator) are taken from the UNA, including custom delimiter sets. Field and component splitting is release-character aware and release sequences are un-escaped in the returned values (`?+` → `+`, `?:` → `:`, `?'` → `'`, `??` → `?`).
+- **Schema-driven functions** (`headersFromEdiString`, `headersFromEdiFile`, `interchangeFromEdiString`, and `fromEdiString` with an envelope schema) validate a leading UNA against the schema delimiters (component, field, decimal separator when the schema declares one, and segment terminator). A matching UNA is skipped; a conflicting UNA produces `InvalidEnvelopeError` — the schema-driven parser cannot honour delimiters other than the schema's.
+
+### 6.4 Trailer location (fail-safe guarantee)
+
+`interchangeFromEdiString` locates the interchange trailer by scanning **backward** from the end of the input, and group / transaction trailers by scanning backward from the next same-level header. Trailer-coded junk inside a corrupted transaction body therefore stays inside that body (captured as the per-transaction `error`) instead of hijacking the envelope.
+
+### 6.5 Fixed-length schemas
+
+Envelope-aware APIs rely on delimiter-based segment-code extraction and do not support fixed-length (`"field": "FL"`) schemas; they return `SchemaCompatibilityError`. `fromEdiString` / `toEdiString` with FL schemas that have no `envelope` are unaffected.
+
+### 6.6 Byte-order marks
+
+A single leading U+FEFF (BOM) is stripped by the string and file entry points of the envelope-aware APIs before envelope detection.

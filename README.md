@@ -124,13 +124,20 @@ foreach var grp in ix.groups ?: [] {
 
 For EDIFACT messages without UNG/UNE, the schema omits the `group` level and `EdiInterchange.transactions` is set directly (no `groups` field).
 
-If you only need the headers, `headersFromEdiString` stops as soon as the envelope header segments are consumed. The file variant reads only the first 4096 characters.
+A few semantics to be aware of:
+
+- **Single interchange per call** — content after the interchange trailer (e.g. a second concatenated interchange) is rejected with `edi:InvalidEnvelopeError`. Split batched streams into individual interchanges first.
+- **Counts are not validated on read** — trailer counts and control references (SE01, GE01, IEA01, UNT01, UNZ01, ...) are captured as-is; `interchangeToEdiString` recomputes them on write.
+- **UNA handling** — a leading EDIFACT UNA service string advice is validated against the schema delimiters and skipped; conflicting delimiters produce `edi:InvalidEnvelopeError`. (The schema-free `edifactHeaders...` functions honour custom UNA delimiters fully, including the release character.)
+- **Fixed-length schemas are unsupported** — envelope-aware APIs reject `"field": "FL"` schemas with `edi:SchemaCompatibilityError`.
+
+If you only need the headers, `headersFromEdiString` stops as soon as the envelope header segments are consumed. The file variant reads only the first 4096 characters and returns an `edi:InvalidEnvelopeError` mentioning the window size when the headers cannot be parsed within it.
 
 > See the [`envelope` field](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md#7-envelope) in the schema spec for how to declare envelope segments.
 
 ### 2.3 Parsing a message body
 
-Given an EDI text and a matching schema, `fromEdiString` returns a JSON tree shaped per the schema's segment / field tags. When the schema declares an `envelope`, envelope segments are skipped automatically — the output contains only the parsed transaction body.
+Given an EDI text and a matching schema, `fromEdiString` returns a JSON tree shaped per the schema's segment / field tags. When the schema declares an `envelope`, envelope segments are skipped automatically (positionally — headers at the start, trailers at the end) and the output contains only the parsed transaction body. The input must contain a single transaction: multi-transaction interchanges are rejected with `edi:InvalidEnvelopeError` directing you to `interchangeFromEdiString`.
 
 ```ballerina
 edi:EdiSchema schema = check edi:getSchema(check io:fileReadJson("resources/schema.json"));
@@ -165,7 +172,31 @@ edi:EdiInterchange ix = check edi:interchangeFromEdiString(ediText, schema);
 string ediOut = check edi:interchangeToEdiString(ix, schema);
 ```
 
-A transaction whose `body` is an `error` (a fail-safe parse result) cannot be serialized — filter or replace such transactions before calling `interchangeToEdiString`.
+A transaction whose `body` is an `error` (a fail-safe parse result) cannot be serialized (`edi:SerializationError`) — filter or replace such transactions before calling `interchangeToEdiString`.
+
+On write, `interchangeToEdiString` keeps the output conformant automatically:
+
+- the X12 ISA header is re-padded to its standard fixed widths (the emitted ISA is exactly 106 characters), and
+- trailer counts (SE01 / GE01 / IEA01 / UNT01 / UNZ01) are **recomputed** from the content being written, with trailer control references mirrored from the corresponding headers (IEA02=ISA13, GE02=GS06, SE02=ST02, UNT02=UNH 0062, UNZ02=UNB 0020) — so you can add or remove transactions freely between parse and write.
+
+### 2.5 Error handling
+
+All module errors are subtypes of `edi:Error`, with three distinct subtypes for the envelope-aware paths:
+
+| Error type | Meaning |
+|------------|---------|
+| `edi:InvalidEnvelopeError` | The input does not conform to the expected envelope structure (missing / non-matching mandatory envelope segment, malformed ISA, conflicting UNA, content after the interchange trailer, multi-transaction input to `fromEdiString`, header window overflow). |
+| `edi:SchemaCompatibilityError` | The schema cannot support the operation (no `envelope` — regenerate with edi-tools 2.2.0+; fixed-length "FL" schemas with envelope APIs; unresolved `ref` entries at runtime). |
+| `edi:SerializationError` | `interchangeToEdiString` refuses to serialize (a transaction `body` holds an `error`, or a body / envelope section is not a JSON object). |
+
+```ballerina
+json|edi:Error headers = edi:headersFromEdiString(ediText, schema);
+if headers is edi:SchemaCompatibilityError {
+    // wrong / outdated schema — pick or regenerate the right one
+} else if headers is edi:InvalidEnvelopeError {
+    // malformed input — reject the document
+}
+```
 
 ## 3. Working with standard EDI formats (X12 / EDIFACT)
 
