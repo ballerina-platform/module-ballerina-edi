@@ -18,7 +18,63 @@ EDI File
 │   │   │   │   │   │   └── Sub-component
 ```
 
-The body segment level (HDR / ITM / SUM in the simple example below) is what `schema.segments` describes; the surrounding interchange / group / transaction levels are described separately by `schema.envelope` (see [§7 Envelope](#7-envelope)).
+The body segment level (HDR / ITM in the simple example below) is what `schema.segments` describes; the surrounding interchange / group / transaction levels are described separately by `schema.envelope` (see [§7 Envelope](#7-envelope)).
+
+## Complete minimal example
+
+The following schema describes a simple custom order format with one mandatory header segment and a repeating item segment:
+
+```json
+{
+    "name": "SimpleOrder",
+    "delimiters": {"segment": "~", "field": "*", "component": ":", "repetition": "^"},
+    "segments": [
+        {
+            "code": "HDR",
+            "tag": "header",
+            "minOccurances": 1,
+            "fields": [
+                {"tag": "code"},
+                {"tag": "orderId"},
+                {"tag": "organization"},
+                {"tag": "date"}
+            ]
+        },
+        {
+            "code": "ITM",
+            "tag": "items",
+            "maxOccurances": -1,
+            "fields": [
+                {"tag": "code"},
+                {"tag": "item"},
+                {"tag": "quantity", "dataType": "int"}
+            ]
+        }
+    ]
+}
+```
+
+It parses EDI text like:
+
+```text
+HDR*ORDER_1201*ABC_Store*2008-01-01~
+ITM*A-250*12~
+ITM*A-45*100~
+```
+
+into:
+
+```json
+{
+    "header": {"code": "HDR", "orderId": "ORDER_1201", "organization": "ABC_Store", "date": "2008-01-01"},
+    "items": [
+        {"code": "ITM", "item": "A-250", "quantity": 12},
+        {"code": "ITM", "item": "A-45", "quantity": 100}
+    ]
+}
+```
+
+The sections below define each schema construct in detail.
 
 ## Specification
 

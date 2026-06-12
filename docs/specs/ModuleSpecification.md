@@ -38,7 +38,19 @@ If you have any feedback or suggestions about the module, start a discussion via
 
 ## 1. Overview
 
-The Ballerina language offers first-class support for handling network-structured data, and the `edi` module leverages these features to facilitate the conversion between EDI text and JSON, with the ability to define the EDI schema in JSON format. The module exposes eight public parsing functions and the envelope-aware writer `interchangeToEdiString`, plus `getSchema` and `toEdiString`. All but the four schema-free header functions require a schema; those four know the X12 / EDIFACT envelope structure intrinsically. See the [API summary table](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/README.md#2-processing-edi) in the README for a use-case-driven decision tree.
+The Ballerina language offers first-class support for handling network-structured data, and the `edi` module leverages these features to facilitate the conversion between EDI text and JSON, with the ability to define the EDI schema in JSON format. The module exposes eight public parsing functions and the envelope-aware writer `interchangeToEdiString`, plus `getSchema` and `toEdiString`. All but the four schema-free header functions require a schema; those four know the X12 / EDIFACT envelope structure intrinsically.
+
+The function families span schema-free and schema-driven usage. Pick the one that matches your use case:
+
+| Function | Schema needed? | Error behavior | Primary use case |
+|----------|---------------|----------------|------------------|
+| [`x12HeadersFromEdiString`](#34-x12headersfromedistring-function) / [`x12HeadersFromEdiFile`](#35-x12headersfromedifile-function) | No | Fail fast | Routing, filtering, schema selection (X12) |
+| [`edifactHeadersFromEdiString`](#36-edifactheadersfromedistring-function) / [`edifactHeadersFromEdiFile`](#37-edifactheadersfromedifile-function) | No | Fail fast | Routing, filtering, schema selection (EDIFACT) |
+| [`headersFromEdiString`](#38-headersfromedistring-function) / [`headersFromEdiFile`](#39-headersfromedifile-function) | Yes (`envelope`) | Fail fast | Header-only inspection inside generated libraries |
+| [`interchangeFromEdiString`](#310-interchangefromedistring-function) | Yes (`envelope`) | **Fail safe** (body only) | Batch splitting, partial recovery, body forwarding |
+| [`fromEdiString`](#32-fromedistring-function) | Yes | Fail fast | Transaction body parsing into typed records |
+| [`toEdiString`](#33-toedistring-function) | Yes | Fail fast | Serialize JSON / records into EDI text |
+| [`interchangeToEdiString`](#311-interchangetoedistring-function) | Yes (`envelope`) | Fail fast | Serialize a full interchange; round-trips with `interchangeFromEdiString` |
 
 ## 2. `EdiSchema` Record
 
