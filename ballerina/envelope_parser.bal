@@ -37,16 +37,10 @@ const int SCHEMA_DRIVEN_READ_CHARS = 4096;
 // Schema-free X12
 // =============================================================================
 
-# Parses X12 interchange headers (ISA and optionally GS) from raw EDI text
-# without requiring a schema. The X12 ISA segment is fixed-width (106 chars)
-# and the field delimiter is determined from position 3 of the input. The ISA
-# is validated strictly against the standard fixed element widths — a
-# non-conformant (e.g. unpadded) ISA is rejected with `InvalidEnvelopeError`
-# instead of being part-parsed.
+# Parses X12 interchange headers (ISA and optionally GS) from EDI text without a schema.
 #
-# + ediText - raw X12 EDI text
-# + return - parsed X12Headers, or `InvalidEnvelopeError` when the ISA segment
-# is missing, truncated, or not a conformant fixed-width ISA
+# + ediText - Raw X12 EDI text
+# + return - Parsed `X12Headers`, or an `InvalidEnvelopeError` when the ISA segment is missing or not a conformant fixed-width ISA
 public isolated function x12HeadersFromEdiString(string ediText) returns X12Headers|Error {
     string trimmed = stripBom(ediText).trim();
     if !trimmed.startsWith("ISA") {
@@ -124,12 +118,11 @@ public isolated function x12HeadersFromEdiString(string ediText) returns X12Head
     return {isa};
 }
 
-# Reads X12 interchange headers from a file without requiring a schema.
-# Reads only the first 512 characters using a `ReadableCharacterChannel`,
-# which is enough for ISA (106) plus GS (well under 100).
+# Reads X12 interchange headers (ISA and optionally GS) from a file without a schema.
+# Only the first 512 characters of the file are read.
 #
-# + filePath - path to the EDI file
-# + return - parsed X12Headers, or Error when the file cannot be read or parsed
+# + filePath - Path to the EDI file
+# + return - Parsed `X12Headers`, or an `Error` when the file cannot be read or parsed
 public isolated function x12HeadersFromEdiFile(string filePath) returns X12Headers|Error {
     string text = check readFileChars(filePath, SCHEMA_FREE_READ_CHARS);
     return x12HeadersFromEdiString(text);
@@ -139,15 +132,11 @@ public isolated function x12HeadersFromEdiFile(string filePath) returns X12Heade
 // Schema-free EDIFACT
 // =============================================================================
 
-# Parses EDIFACT interchange headers (UNB and optionally UNH) from raw EDI text
-# without requiring a schema. Honours an optional UNA service string advice
-# segment to discover delimiters (including custom ones). Field and component
-# splitting is release-character aware: delimiters escaped by the release
-# character (default `?`) are kept as data and release sequences are
-# un-escaped in the returned values (`?+` -> `+`, `??` -> `?`, ...).
+# Parses EDIFACT interchange headers (UNB and optionally UNH) from EDI text without a schema.
+# Honours a leading UNA service string advice, including custom delimiters and the release character.
 #
-# + ediText - raw EDIFACT EDI text
-# + return - parsed EdifactHeaders, or `InvalidEnvelopeError` when UNB cannot be parsed
+# + ediText - Raw EDIFACT EDI text
+# + return - Parsed `EdifactHeaders`, or an `InvalidEnvelopeError` when the UNB segment cannot be parsed
 public isolated function edifactHeadersFromEdiString(string ediText) returns EdifactHeaders|Error {
     string trimmed = stripBom(ediText).trim();
 
@@ -252,12 +241,11 @@ public isolated function edifactHeadersFromEdiString(string ediText) returns Edi
     return {unb};
 }
 
-# Reads EDIFACT interchange headers from a file without requiring a schema.
-# Reads only the first 512 characters from the file, which is enough for any
-# UNA + UNB + UNH combination.
+# Reads EDIFACT interchange headers (UNB and optionally UNH) from a file without a schema.
+# Only the first 512 characters of the file are read.
 #
-# + filePath - path to the EDI file
-# + return - parsed EdifactHeaders, or Error when the file cannot be read or parsed
+# + filePath - Path to the EDI file
+# + return - Parsed `EdifactHeaders`, or an `Error` when the file cannot be read or parsed
 public isolated function edifactHeadersFromEdiFile(string filePath) returns EdifactHeaders|Error {
     string text = check readFileChars(filePath, SCHEMA_FREE_READ_CHARS);
     return edifactHeadersFromEdiString(text);
@@ -267,24 +255,13 @@ public isolated function edifactHeadersFromEdiFile(string filePath) returns Edif
 // Schema-driven header-only
 // =============================================================================
 
-# Parses only the envelope header segments defined in the schema and stops.
-# The remainder of the document is never processed. The envelope header
-# segments are treated as mandatory regardless of their declared
-# `minOccurances` — input that does not match them fails fast with
-# `InvalidEnvelopeError` instead of returning empty header sections. An
-# EDIFACT UNA service string advice at the start of the input is validated
-# against the schema delimiters and skipped (conflicting delimiters produce
-# an `InvalidEnvelopeError`).
+# Parses only the envelope header segments declared in the schema; the rest of the
+# document is not processed. Fails fast with an `InvalidEnvelopeError` when the input
+# does not match the envelope headers.
 #
-# Returns `SchemaCompatibilityError` if `schema.envelope` is `()` (old schema
-# guard, directing the caller to regenerate the schema) or if the schema uses
-# fixed-length ("FL") field delimiting, which envelope-aware APIs do not
-# support.
-#
-# + ediText - raw EDI text
-# + schema - EDI schema with a non-nil `envelope`
-# + return - parsed header sections as JSON (interchange / group? / transaction),
-# or Error
+# + ediText - Raw EDI text
+# + schema - EDI schema with an `envelope` declaration
+# + return - Parsed header sections (interchange / group / transaction) as JSON, or an `Error`
 public isolated function headersFromEdiString(string ediText, EdiSchema schema) returns json|Error {
     EdiEnvelopeSchema env = check getEnvelopeOrError(schema);
     check checkEnvelopeFixedLengthSupport(schema);
@@ -293,15 +270,13 @@ public isolated function headersFromEdiString(string ediText, EdiSchema schema) 
     return readEnvelopeHeaders(segments, schema, env);
 }
 
-# Reads only the envelope header segments from an EDI file. Reads only the first
-# 4096 characters via a `ReadableCharacterChannel` and parses them. When the
-# headers cannot be parsed and the read consumed the entire 4096-character
-# window, an `InvalidEnvelopeError` mentioning the window size is returned —
-# the envelope header section may exceed the read window.
+# Reads only the envelope header segments from an EDI file.
+# Only the first 4096 characters of the file are read; headers exceeding that window
+# produce an `InvalidEnvelopeError`.
 #
-# + filePath - path to the EDI file
-# + schema - EDI schema with a non-nil `envelope`
-# + return - parsed header sections as JSON, or Error
+# + filePath - Path to the EDI file
+# + schema - EDI schema with an `envelope` declaration
+# + return - Parsed header sections as JSON, or an `Error`
 public isolated function headersFromEdiFile(string filePath, EdiSchema schema) returns json|Error {
     string text = check readFileChars(filePath, SCHEMA_DRIVEN_READ_CHARS);
     json|Error result = headersFromEdiString(text, schema);
@@ -316,27 +291,14 @@ public isolated function headersFromEdiFile(string filePath, EdiSchema schema) r
 // Schema-driven hierarchical interchange (fail-safe per transaction body)
 // =============================================================================
 
-# Parses the full envelope hierarchy and returns an `EdiInterchange`. Envelope
-# headers and trailers are fail-fast — a malformed envelope segment aborts the
-# parse with an `InvalidEnvelopeError`. The transaction body is fail-safe —
-# when a body cannot be parsed, the resulting `EdiTransaction.body` holds the
-# parse `error` and the rest of the interchange continues. Envelope trailers
-# are located by scanning backward, so trailer-coded junk inside a corrupted
-# body does not hijack the envelope. Count and control-number values in the
-# trailers (SE01/GE01/IEA01/UNT01/UNZ01 etc.) are captured as-is and are NOT
-# validated against the actual content; they are recomputed on write by
-# `interchangeToEdiString`.
+# Parses the full envelope hierarchy of a single interchange into an `EdiInterchange`.
+# The envelope is fail-fast while transaction bodies are fail-safe: a malformed body is
+# captured as the `error` in `EdiTransaction.body` and the rest of the interchange
+# continues to parse.
 #
-# Only a single interchange per call is supported: content after the
-# interchange trailer, or a second interchange header inside the body, is
-# rejected with `InvalidEnvelopeError`.
-#
-# Returns `SchemaCompatibilityError` if `schema.envelope` is `()` (old schema
-# guard) or if the schema uses fixed-length ("FL") field delimiting.
-#
-# + ediText - raw EDI text
-# + schema - EDI schema with a non-nil `envelope`
-# + return - parsed `EdiInterchange`, or Error
+# + ediText - Raw EDI text containing a single interchange
+# + schema - EDI schema with an `envelope` declaration
+# + return - Parsed `EdiInterchange`, or an `Error`
 public isolated function interchangeFromEdiString(string ediText, EdiSchema schema) returns EdiInterchange|Error {
     EdiEnvelopeSchema env = check getEnvelopeOrError(schema);
     check checkEnvelopeFixedLengthSupport(schema);

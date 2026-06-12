@@ -23,20 +23,12 @@ type EdiContext record {|
 |};
 
 # Reads the given EDI text according to the provided schema.
-# When `schema.envelope` is set (new envelope-aware schemas), envelope segments
-# are skipped positionally — header segments at the start of the input and
-# trailer segments at the end — and only `schema.segments` is parsed. The input
-# must contain at most a single transaction; when more than one transaction
-# header segment is present, an `InvalidEnvelopeError` is returned directing
-# the caller to `interchangeFromEdiString`. A leading BOM is stripped and an
-# EDIFACT UNA service string advice is validated against the schema delimiters
-# and skipped. Envelope-aware processing does not support fixed-length ("FL")
-# schemas. When `schema.envelope` is nil (older schemas), behaviour is
-# unchanged.
+# When the schema declares an `envelope`, envelope segments are skipped and only the
+# single transaction body is parsed; use `interchangeFromEdiString` for multi-transaction input.
 #
 # + ediText - EDI text to be read
 # + schema - Schema of the EDI text
-# + return - JSON variable containing EDI data. Error if the reading fails.
+# + return - JSON value containing the EDI data, or an `Error` when reading fails
 public isolated function fromEdiString(string ediText, EdiSchema schema) returns json|Error {
     EdiContext context = {schema};
     EdiUnitSchema[] currentMapping = context.schema.segments;
@@ -109,24 +101,14 @@ public isolated function getSchema(string|json schema) returns EdiSchema|error {
 # Represents EDI module related errors
 public type Error distinct error;
 
-# Represents failures where the input EDI text does not conform to the expected
-# envelope structure. Examples: a mandatory envelope segment (ISA / GS / ST /
-# UNB / UNH or the corresponding trailers) is missing or does not match,
-# content remains after the interchange trailer (multiple interchanges per
-# call are not supported), the X12 ISA segment is malformed or truncated,
-# a UNA service string advice declares delimiters conflicting with the schema,
-# or the envelope headers exceed the file read window.
+# Represents an input EDI text that does not conform to the expected envelope structure
+# (e.g. a missing or malformed envelope segment, or multiple interchanges in one call).
 public type InvalidEnvelopeError distinct Error;
 
-# Represents failures where the provided schema cannot support the requested
-# operation. Examples: a schema without an `envelope` declaration is passed to
-# an envelope-aware API (regenerate the schema with edi-tools 2.2.0 or later),
-# a fixed-length ("FL" field delimiter) schema is used with envelope-aware
-# APIs, or unresolved segment references (`ref`) surface at runtime.
+# Represents a schema that cannot support the requested operation
+# (e.g. no `envelope` declaration, or a fixed-length "FL" schema used with envelope-aware APIs).
 public type SchemaCompatibilityError distinct Error;
 
-# Represents refusals of `interchangeToEdiString` to serialize an
-# `EdiInterchange`. Examples: a transaction `body` holds an `error` (the
-# fail-safe result of a previous parse), or a body / envelope section is not
-# a JSON object.
+# Represents a refusal to serialize an `EdiInterchange`
+# (e.g. a transaction `body` holds an `error` from a fail-safe parse).
 public type SerializationError distinct Error;

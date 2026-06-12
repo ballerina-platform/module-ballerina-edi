@@ -64,9 +64,7 @@ public type X12GS record {|
     string version;
 |};
 
-# X12 envelope headers returned by `x12HeadersFromEdiString` or
-# `x12HeadersFromEdiFile`. Contains ISA (always present) and optionally GS
-# (when a functional group header follows the interchange header).
+# X12 envelope headers returned by `x12HeadersFromEdiString` / `x12HeadersFromEdiFile`.
 #
 # + isa - Parsed ISA segment (always present)
 # + gs - Parsed GS segment when one follows the ISA, otherwise nil
@@ -140,9 +138,7 @@ public type EdifactUNH record {|
     EdifactMessageIdentifier messageIdentifier;
 |};
 
-# EDIFACT envelope headers returned by `edifactHeadersFromEdiString` or
-# `edifactHeadersFromEdiFile`. Contains UNB (always present) and optionally UNH
-# (when a message header follows the interchange header).
+# EDIFACT envelope headers returned by `edifactHeadersFromEdiString` / `edifactHeadersFromEdiFile`.
 #
 # + unb - Parsed UNB segment (always present)
 # + unh - Parsed UNH segment when one follows the UNB, otherwise nil
@@ -152,13 +148,8 @@ public type EdifactHeaders record {|
 |};
 
 # A parsed EDI interchange containing the full envelope hierarchy.
-#
-# The schema's `envelope.group` selects which collection carries the
-# transactions: `groups` when a group level is defined (e.g., GS/GE for X12),
-# or `transactions` when it is absent (e.g., EDIFACT without UNG/UNE).
-# `interchangeFromEdiString` populates only the schema-selected field, and
-# `interchangeToEdiString` reads only that field — the other is ignored, so a
-# hand-built value that sets both serialises using the schema-selected one.
+# Transactions are carried in `groups` when the schema defines a group level (e.g. X12
+# GS/GE), or directly in `transactions` when it does not (e.g. EDIFACT without UNG/UNE).
 #
 # + interchangeHeader - Parsed interchange header (e.g. ISA / UNB) as JSON
 # + groups - Parsed functional groups when `envelope.group` is defined

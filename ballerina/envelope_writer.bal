@@ -14,48 +14,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# Serializes an `EdiInterchange` into EDI text using the schema's `envelope`
-# definition. The inverse of `interchangeFromEdiString`.
+# Serializes an `EdiInterchange` into EDI text; the inverse of `interchangeFromEdiString`.
+# The X12 ISA header is re-padded to its standard fixed widths, and trailer counts and
+# control references are recomputed from the content being written. A transaction whose
+# `body` is an `error` is refused with a `SerializationError`.
 #
-# Envelope segments (interchange / group? / transaction headers and trailers)
-# are written from `EdiInterchange.interchangeHeader`, `groups[*].groupHeader`,
-# `transactions[*].transactionHeader`, etc. Transaction bodies are written
-# using `schema.segments` — the same schema fragment that `fromEdiString`
-# parses against — so a parse / serialize round-trip is structurally
-# symmetric.
-#
-# Conformance adjustments applied on write:
-# - The X12 ISA interchange header is re-padded to its standard fixed widths
-# (ISA01..ISA16) so the emitted ISA segment is exactly 106 characters, even
-# though parsing trims the fixed-width padding. Schema-declared fixed field
-# lengths take precedence over the standard widths.
-# - Trailer counts are RECOMPUTED from the content being written (stale
-# values captured at parse time are ignored): the transaction trailer count
-# (SE01 / UNT01) is the number of segments in the transaction including its
-# header and trailer; the group trailer count (GE01) is the number of
-# transaction sets in the group; and the interchange trailer count
-# (IEA01 / UNZ01) is the number of groups (or messages when the schema has
-# no group level).
-# - Trailer control references are synchronized from the corresponding
-# headers (IEA02=ISA13, GE02=GS06, SE02=ST02, UNT02=UNH-0062,
-# UNZ02=UNB-0020), identified positionally per the standard segment
-# layouts. When the schema-declared trailer has fewer fields, only what
-# fits is written.
-#
-# A transaction whose `body` is an `error` cannot be serialized; the function
-# returns a `SerializationError` in that case. Callers should filter out
-# errored transactions (or replace them with valid bodies) before serialising.
-#
-# Returns `SchemaCompatibilityError` if `schema.envelope` is `()` (old schema
-# guard) or the schema uses fixed-length ("FL") field delimiting; a
-# `SerializationError` if `EdiInterchange.groups` is unset for an X12-style
-# schema (or `transactions` is unset for an EDIFACT-style schema) or a body /
-# envelope section is not a JSON object; or an `Error` if any envelope
-# segment fails to write.
-#
-# + msg - The interchange to serialise
-# + schema - EDI schema with a non-nil `envelope`
-# + return - EDI text, or Error
+# + msg - Interchange to serialize
+# + schema - EDI schema with an `envelope` declaration
+# + return - EDI text, or an `Error`
 public isolated function interchangeToEdiString(EdiInterchange msg, EdiSchema schema) returns string|Error {
     EdiEnvelopeSchema env = check getEnvelopeOrError(schema);
     check checkEnvelopeFixedLengthSupport(schema);
