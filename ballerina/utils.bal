@@ -51,19 +51,24 @@ isolated function replaceLiteral(string text, string target, string replacement)
     if target.length() == 0 {
         return text;
     }
-    string result = "";
-    int i = 0;
+    // Accumulate slices and join once — repeated `+=` concatenation is
+    // quadratic on long values.
+    string[] parts = [];
     int targetLen = target.length();
-    while i < text.length() {
-        if i + targetLen <= text.length() && text.substring(i, i + targetLen) == target {
-            result += replacement;
+    int sliceStart = 0;
+    int i = 0;
+    while i + targetLen <= text.length() {
+        if text.substring(i, i + targetLen) == target {
+            parts.push(text.substring(sliceStart, i));
+            parts.push(replacement);
             i += targetLen;
+            sliceStart = i;
         } else {
-            result += text.substring(i, i + 1);
             i += 1;
         }
     }
-    return result;
+    parts.push(text.substring(sliceStart));
+    return string:'join("", ...parts);
 }
 
 // Splits a string by a single-character delimiter without regex. Avoids the
@@ -140,19 +145,23 @@ isolated function splitUnescaped(string text, string delimiter, string release) 
 // character causes the following character to be taken literally
 // (`?+` -> `+`, `?:` -> `:`, `?'` -> `'`, `??` -> `?`).
 isolated function unescapeReleased(string text, string release) returns string {
-    string result = "";
+    // Accumulate slices and join once — repeated `+=` concatenation is
+    // quadratic on long segments.
+    string[] parts = [];
+    int sliceStart = 0;
     int i = 0;
     while i < text.length() {
-        string ch = text.substring(i, i + 1);
-        if ch == release && i + 1 < text.length() {
-            result += text.substring(i + 1, i + 2);
+        if text.substring(i, i + 1) == release && i + 1 < text.length() {
+            parts.push(text.substring(sliceStart, i));
+            parts.push(text.substring(i + 1, i + 2));
             i += 2;
-            continue;
+            sliceStart = i;
+        } else {
+            i += 1;
         }
-        result += ch;
-        i += 1;
     }
-    return result;
+    parts.push(text.substring(sliceStart));
+    return string:'join("", ...parts);
 }
 
 // Returns the leading segment code from a segment string — the substring up to
