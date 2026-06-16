@@ -56,14 +56,15 @@ public isolated function fromEdiString(string ediText, EdiSchema schema) returns
 # + schema - Schema of the EDI text
 # + return - EDI text containing the data provided in the JSON variable. Error if the reading fails.
 public isolated function toEdiString(json msg, EdiSchema schema) returns string|Error {
-    if !(msg is map<json>) {
+    if msg !is map<json> {
         return error(string `Input is not compatible with the schema.`);
     }
-    // Skip check here since return type must be edi:Error.
     // Clone schema to prevent modifying originals with references.
+    // `cloneWithType` returns a plain `error`, which is not a subtype of the
+    // distinct `Error`, so `check` cannot be used here — cast instead.
     EdiSchema|error clonedSchema = schema.cloneWithType();
     if clonedSchema is error {
-        return <Error> clonedSchema;
+        return <Error>clonedSchema;
     }
     EdiContext context = {schema: clonedSchema};
     check writeSegmentGroup(msg, clonedSchema, context);

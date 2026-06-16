@@ -12,7 +12,7 @@ The Ballerina `edi` module lets you:
 
 The companion [`edi-tools` CLI](https://github.com/ballerina-platform/edi-tools) generates Ballerina records and ready-to-use parser code from a schema, so most users never have to call the low-level functions in this module directly.
 
-## Quick start
+## Quickstart
 
 The fastest path is to generate a typed parser from an EDIFACT or X12 spec using `edi-tools` and call the generated functions from your code.
 

@@ -488,7 +488,7 @@ function testHeadersFromEdiStringX12() returns error? {
 function testHeadersFromEdiStringEdifact() returns error? {
     EdiSchema schema = check buildEdifactOrdersSchema();
     json result = check headersFromEdiString(EDIFACT_SAMPLE, schema);
-    if !(result is map<json>) {
+    if result !is map<json> {
         test:assertFail("Expected a JSON object");
     }
     test:assertFalse(result.hasKey("group"), "EDIFACT schema has no group level.");
@@ -506,7 +506,7 @@ function testHeadersFromEdiStringEdifact() returns error? {
 function testHeadersFromEdiStringOldSchemaError() returns error? {
     EdiSchema oldSchema = check buildOldX12Schema();
     json|Error result = headersFromEdiString(X12_SAMPLE, oldSchema);
-    if !(result is SchemaCompatibilityError) {
+    if result !is SchemaCompatibilityError {
         test:assertFail("Expected a SchemaCompatibilityError for old schema without envelope.");
     }
     test:assertTrue(result.message().includes("Regenerate the schema"),
@@ -576,7 +576,7 @@ function testInterchangeFromEdiStringFailSafeBody() returns error? {
 function testInterchangeFromEdiStringOldSchemaError() returns error? {
     EdiSchema oldSchema = check buildOldX12Schema();
     EdiInterchange|Error result = interchangeFromEdiString(X12_SAMPLE, oldSchema);
-    if !(result is SchemaCompatibilityError) {
+    if result !is SchemaCompatibilityError {
         test:assertFail("Expected a SchemaCompatibilityError for old schema without envelope.");
     }
 }
@@ -585,7 +585,7 @@ function testInterchangeFromEdiStringOldSchemaError() returns error? {
 function testInterchangeFromEdiStringRejectsMultipleInterchanges() returns error? {
     EdiSchema schema = check buildX12Schema();
     EdiInterchange|Error result = interchangeFromEdiString(X12_SAMPLE + X12_SAMPLE, schema);
-    if !(result is InvalidEnvelopeError) {
+    if result !is InvalidEnvelopeError {
         test:assertFail("Expected an InvalidEnvelopeError for concatenated interchanges.");
     }
     test:assertTrue(result.message().includes("single interchange"),
@@ -596,7 +596,7 @@ function testInterchangeFromEdiStringRejectsMultipleInterchanges() returns error
 function testInterchangeFromEdiStringRejectsTrailingContent() returns error? {
     EdiSchema schema = check buildX12Schema();
     EdiInterchange|Error result = interchangeFromEdiString(X12_SAMPLE + "JUNK*1~", schema);
-    if !(result is InvalidEnvelopeError) {
+    if result !is InvalidEnvelopeError {
         test:assertFail("Expected an InvalidEnvelopeError for content after the interchange trailer.");
     }
     test:assertTrue(result.message().includes("single interchange"),
@@ -642,7 +642,7 @@ function testInterchangeFromEdiStringGarbageInputFailsFast() returns error? {
 function testFromEdiStringNewSchemaSkipsEnvelope() returns error? {
     EdiSchema schema = check buildX12Schema();
     json body = check fromEdiString(X12_SAMPLE, schema);
-    if !(body is map<json>) {
+    if body !is map<json> {
         test:assertFail("Expected a JSON object body.");
     }
     // Envelope segments stripped; only BEG and REF in body.
@@ -656,7 +656,7 @@ function testFromEdiStringNewSchemaSkipsEnvelope() returns error? {
 function testFromEdiStringOldSchemaUnchanged() returns error? {
     EdiSchema oldSchema = check buildOldX12Schema();
     json body = check fromEdiString(X12_SAMPLE, oldSchema);
-    if !(body is map<json>) {
+    if body !is map<json> {
         test:assertFail("Expected a JSON object body.");
     }
     // Old schemas use ignoreSegments to skip envelope; same body is produced.
@@ -730,7 +730,7 @@ function testInterchangeToEdiStringOldSchemaError() returns error? {
         interchangeTrailer: {}
     };
     string|Error result = interchangeToEdiString(dummy, oldSchema);
-    if !(result is SchemaCompatibilityError) {
+    if result !is SchemaCompatibilityError {
         test:assertFail("Expected a SchemaCompatibilityError for old schema without envelope.");
     }
 }
@@ -746,7 +746,7 @@ function testInterchangeToEdiStringRefusesErrorBody() returns error? {
     // Replace the first transaction's body with an error.
     transactions[0].body = error("simulated bad body");
     string|Error result = interchangeToEdiString(parsed, schema);
-    if !(result is SerializationError) {
+    if result !is SerializationError {
         test:assertFail("Should refuse (with SerializationError) to serialise an interchange whose transaction body is an error.");
     }
     test:assertTrue(result.message().includes("error body"),
@@ -882,7 +882,7 @@ function testHeadersFromEdiStringUnaConflict() returns error? {
     // schema-driven parser must reject instead of skipping UNA blindly.
     EdiSchema schema = check buildEdifactOrdersSchema();
     json|Error result = headersFromEdiString(EDIFACT_CUSTOM_UNA, schema);
-    if !(result is InvalidEnvelopeError) {
+    if result !is InvalidEnvelopeError {
         test:assertFail("Expected an InvalidEnvelopeError for UNA delimiters conflicting with the schema.");
     }
     test:assertTrue(result.message().includes("UNA"),
@@ -934,7 +934,7 @@ function testHeadersFromEdiFileWindowOverflow() returns error? {
     string path = check writeTemp(content);
     EdiSchema schema = check buildX12Schema();
     json|Error result = headersFromEdiFile(path, schema);
-    if !(result is InvalidEnvelopeError) {
+    if result !is InvalidEnvelopeError {
         test:assertFail("Expected an InvalidEnvelopeError when headers exceed the read window.");
     }
     test:assertTrue(result.message().includes("4096"),
@@ -950,7 +950,7 @@ function testFromEdiStringRejectsMultipleTransactions() returns error? {
     // Two ST..SE transactions must not silently merge into one body.
     EdiSchema schema = check buildX12Schema();
     json|Error result = fromEdiString(X12_MULTI_GROUP, schema);
-    if !(result is InvalidEnvelopeError) {
+    if result !is InvalidEnvelopeError {
         test:assertFail("Expected an InvalidEnvelopeError for multi-transaction input to fromEdiString.");
     }
     test:assertTrue(result.message().includes("interchangeFromEdiString"),
@@ -1018,7 +1018,7 @@ function testComponentOverflowReturnsErrorNotPanic() returns error? {
     string input = "UNB+UNOA:2+SENDER:ZZ:INTERNAL+RECEIVER:ZZ+210527:1200+REF1'" +
         "UNH+1+ORDERS:D:03A:UN'BGM+220+PO123'UNT+3+1'UNZ+1+REF1'";
     json|Error result = headersFromEdiString(input, schema);
-    if !(result is Error) {
+    if result !is Error {
         test:assertFail("Expected an Error for input with more components than the schema declares.");
     }
     test:assertTrue(result.message().includes("components"),

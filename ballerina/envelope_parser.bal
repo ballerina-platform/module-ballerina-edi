@@ -280,7 +280,7 @@ public isolated function headersFromEdiString(string ediText, EdiSchema schema) 
 public isolated function headersFromEdiFile(string filePath, EdiSchema schema) returns json|Error {
     string text = check readFileChars(filePath, SCHEMA_DRIVEN_READ_CHARS);
     json|Error result = headersFromEdiString(text, schema);
-    if result is Error && !(result is SchemaCompatibilityError) && text.length() == SCHEMA_DRIVEN_READ_CHARS {
+    if result is Error && result !is SchemaCompatibilityError && text.length() == SCHEMA_DRIVEN_READ_CHARS {
         return error InvalidEnvelopeError(string `Envelope headers could not be parsed within the ${SCHEMA_DRIVEN_READ_CHARS}-character read window of file '${filePath}'. ` +
                 string `The envelope header section may exceed the window. Cause: ${result.message()}`, result);
     }

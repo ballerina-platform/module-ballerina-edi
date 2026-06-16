@@ -26,6 +26,8 @@ public isolated function interchangeToEdiString(EdiInterchange msg, EdiSchema sc
     EdiEnvelopeSchema env = check getEnvelopeOrError(schema);
     check checkEnvelopeFixedLengthSupport(schema);
 
+    // `cloneWithType` returns a plain `error`, which is not a subtype of the
+    // distinct `Error`, so `check` cannot be used here — cast instead.
     EdiSchema|error clonedSchema = schema.cloneWithType();
     if clonedSchema is error {
         return <Error>clonedSchema;
@@ -105,7 +107,7 @@ isolated function writeOneTransaction(EdiTransaction t, EdiEnvelopeSchema env,
     if rawBody is error {
         return error SerializationError(string `Cannot serialise transaction with error body: ${rawBody.message()}`);
     }
-    if !(rawBody is map<json>) {
+    if rawBody !is map<json> {
         return error SerializationError(string `Transaction body must be a JSON object. Found: ${rawBody.toString()}`);
     }
     EdiSchema bodyScratch = makeScratchSchema(clonedSchema, clonedSchema.segments);
@@ -133,7 +135,7 @@ isolated function writeOneTransaction(EdiTransaction t, EdiEnvelopeSchema env,
 // using a scratch schema that exposes only that level's segments.
 isolated function writeEnvelopeLevel(json levelJson, EdiUnitSchema[] segments,
         EdiSchema clonedSchema, EdiContext context, string label) returns Error? {
-    if !(levelJson is map<json>) {
+    if levelJson !is map<json> {
         return error SerializationError(string `Envelope ${label} must be a JSON object. Found: ${levelJson.toString()}`);
     }
     EdiSchema scratch = makeScratchSchema(clonedSchema, segments);
@@ -168,7 +170,7 @@ isolated function makeScratchSchema(EdiSchema base, EdiUnitSchema[] segments) re
 // when it carries no ISA segment (e.g. EDIFACT).
 isolated function padX12InterchangeHeader(json levelJson, EdiUnitSchema[] units,
         EdiSchema schema) returns json {
-    if !(levelJson is map<json>) {
+    if levelJson !is map<json> {
         return levelJson;
     }
     EdiSegSchema? isaSchema = ();
@@ -186,7 +188,7 @@ isolated function padX12InterchangeHeader(json levelJson, EdiUnitSchema[] units,
         return levelJson;
     }
     json segJson = cloned[isaSchema.tag];
-    if !(segJson is map<json>) {
+    if segJson !is map<json> {
         return levelJson;
     }
     map<json> segMap = segJson;
@@ -219,7 +221,7 @@ isolated function padX12InterchangeHeader(json levelJson, EdiUnitSchema[] units,
 // writer reports it as a SerializationError downstream).
 isolated function patchTrailerCounts(json trailerJson, EdiUnitSchema[] trailerUnits,
         EdiSchema schema, int count, json controlRef) returns json {
-    if !(trailerJson is map<json>) {
+    if trailerJson !is map<json> {
         return trailerJson;
     }
     EdiSegSchema? segSchema = ();
@@ -264,7 +266,7 @@ isolated function patchTrailerCounts(json trailerJson, EdiUnitSchema[] trailerUn
 // codes or when the element is not present.
 isolated function getHeaderControlValue(json headerJson, EdiUnitSchema[] headerUnits,
         EdiSchema schema) returns json {
-    if !(headerJson is map<json>) {
+    if headerJson !is map<json> {
         return ();
     }
     EdiSegSchema? segSchema = ();
@@ -286,7 +288,7 @@ isolated function getHeaderControlValue(json headerJson, EdiUnitSchema[] headerU
         return ();
     }
     json segJson = headerJson[segSchema.tag];
-    if !(segJson is map<json>) {
+    if segJson !is map<json> {
         return ();
     }
     return segJson[segSchema.fields[idx].tag];

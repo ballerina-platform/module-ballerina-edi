@@ -39,7 +39,7 @@ isolated function denormalizeEnvelope(map<json> envelope, map<json> defs) return
             continue;
         }
         json level = envelope.get(levelKey);
-        if !(level is map<json>) {
+        if level !is map<json> {
             continue;
         }
         foreach string sectionKey in ["header", "trailer"] {
