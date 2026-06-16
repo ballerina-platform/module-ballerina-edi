@@ -6,7 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+### Added
+- [Add tiered EDI envelope parsing and serialization API, with typed envelope records and a typed error hierarchy (BEP-1441)](https://github.com/ballerina-platform/ballerina-spec/issues/1441)
+
+### Fixed
+- [Fix `convertToType` corrupting numeric values when `decimalSeparator` is a regex metacharacter](https://github.com/ballerina-platform/ballerina-library/issues/8771)
 
 ## [1.5.3] 
 

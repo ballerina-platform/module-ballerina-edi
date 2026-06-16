@@ -19,7 +19,39 @@ isolated function denormalizeSchema(json schema) returns Error? {
         return error Error("Schema does not contain segments.");
     }
     check denormalizeSegments(segments, segmentDefinitions);
+
+    // EDIFACT and X12 schemas converted by edi-tools heavily reuse standard
+    // envelope segments (UNB, UNH, ISA, ...) via `ref`. Resolve references
+    // inside every envelope level so the runtime never sees an unresolved ref.
+    if schema.hasKey("envelope") {
+        json envelope = schema.get("envelope");
+        if envelope is map<json> {
+            check denormalizeEnvelope(envelope, segmentDefinitions);
+        }
+    }
+
     _ = schema.remove("segmentDefinitions");
+}
+
+isolated function denormalizeEnvelope(map<json> envelope, map<json> defs) returns Error? {
+    foreach string levelKey in ["interchange", "group", "transaction"] {
+        if !envelope.hasKey(levelKey) {
+            continue;
+        }
+        json level = envelope.get(levelKey);
+        if level !is map<json> {
+            continue;
+        }
+        foreach string sectionKey in ["header", "trailer"] {
+            if !level.hasKey(sectionKey) {
+                continue;
+            }
+            json section = level.get(sectionKey);
+            if section is json[] {
+                check denormalizeSegments(section, defs);
+            }
+        }
+    }
 }
 
 isolated function denormalizeSegments(json[] segments, map<json> defs) returns Error? {

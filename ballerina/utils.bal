@@ -23,9 +23,13 @@ isolated function convertToType(string value, EdiDataType dataType, string? deci
             return v;
         }
         INT|FLOAT => {
-            if decimalSeparator != () {
-                string:RegExp decimalSep = check regexp:fromString(decimalSeparator);
-                v = decimalSep.replace(v, ".");
+            if decimalSeparator != () && decimalSeparator != "." {
+                // The configured decimal separator is replaced via a literal
+                // character scan rather than `regexp:fromString`. Separators may
+                // be regex metacharacters (e.g. ".", "^", "]", "\\", "-") and any
+                // form of regex compilation would silently corrupt the value.
+                // Fixes ballerina-platform/ballerina-library#8771.
+                v = replaceLiteral(v, decimalSeparator, ".");
             }
             match dataType {
                 INT => {
@@ -38,6 +42,135 @@ isolated function convertToType(string value, EdiDataType dataType, string? deci
         }
     }
     return error("Undefined type for value:" + value);
+}
+
+// Replaces every occurrence of `target` in `text` with `replacement` using a
+// straight character scan. Used in places where the search string may contain
+// regex metacharacters and a regex-based replacement would have to escape them.
+isolated function replaceLiteral(string text, string target, string replacement) returns string {
+    if target.length() == 0 {
+        return text;
+    }
+    // Accumulate slices and join once — repeated `+=` concatenation is
+    // quadratic on long values.
+    string[] parts = [];
+    int targetLen = target.length();
+    int sliceStart = 0;
+    int i = 0;
+    while i + targetLen <= text.length() {
+        if text.substring(i, i + targetLen) == target {
+            parts.push(text.substring(sliceStart, i));
+            parts.push(replacement);
+            i += targetLen;
+            sliceStart = i;
+        } else {
+            i += 1;
+        }
+    }
+    parts.push(text.substring(sliceStart));
+    return string:'join("", ...parts);
+}
+
+// Splits a string by a single-character delimiter without regex. Avoids the
+// overhead and escape issues of regex-based split when the delimiter could be
+// a regex metacharacter.
+isolated function splitByDelimiter(string text, string delimiter) returns string[] {
+    string[] parts = [];
+    int startIdx = 0;
+    int i = 0;
+    while i < text.length() {
+        if text.substring(i, i + 1) == delimiter {
+            parts.push(text.substring(startIdx, i));
+            startIdx = i + 1;
+        }
+        i += 1;
+    }
+    parts.push(text.substring(startIdx));
+    return parts;
+}
+
+// Returns the index of the first unescaped occurrence of `terminator` in `text`,
+// or `text.length()` if none is found. Characters preceded by `release` are
+// treated as escaped and skipped — used for EDIFACT, where the release character
+// (default `?`, or position 6 of UNA when present) escapes embedded delimiters
+// and segment terminators.
+isolated function indexOfUnescaped(string text, string terminator, string release) returns int {
+    int i = 0;
+    while i < text.length() {
+        string ch = text.substring(i, i + 1);
+        if ch == release && i + 1 < text.length() {
+            i += 2;
+            continue;
+        }
+        if ch == terminator {
+            return i;
+        }
+        i += 1;
+    }
+    return text.length();
+}
+
+// Strips a single leading byte-order mark (U+FEFF) from the given text. Files
+// produced by some Windows tools are BOM-prefixed, which would otherwise make
+// envelope detection fail with a misleading "does not start with ..." error.
+isolated function stripBom(string text) returns string {
+    return text.startsWith("\u{FEFF}") ? text.substring(1) : text;
+}
+
+// Splits a string by a single-character delimiter, treating characters preceded
+// by the release character as escaped (EDIFACT release semantics, default `?`).
+// The returned parts still contain the release sequences — call
+// `unescapeReleased` on each part before using the values.
+isolated function splitUnescaped(string text, string delimiter, string release) returns string[] {
+    string[] parts = [];
+    int startIdx = 0;
+    int i = 0;
+    while i < text.length() {
+        string ch = text.substring(i, i + 1);
+        if ch == release && i + 1 < text.length() {
+            i += 2;
+            continue;
+        }
+        if ch == delimiter {
+            parts.push(text.substring(startIdx, i));
+            startIdx = i + 1;
+        }
+        i += 1;
+    }
+    parts.push(text.substring(startIdx));
+    return parts;
+}
+
+// Un-escapes EDIFACT release sequences: each occurrence of the release
+// character causes the following character to be taken literally
+// (`?+` -> `+`, `?:` -> `:`, `?'` -> `'`, `??` -> `?`).
+isolated function unescapeReleased(string text, string release) returns string {
+    // Accumulate slices and join once — repeated `+=` concatenation is
+    // quadratic on long segments.
+    string[] parts = [];
+    int sliceStart = 0;
+    int i = 0;
+    while i < text.length() {
+        if text.substring(i, i + 1) == release && i + 1 < text.length() {
+            parts.push(text.substring(sliceStart, i));
+            parts.push(text.substring(i + 1, i + 2));
+            i += 2;
+            sliceStart = i;
+        } else {
+            i += 1;
+        }
+    }
+    parts.push(text.substring(sliceStart));
+    return string:'join("", ...parts);
+}
+
+// Returns the leading segment code from a segment string — the substring up to
+// the first occurrence of the field delimiter. Used to compare segment codes
+// exactly so that body codes sharing a prefix with envelope codes
+// (e.g. "SEG*..." vs trailer "SE") do not match.
+isolated function getSegmentCode(string segText, string fieldDelim) returns string {
+    int? delimPos = segText.indexOf(fieldDelim);
+    return delimPos is int ? segText.substring(0, delimPos) : segText;
 }
 
 isolated function getArray(EdiDataType dataType) returns SimpleArray|EdiComponentGroup[] {

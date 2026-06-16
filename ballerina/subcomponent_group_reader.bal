@@ -37,6 +37,18 @@ isolated function readSubcomponentGroup(string scGroupText, EdiSchema schema, Ed
     int subcomponentNumber = 0;
     while subcomponentNumber < subcomponents.length() {
         string subcomponent = subcomponents[subcomponentNumber];
+        if subcomponentNumber >= subMappings.length() {
+            // The input carries more subcomponents than the schema declares.
+            // Trailing empty subcomponents are tolerated; any extra
+            // value-bearing subcomponent is an error (never a panic).
+            if subcomponent.trim().length() == 0 {
+                subcomponentNumber += 1;
+                continue;
+            }
+            return error Error(string `Input component contains more subcomponents than the schema declares for component: ${compSchema.tag}.
+                Schema subcomponent count: ${subMappings.length()}, input subcomponent count: ${subcomponents.length()},
+                Extra subcomponent: ${subcomponent}, Subcomponent group text: ${scGroupText}`);
+        }
         EdiSubcomponentSchema subMapping = subMappings[subcomponentNumber];
         if subcomponent.trim().length() == 0 {
             if subMapping.required {

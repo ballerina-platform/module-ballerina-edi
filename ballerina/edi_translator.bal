@@ -23,14 +23,29 @@ type EdiContext record {|
 |};
 
 # Reads the given EDI text according to the provided schema.
+# When the schema declares an `envelope`, envelope segments are skipped and only the
+# single transaction body is parsed; use `interchangeFromEdiString` for multi-transaction input.
 #
 # + ediText - EDI text to be read
 # + schema - Schema of the EDI text
-# + return - JSON variable containing EDI data. Error if the reading fails.
+# + return - JSON value containing the EDI data, or an `Error` when reading fails
 public isolated function fromEdiString(string ediText, EdiSchema schema) returns json|Error {
     EdiContext context = {schema};
     EdiUnitSchema[] currentMapping = context.schema.segments;
-    context.ediText = check splitSegments(ediText, context.schema.delimiters.segment);
+
+    string text = ediText;
+    EdiEnvelopeSchema? env = schema.envelope;
+    if env is EdiEnvelopeSchema {
+        check checkEnvelopeFixedLengthSupport(schema);
+        text = stripBom(text);
+        text = check stripUnaIfPresent(text, schema);
+    }
+    context.ediText = check splitSegments(text, context.schema.delimiters.segment);
+
+    if env is EdiEnvelopeSchema {
+        context.ediText = check stripEnvelopeSegmentsPositional(context.ediText, env, schema.delimiters.'field);
+    }
+
     EdiSegmentGroup rootGroup = check readSegmentGroup(currentMapping, context, true);
     return rootGroup;
 }
@@ -41,22 +56,26 @@ public isolated function fromEdiString(string ediText, EdiSchema schema) returns
 # + schema - Schema of the EDI text
 # + return - EDI text containing the data provided in the JSON variable. Error if the reading fails.
 public isolated function toEdiString(json msg, EdiSchema schema) returns string|Error {
-    if !(msg is map<json>) {
+    if msg !is map<json> {
         return error(string `Input is not compatible with the schema.`);
     }
-    // Skip check here since return type must be edi:Error.
     // Clone schema to prevent modifying originals with references.
+    // `cloneWithType` returns a plain `error`, which is not a subtype of the
+    // distinct `Error`, so `check` cannot be used here — cast instead.
     EdiSchema|error clonedSchema = schema.cloneWithType();
     if clonedSchema is error {
-        return <Error> clonedSchema;
+        return <Error>clonedSchema;
     }
     EdiContext context = {schema: clonedSchema};
     check writeSegmentGroup(msg, clonedSchema, context);
-    string ediOutput = "";
-    foreach string s in context.ediText {
-        ediOutput += s + (clonedSchema.delimiters.segment == "\n" ? "" : "\n");
+    string[] ediText = context.ediText;
+    if ediText.length() == 0 {
+        return "";
     }
-    return ediOutput;
+    // A single join (suffix after every entry) avoids the quadratic cost of
+    // repeated `+=` concatenation when serialising large messages.
+    string suffix = clonedSchema.delimiters.segment == "\n" ? "" : "\n";
+    return string:'join(suffix, ...ediText) + suffix;
 }
 
 # Creates an EDI schema from a string or a JSON.
@@ -82,3 +101,15 @@ public isolated function getSchema(string|json schema) returns EdiSchema|error {
 
 # Represents EDI module related errors
 public type Error distinct error;
+
+# Represents an input EDI text that does not conform to the expected envelope structure
+# (e.g. a missing or malformed envelope segment, or multiple interchanges in one call).
+public type InvalidEnvelopeError distinct Error;
+
+# Represents a schema that cannot support the requested operation
+# (e.g. no `envelope` declaration, or a fixed-length "FL" schema used with envelope-aware APIs).
+public type SchemaCompatibilityError distinct Error;
+
+# Represents a refusal to serialize an `EdiInterchange`
+# (e.g. a transaction `body` holds an `error` from a fail-safe parse).
+public type SerializationError distinct Error;

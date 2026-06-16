@@ -37,6 +37,8 @@
 #
 # + segments - Array of segment and segment group schemas
 # + segmentDefinitions - Map of segment definitions indexed by the segment code
+# + envelope - Hierarchical envelope schema (interchange / group / transaction) enabling
+# the envelope-aware APIs; when nil (older schemas), behaviour is unchanged
 public type EdiSchema record {|
     string name;
     string tag = "Root_mapping";
@@ -55,8 +57,32 @@ public type EdiSchema record {|
     boolean preserveEmptyFields = true;
     boolean includeSegmentCode = true;
 
+    EdiEnvelopeSchema? envelope = ();
     EdiUnitSchema[] segments = [];
     map<EdiSegSchema> segmentDefinitions = {};
+|};
+
+# One level of an envelope hierarchy. Contains a list of header segments and a
+# list of trailer segments scoped to that level (e.g. ISA/IEA at the interchange
+# level, GS/GE at the group level, ST/SE at the transaction level for X12).
+#
+# + header - Header segments scoped to this level
+# + trailer - Trailer segments scoped to this level
+public type EdiEnvelopeLevel record {|
+    EdiUnitSchema[] header;
+    EdiUnitSchema[] trailer;
+|};
+
+# Structured envelope schema with separate levels for interchange, group (optional),
+# and transaction. EDIFACT schemas without UNG/UNE leave `group` unset.
+#
+# + interchange - Interchange-level envelope (e.g. ISA/IEA, UNB/UNZ)
+# + group - Optional group-level envelope (e.g. GS/GE for X12)
+# + 'transaction - Transaction-level envelope (e.g. ST/SE, UNH/UNT)
+public type EdiEnvelopeSchema record {|
+    EdiEnvelopeLevel interchange;
+    EdiEnvelopeLevel group?;
+    EdiEnvelopeLevel 'transaction;
 |};
 
 public type EdiUnitSchema EdiSegSchema|EdiSegGroupSchema|EdiUnitRef;
