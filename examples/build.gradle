@@ -17,7 +17,23 @@
 
 import org.apache.tools.ant.taskdefs.condition.Os
 
+// The examples are end-to-end integrations built against the local `ballerina/edi`
+// build, so they require the `bal` CLI on the PATH. CI builds the module through the
+// Ballerina Gradle plugin's bundled distribution and does not expose `bal`, so these
+// tasks skip automatically there and run only in local environments that have `bal`.
+def balAvailable() {
+    try {
+        def command = Os.isFamily(Os.FAMILY_WINDOWS) ? ['where', 'bal'] : ['which', 'bal']
+        def process = command.execute()
+        process.waitFor()
+        return process.exitValue() == 0
+    } catch (Exception ignored) {
+        return false
+    }
+}
+
 task test {
+    onlyIf { balAvailable() }
     doLast {
         try {
             exec {
@@ -37,6 +53,7 @@ task test {
 }
 
 task build {
+    onlyIf { balAvailable() }
     gradle.taskGraph.whenReady { graph ->
         if (graph.hasTask(":edi-examples:test")) {
             build.enabled = false
