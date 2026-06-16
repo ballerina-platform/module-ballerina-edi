@@ -3,7 +3,7 @@
 # Start with: docker compose up -d
 services:
   sftp:
-    image: atmoz/sftp:latest
+    image: atmoz/sftp:alpine
     container_name: edi-sftp
     ports:
       - "22:22"

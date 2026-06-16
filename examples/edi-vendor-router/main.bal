@@ -49,7 +49,7 @@ listener ftp:Listener inbox = check new ({
 
 @ftp:ServiceConfig {
     path: inboxPath,
-    fileNamePattern: "(.*).edi"
+    fileNamePattern: "(.*)\\.edi"
 }
 service on inbox {
     // The listener reads each new file as text; we inspect only the envelope
