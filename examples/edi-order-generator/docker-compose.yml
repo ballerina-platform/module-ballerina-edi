@@ -1,0 +1,11 @@
+# Local SFTP server for the outbound delivery step of this example.
+# Creates user wso2/wso2123 with an outbound drop folder.
+# Start with: docker compose up -d
+services:
+  sftp:
+    image: atmoz/sftp:latest
+    container_name: edi-outbound-sftp
+    ports:
+      - "22:22"
+    command: >
+      wso2:wso2123:::edi/outbound
