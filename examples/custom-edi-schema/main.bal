@@ -31,8 +31,10 @@ public function main() returns error? {
     io:println("Partner extension (custom new_field): ", messageInfo?.new_field);
 
     orders:ORDERS|error body = interchange.transactions[0].body;
-    if body is orders:ORDERS {
-        io:println("Order id: ", body.Beginning_of_message?.DOCUMENT_MESSAGE_IDENTIFICATION?.Document_identifier);
-        io:println("Line items: ", body.group_28.length());
+    if body is error {
+        io:println("Transaction body failed to parse: ", body.message());
+        return;
     }
+    io:println("Order id: ", body.Beginning_of_message?.DOCUMENT_MESSAGE_IDENTIFICATION?.Document_identifier);
+    io:println("Line items: ", body.group_28.length());
 }

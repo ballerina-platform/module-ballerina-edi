@@ -10,7 +10,7 @@ Routing only needs the sender id from the interchange envelope, so the integrati
 header segments with the schema-free `x12HeadersFromEdiString` / `edifactHeadersFromEdiString`
 functions and moves the untouched file to the folder mapped to that sender.
 
-```
+```text
 /edi/inbox/*.edi ──▶ read envelope header (no schema) ──▶ /edi/vendors/<partner>/
 ```
 
@@ -26,9 +26,6 @@ to a full, schema-driven parse. For purely local files, `x12HeadersFromEdiFile` 
    ```bash
    docker compose up -d
    ```
-
-> The `ballerina/edi` 1.6.0 header APIs used here are resolved from the local repository
-> (`repository = "local"` in `Ballerina.toml`) until the release is published to Ballerina Central.
 
 ## Run the example
 
@@ -50,14 +47,14 @@ unmatched senders fall back to `/edi/vendors/unknown`:
 Upload the two sample files to the inbox:
 
 ```bash
-sftp -P 22 wso2@localhost   # password: wso2123
+sftp -P 2222 wso2@localhost   # password: wso2123
 sftp> put sample-data/edifact-acme.edi /edi/inbox/
 sftp> put sample-data/x12-sender.edi   /edi/inbox/
 ```
 
 Expected logs — the EDIFACT file is routed by its UNB sender, the X12 file by its ISA06 sender:
 
-```
+```text
 Routed EDI file sender=ACME file=edifact-acme.edi destination=/edi/vendors/acme
 Routed EDI file sender=SENDER file=x12-sender.edi destination=/edi/vendors/globex
 ```
@@ -70,7 +67,7 @@ Override defaults in a `Config.toml` if needed:
 
 ```toml
 sftpHost = "localhost"
-sftpPort = 22
+sftpPort = 2222
 sftpUser = "wso2"
 sftpPassword = "wso2123"
 inboxPath = "/edi/inbox"

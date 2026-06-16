@@ -78,7 +78,7 @@ bal run
 
 Expected output — the custom `new_field` is parsed alongside the standard fields:
 
-```
+```text
 Standard message type: ORDERS D03A UN
 Partner extension (custom new_field): EXT1
 Order id: PO77001

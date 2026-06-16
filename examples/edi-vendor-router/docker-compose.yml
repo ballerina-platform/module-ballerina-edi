@@ -6,6 +6,6 @@ services:
     image: atmoz/sftp:alpine
     container_name: edi-sftp
     ports:
-      - "22:22"
+      - "2222:22"
     command: >
       wso2:wso2123:::edi/inbox,edi/vendors/acme,edi/vendors/globex,edi/vendors/unknown

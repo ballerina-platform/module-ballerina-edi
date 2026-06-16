@@ -21,7 +21,7 @@ import ballerina/ftp;
 import wso2/edi_order_generator.orders;
 
 configurable string sftpHost = "localhost";
-configurable int sftpPort = 22;
+configurable int sftpPort = 2222;
 configurable string sftpUser = "wso2";
 configurable string sftpPassword = "wso2123";
 configurable string outboundPath = "/edi/outbound";

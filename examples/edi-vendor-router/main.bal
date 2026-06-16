@@ -19,7 +19,7 @@ import ballerina/log;
 import ballerina/ftp;
 
 configurable string sftpHost = "localhost";
-configurable int sftpPort = 22;
+configurable int sftpPort = 2222;
 configurable string sftpUser = "wso2";
 configurable string sftpPassword = "wso2123";
 configurable string inboxPath = "/edi/inbox";
@@ -49,7 +49,7 @@ listener ftp:Listener inbox = check new ({
 
 @ftp:ServiceConfig {
     path: inboxPath,
-    fileNamePattern: "(.*)\\.edi"
+    fileNamePattern: "^.*\\.edi$"
 }
 service on inbox {
     // The listener reads each new file as text; we inspect only the envelope

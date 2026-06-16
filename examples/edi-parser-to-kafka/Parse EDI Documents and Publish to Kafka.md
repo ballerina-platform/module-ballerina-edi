@@ -14,7 +14,7 @@ Parsing is **fail-safe per transaction**: when one message in a multi-message in
 malformed, only that transaction's `body` becomes an `error`. The good orders are still published,
 and the bad one is routed to a quarantine topic instead of aborting the whole batch.
 
-```
+```text
 inbox (*.edi) ──▶ interchangeFromEdiString ──┬──▶ edi.orders            (parsed order bodies)
                                              └──▶ edi.orders.quarantine (malformed transactions)
 ```
@@ -32,9 +32,6 @@ that schema and module are produced.
    docker compose up -d
    ```
 
-> The `ballerina/edi` 1.6.0 envelope APIs used here are resolved from the local repository
-> (`repository = "local"` in `Ballerina.toml`) until the release is published to Ballerina Central.
-
 ## Run the example
 
 ```bash
@@ -51,13 +48,13 @@ The service starts watching `./sample-data`. Two sample files are provided:
 With the service running, (re-)drop a file into the inbox to trigger processing:
 
 ```bash
-cp sample-data/order-batch.edi sample-data/incoming.edi
+cp sample-data/order-batch.edi "sample-data/incoming-$(date +%s).edi"
 ```
 
 Expected logs — the valid order is published, the malformed one is quarantined, and the batch is not
 aborted:
 
-```
+```text
 Parsed interchange file=./sample-data/incoming.edi partner=SUPERMART transactions=2
 Published order orderId=PO20001 partner=SUPERMART topic=edi.orders
 Quarantining malformed transaction error=...

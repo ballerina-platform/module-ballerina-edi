@@ -35,9 +35,6 @@ The typed `orders` module under `modules/orders` was generated from `schemas/ORD
    Without it, generation, round-trip, and the serialization-error demo still run; delivery is
    skipped with a warning.
 
-> The `ballerina/edi` 1.6.0 envelope APIs used here are resolved from the local repository
-> (`repository = "local"` in `Ballerina.toml`) until the release is published to Ballerina Central.
-
 ## Run the example
 
 ```bash
@@ -46,7 +43,7 @@ bal run
 
 Expected output — note `UNT+11` is computed by the module, not supplied by the program:
 
-```
+```text
 Generated EDI:
 UNB+UNOA:3+BUYER123:14+ACME:14+260615:1200+REF1++++ORDERS'UNH+0001+ORDERS:D:03A:UN'BGM+220+PO20260615+9'...UNS+S'UNT+11+0001'UNZ+1+REF1'
 
@@ -61,7 +58,7 @@ Override defaults in a `Config.toml` if needed:
 
 ```toml
 sftpHost = "localhost"
-sftpPort = 22
+sftpPort = 2222
 sftpUser = "wso2"
 sftpPassword = "wso2123"
 outboundPath = "/edi/outbound"

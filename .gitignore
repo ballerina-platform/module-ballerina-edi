@@ -31,3 +31,6 @@ replay_pid*
 
 # Ignore Gradle build output directory
 build
+
+# Ballerina example lockfiles (regenerated on build)
+examples/**/Dependencies.toml
