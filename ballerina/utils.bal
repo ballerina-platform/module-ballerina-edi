@@ -16,8 +16,8 @@
 
 import ballerina/lang.regexp;
 
-isolated function convertToType(string value, EdiDataType dataType, string? decimalSeparator) returns SimpleType|error {
-    string v = value.trim();
+isolated function convertToType(string value, EdiDataType dataType, string? decimalSeparator, boolean isIsa02orIsa04Field = false) returns SimpleType|error {
+    string v = isIsa02orIsa04Field ? value : value.trim();
     match dataType {
         STRING => {
             return v;

@@ -40,11 +40,15 @@ isolated function readSegment(EdiSegSchema segMapping, string[] fields, EdiSchem
         }
         EdiFieldSchema fieldMapping = segMapping.fields[fieldNumber];
         string tag = fieldMapping.tag;
+        // ISA02 (auth info) and ISA04 (security info) carry fixed-width space-padded values
+        // that must be preserved verbatim per the X12 spec. Identified by segment code and
+        // field index (2 and 4) so any tag naming convention works.
+        boolean isIsa02OrIsa04Field = segMapping.code == "ISA" && (fieldNumber == 2 || fieldNumber == 4);
 
         // EDI segment starts with the segment name. So we have to skip the first field.
         // string fieldText = fields[fieldNumber + 1];
-        string fieldText = fields[fieldNumber];
-        if fieldText.trim().length() == 0 {
+        string fieldText = isIsa02OrIsa04Field ? fields[fieldNumber] : fields[fieldNumber].trim();
+        if fieldText.length() == 0 {
             if fieldMapping.required {
                 return error Error(string `Required field is not provided. Field: ${fieldMapping.tag}, Segment: ${segMapping.code}`);
             } else {
@@ -52,7 +56,7 @@ isolated function readSegment(EdiSegSchema segMapping, string[] fields, EdiSchem
                     if fieldMapping.repeat {
                         segment[tag] = getArray(fieldMapping.dataType);
                     } else if fieldMapping.dataType == STRING {
-                        segment[tag] = fieldText.trim();
+                        segment[tag] = fieldText;
                     } else {
                         segment[tag] = ();
                     }
@@ -88,7 +92,8 @@ isolated function readSegment(EdiSegSchema segMapping, string[] fields, EdiSchem
             }
         } else {
             // this is a simple type field
-            SimpleType|error value = convertToType(fieldText, fieldMapping.dataType, schema.delimiters.decimalSeparator);
+            SimpleType|error value = convertToType(fieldText, fieldMapping.dataType, schema.delimiters.decimalSeparator,
+                    isIsa02OrIsa04Field);
             if value is error {
                 return error Error(string `Input field cannot be converted to the type specified in the segment schema.
                         Input field: ${fieldText}, Schema type: ${fieldMapping.dataType},
