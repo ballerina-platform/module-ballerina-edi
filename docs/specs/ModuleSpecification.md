@@ -3,7 +3,7 @@
 _Owners_: @chathurace @RDPerera
 _Reviewers_: @niveathika @chathurace
 _Created_: 2024/01/19
-_Updated_: 2026/04/29
+_Updated_: 2026/06/22
 _Edition_: Swan Lake
 
 ## Introduction
@@ -152,6 +152,23 @@ function toEdiString(json msg, EdiSchema schema) returns string|Error
 
 #### Return Type
 - `string|Error` - EDI text containing the data provided in the JSON variable. Error if the writing fails.
+
+#### Example
+
+```ballerina
+import ballerina/io;
+import ballerina/edi;
+
+public function main() returns error? {
+    edi:EdiSchema schema = check edi:getSchema(check io:fileReadJson("resources/edi-schema.json"));
+    json order = {
+        "header": {"code": "HDR", "orderId": "ORDER_1201", "organization": "ABC_Store", "date": "2008-01-01"},
+        "items": [{"code": "ITM", "item": "A-250", "quantity": 12}]
+    };
+    string ediText = check edi:toEdiString(order, schema);
+    io:println(ediText);
+}
+```
 
 ### 3.4 `x12HeadersFromEdiString` function
 

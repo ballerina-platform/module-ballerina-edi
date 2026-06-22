@@ -183,7 +183,7 @@ References are resolved by `getSchema` / `denormalizeSchema` before parsing — 
 ]
 ```
 
-### 4. Definition for Fields
+### 4. Fields
 
 Within the `fields` sub-definition, the `length` attribute is used to specify the length constraints for a field. This object includes parameters for fixed length, minimum length, and maximum length, offering comprehensive control over the size of the field.
 
@@ -244,7 +244,7 @@ The `length` value provides the following constraints:
 ]
 ```
 
-### 5. Definition for Components
+### 5. Components
 
 For each component within a field:
 
@@ -271,7 +271,7 @@ For each component within a field:
 ]
 ```
 
-### 6. Definition for Sub-components
+### 6. Sub-components
 
 For each sub-component within a component:
 
