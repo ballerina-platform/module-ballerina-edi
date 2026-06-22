@@ -77,14 +77,14 @@ The file listener fires only on files **created after** it starts, so (re-)drop 
 to trigger processing:
 
 ```bash
-cp resources/sample-data/order-batch.edi "resources/sample-data/incoming-$(date +%s).edi"
+cp ../resources/sample-data/order-batch.edi "../resources/sample-data/incoming-$(date +%s).edi"
 ```
 
 Expected logs — the interchange is parsed, the valid order is published, and the malformed one is
 quarantined without aborting the batch:
 
 ```text
-level=INFO message="Edi file parsed" file=".../incoming.edi" partner="SUPERMART" trx=2
+level=INFO message="EDI file parsed" file=".../incoming.edi" partner="SUPERMART" trx=2
 level=ERROR message="Quarantining malformed transaction" ...
 ```
 

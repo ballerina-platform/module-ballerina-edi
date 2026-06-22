@@ -29,8 +29,8 @@ configurable string outboundPath = "/edi/outbound";
 
 configurable string dbHost = "localhost";
 configurable int dbPort = 5432;
-configurable string dbUser = "wso2";
-configurable string dbPassword = "wso2123";
+configurable string dbUser = ?;
+configurable string dbPassword = ?;
 configurable string dbName = "edi";
 
 // The purchase order to pick from the database and send.

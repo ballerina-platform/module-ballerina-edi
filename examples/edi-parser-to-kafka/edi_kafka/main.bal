@@ -33,9 +33,9 @@ service file:Service on fileListener {
         do {
             if event.name.endsWith(".edi") {
                 string content = check io:fileReadString(event.name);
-                edi_parser:ORDERSInterchange ordersinterchange = check edi_parser:interchangeFromEdiString(content);
-                log:printInfo("Edi file parsed", file = event.name, partner = ordersinterchange.interchangeHeader.interchange_header.sender.id, trx = ordersinterchange.transactions.length());
-                foreach edi_parser:ORDERSTransaction trx in ordersinterchange.transactions {
+                edi_parser:ORDERSInterchange ordersInterchange = check edi_parser:interchangeFromEdiString(content);
+                log:printInfo("EDI file parsed", file = event.name, partner = ordersInterchange.interchangeHeader.interchange_header.sender.id, trx = ordersInterchange.transactions.length());
+                foreach edi_parser:ORDERSTransaction trx in ordersInterchange.transactions {
                     edi_parser:ORDERS|error body = trx.body;
                     if body is error {
                         log:printError("Quarantining malformed transaction", body);
