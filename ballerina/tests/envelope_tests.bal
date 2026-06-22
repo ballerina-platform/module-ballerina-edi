@@ -406,8 +406,8 @@ function testIsa02AndIsa04() returns error? {
     map<json> msg = check result.ensureType();
     map<json> isa = check msg["InterchangeControlHeader"].ensureType();
     // Whitespace-only required fields must parse without error and store as string.
-    test:assertEquals(isa["ISA02__AuthorizationInformation"], "          ");
-    test:assertEquals(isa["ISA04__SecurityInformation"], "          ");
+    test:assertEquals(isa["ISA02__AuthorizationInformation"], "");
+    test:assertEquals(isa["ISA04__SecurityInformation"], "");
     // Other fields parsed correctly.
     test:assertEquals(isa["ISA01__AuthorizationInformationQualifier"], "00");
     test:assertEquals(isa["ISA06__InterchangeSenderID"], "VIMLY");
