@@ -1,9 +1,12 @@
 # Local SFTP server for running this example.
 # Creates user wso2/wso2123 with the inbox and per-vendor destination folders.
 # Start with: docker compose up -d
+#
+# Note: atmoz/sftp is pinned to alpine-3.7 because Ballerina's ftp SSH client needs a
+# legacy host-key algorithm that the latest OpenSSH-based images no longer offer.
 services:
   sftp:
-    image: atmoz/sftp:alpine
+    image: atmoz/sftp:alpine-3.7
     container_name: edi-sftp
     ports:
       - "2222:22"
