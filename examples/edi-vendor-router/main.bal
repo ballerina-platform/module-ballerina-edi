@@ -15,15 +15,13 @@
 // under the License.
 
 import ballerina/edi;
-import ballerina/log;
 import ballerina/ftp;
+import ballerina/log;
 
 configurable string sftpHost = "localhost";
 configurable int sftpPort = 2222;
-configurable string sftpUser = "wso2";
-configurable string sftpPassword = "wso2123";
-configurable string inboxPath = "/edi/inbox";
-configurable string fallbackPath = "/edi/vendors/unknown";
+configurable string sftpUser = ?;
+configurable string sftpPassword = ?;
 
 // Trading-partner sender id -> destination directory on the SFTP server.
 final readonly & map<string> vendorRoutes = {
@@ -31,15 +29,7 @@ final readonly & map<string> vendorRoutes = {
     "SENDER": "/edi/vendors/globex"
 };
 
-// Client used to move routed files into their destination directories.
-final ftp:Client fileClient = check new ({
-    protocol: ftp:SFTP,
-    host: sftpHost,
-    port: sftpPort,
-    auth: {credentials: {username: sftpUser, password: sftpPassword}}
-});
-
-listener ftp:Listener inbox = check new ({
+listener ftp:Listener ftpListener = check new ({
     protocol: ftp:SFTP,
     host: sftpHost,
     port: sftpPort,
@@ -48,16 +38,20 @@ listener ftp:Listener inbox = check new ({
 });
 
 @ftp:ServiceConfig {
-    path: inboxPath,
+    path: "/edi/inbox",
     fileNamePattern: "^.*\\.edi$"
 }
-service on inbox {
+service on ftpListener {
+
     // The listener reads each new file as text; we inspect only the envelope
     // headers (no schema) and move the untouched file to its trading partner's folder.
-    remote function onFileText(string content, ftp:FileInfo fileInfo) returns error? {
+    @ftp:FunctionConfig {
+        fileNamePattern: "^.*\\.edi$"
+    }
+    remote function onFileText(string content, ftp:FileInfo fileInfo, ftp:Caller caller) returns error? {
         string senderId = check senderIdOf(content);
-        string destination = vendorRoutes[senderId] ?: fallbackPath;
-        check fileClient->move(fileInfo.path, string `${destination}/${fileInfo.name}`);
+        string destination = vendorRoutes[senderId] ?: "/edi/vendors/unknown";
+        check caller->move(fileInfo.pathDecoded, string `${destination}/${fileInfo.name}`);
         log:printInfo("Routed EDI file", sender = senderId, file = fileInfo.name, destination = destination);
     }
 }

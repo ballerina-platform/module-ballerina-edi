@@ -18,13 +18,21 @@ This is the cheapest way to inspect an EDI document: you decide where a file goe
 to a full, schema-driven parse. For purely local files, `x12HeadersFromEdiFile` /
 `edifactHeadersFromEdiFile` read only the first ~512 characters off disk.
 
+## Project layout
+
+```text
+edi-vendor-router/
+├── main.bal        # the routing service
+└── resources/      # docker-compose.yml (SFTP) + sample-data/
+```
+
 ## Prerequisites
 
-1. **Ballerina** — Swan Lake (2201.12.0 or later).
+1. **Ballerina** — Swan Lake (2201.13.4 or later).
 2. **SFTP server** — start one with the inbox and vendor folders pre-created:
 
    ```bash
-   docker compose up -d
+   docker compose -f resources/docker-compose.yml up -d
    ```
 
 ## Run the example
@@ -48,8 +56,8 @@ Upload the two sample files to the inbox:
 
 ```bash
 sftp -P 2222 wso2@localhost   # password: wso2123
-sftp> put sample-data/edifact-acme.edi /edi/inbox/
-sftp> put sample-data/x12-sender.edi   /edi/inbox/
+sftp> put resources/sample-data/edifact-acme.edi /edi/inbox/
+sftp> put resources/sample-data/x12-sender.edi   /edi/inbox/
 ```
 
 Expected logs — the EDIFACT file is routed by its UNB sender, the X12 file by its ISA06 sender:
@@ -63,13 +71,15 @@ Confirm the files moved out of the inbox and into the vendor folders over SFTP.
 
 ## Configuration
 
-Override defaults in a `Config.toml` if needed:
+`sftpUser` and `sftpPassword` are required, so create a `Config.toml` to run.
+`sftpHost`/`sftpPort` default to `localhost:2222`:
 
 ```toml
 sftpHost = "localhost"
 sftpPort = 2222
 sftpUser = "wso2"
 sftpPassword = "wso2123"
-inboxPath = "/edi/inbox"
-fallbackPath = "/edi/vendors/unknown"
 ```
+
+The inbox path (`/edi/inbox`), the per-vendor routes, and the `/edi/vendors/unknown` fallback are
+defined in `main.bal`.

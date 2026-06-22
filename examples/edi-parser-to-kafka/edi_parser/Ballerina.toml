@@ -1,9 +1,9 @@
 [package]
 org = "wso2"
-name = "edi_vendor_router"
+name = "edi_parser"
 version = "0.1.0"
 distribution = "2201.13.4"
-title = "edi-vendor-router"
+title = "edi-parser"
 
 [build-options]
 sticky = true

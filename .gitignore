@@ -34,3 +34,6 @@ build
 
 # Ballerina example lockfiles (regenerated on build)
 examples/**/Dependencies.toml
+
+# Ballerina runtime configuration (may carry environment-specific values)
+Config.toml

@@ -1,0 +1,9 @@
+[package]
+org = "wso2"
+name = "custom_edi_schema"
+version = "0.1.0"
+distribution = "2201.13.4"
+title = "custom-edi-schema"
+
+[build-options]
+sticky = true

@@ -1,0 +1,26 @@
+# Local infrastructure for this example:
+#   - postgres: source database holding the purchase orders to send (seeded by init.sql)
+#   - sftp:     the trading partner's drop the generated EDI is delivered to
+# Start with: docker compose -f resources/docker-compose.yml up -d
+#
+# Note: atmoz/sftp is pinned to alpine-3.7 because Ballerina's ftp SSH client needs a
+# legacy host-key algorithm that the latest OpenSSH-based images no longer offer.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: edi-orders-db
+    environment:
+      POSTGRES_USER: wso2
+      POSTGRES_PASSWORD: wso2123
+      POSTGRES_DB: edi
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+  sftp:
+    image: atmoz/sftp:alpine-3.7
+    container_name: edi-outbound-sftp
+    ports:
+      - "2222:22"
+    command: >
+      wso2:wso2123:::edi/outbound

@@ -1,9 +1,9 @@
 # Build a Custom EDI Schema and Parser
 
 This example shows how to start from a standard EDIFACT message, customise it for a trading
-partner's deviations, and generate a typed Ballerina parser with `edi-tools`. The other EDI examples
-([parser to Kafka](../edi-parser-to-kafka), [vendor router](../edi-vendor-router),
-[order generator](../edi-order-generator)) all rely on a module produced this way.
+partner's deviations, and generate a typed Ballerina parser with `edi-tools`. The
+[parser to Kafka](../edi-parser-to-kafka) and [order generator](../edi-order-generator) examples
+reuse a typed module produced this way.
 
 ## Overview
 
@@ -24,12 +24,12 @@ The result is a Ballerina module whose `interchangeFromEdiString`, `headersFromE
 populated `envelope` (interchange + transaction levels for EDIFACT; no functional group):
 
 ```bash
-bal edi convertEdifactSchema -v d03a -t ORDERS -o schemas/ORDERS.json
+bal edi convertEdifactSchema -v d03a -t ORDERS -o resources/ORDERS.json
 ```
 
 ## Step 2 — Customise the schema
 
-Edit `schemas/ORDERS.json` for partner-specific deviations. In this example the partner appends a
+Edit `resources/ORDERS.json` for partner-specific deviations. In this example the partner appends a
 fifth sub-element to the UNH message identifier, so a `new_field` component was added to the `UNH`
 segment definition:
 
@@ -49,7 +49,7 @@ for the full grammar.
 ## Step 3 — Generate the typed module
 
 ```bash
-bal edi codegen -i schemas/ORDERS.json -o modules/orders/orders.bal
+bal edi codegen -i resources/ORDERS.json -o edi_parser/edi.bal
 ```
 
 The customised element appears on the generated record, so `messageInfo.new_field` is fully typed:
@@ -64,15 +64,14 @@ public type Message_information_GType record {|
 |};
 ```
 
-> The `edi-tools` 2.2.0 commands above and the `ballerina/edi` 1.6.0 envelope APIs are part of an
-> unreleased version; the generated module under `modules/orders` and the schema under `schemas/` are
-> committed so this example runs against the local `ballerina/edi` build today.
-
 ## Run the example
 
-`sample.edi` carries the partner extension in its UNH segment (`...:UN:EXT1`):
+This example is a Ballerina **workspace**: the generated `edi_parser` package plus the
+`custom_edi_schema` program that parses `resources/sample.edi` (it carries the partner extension in
+its UNH segment, `...:UN:EXT1`). Run from the program package:
 
 ```bash
+cd custom_edi_schema
 bal run
 ```
 
