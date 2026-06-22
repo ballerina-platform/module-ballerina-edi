@@ -368,6 +368,53 @@ function testX12HeadersFromFile() returns error? {
     test:assertEquals(headers.isa.senderId, "SENDER");
 }
 
+@test:Config {}
+function testIsa02AndIsa04() returns error? {
+    string isaSegment = "ISA*00*          *00*          *ZZ*VIMLY *ZZ*MAGNACARE *260415*2028*^*00501*000213133*0*P*:~";
+    json schemaJson = {
+        "name": "ISATest",
+        "delimiters": {"segment": "~", "field": "*", "component": ":", "repetition": "^"},
+        "includeSegmentCode": true,
+        "segments": [
+            {
+                "code": "ISA",
+                "tag": "InterchangeControlHeader",
+                "fields": [
+                    {"tag": "code", "required": true, "dataType": "string"},
+                    {"tag": "ISA01__AuthorizationInformationQualifier", "required": true, "dataType": "string"},
+                    {"tag": "ISA02__AuthorizationInformation", "required": true, "dataType": "string"},
+                    {"tag": "ISA03__SecurityInformationQualifier", "required": true, "dataType": "string"},
+                    {"tag": "ISA04__SecurityInformation", "required": true, "dataType": "string"},
+                    {"tag": "ISA05__InterchangeIDQualifier", "required": true, "dataType": "string"},
+                    {"tag": "ISA06__InterchangeSenderID", "required": true, "dataType": "string"},
+                    {"tag": "ISA07__InterchangeIDQualifier", "required": true, "dataType": "string"},
+                    {"tag": "ISA08__InterchangeReceiverID", "required": true, "dataType": "string"},
+                    {"tag": "ISA09__InterchangeDate", "required": true, "dataType": "string"},
+                    {"tag": "ISA10__InterchangeTime", "required": true, "dataType": "string"},
+                    {"tag": "ISA11__RepetitionSeparator", "required": true, "dataType": "string"},
+                    {"tag": "ISA12__InterchangeControlVersionNumber", "required": true, "dataType": "string"},
+                    {"tag": "ISA13__InterchangeControlNumber", "required": true, "dataType": "string"},
+                    {"tag": "ISA14__AcknowledgmentRequested", "required": true, "dataType": "string"},
+                    {"tag": "ISA15__UsageIndicator", "required": true, "dataType": "string"},
+                    {"tag": "ISA16__ComponentElementSeparator", "required": true, "dataType": "string"}
+                ]
+            }
+        ]
+    };
+    EdiSchema schema = check getSchema(schemaJson);
+    json result = check fromEdiString(isaSegment, schema);
+    map<json> msg = check result.ensureType();
+    map<json> isa = check msg["InterchangeControlHeader"].ensureType();
+    // Whitespace-only required fields must parse without error and store as string.
+    test:assertEquals(isa["ISA02__AuthorizationInformation"], "");
+    test:assertEquals(isa["ISA04__SecurityInformation"], "");
+    // Other fields parsed correctly.
+    test:assertEquals(isa["ISA01__AuthorizationInformationQualifier"], "00");
+    test:assertEquals(isa["ISA06__InterchangeSenderID"], "VIMLY");
+    test:assertEquals(isa["ISA08__InterchangeReceiverID"], "MAGNACARE");
+    test:assertEquals(isa["ISA13__InterchangeControlNumber"], "000213133");
+}
+
 // =============================================================================
 // Schema-free EDIFACT header tests
 // =============================================================================
