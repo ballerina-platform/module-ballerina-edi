@@ -38,11 +38,12 @@ The fastest path is to generate a typed parser from an EDIFACT or X12 spec using
 Run the following from your Ballerina package to generate the records and parser functions into its default module:
 
 ```bash
-# 1. Convert the EDIFACT D03A ORDERS spec into a Ballerina EDI schema
-$ bal edi convertEdifactSchema -v d03a -t ORDERS -o resources/orders-schema.json
+# 1. Convert the EDIFACT D03A ORDERS spec into a Ballerina EDI schema.
+#    -o is a directory; the schema is written to resources/ORDERS.json (named after the message type).
+$ bal edi convertEdifactSchema -v d03a -t ORDERS -o resources
 
 # 2. Generate Ballerina records and parser functions into the default module
-$ bal edi codegen -i resources/orders-schema.json -o orders.bal
+$ bal edi codegen -i resources/ORDERS.json -o orders.bal
 ```
 
 For X12 use `bal edi convertX12Schema` — see the [edi-tools documentation](https://github.com/ballerina-platform/edi-tools). For larger projects, the generated EDI code can live in its own package within a Ballerina workspace alongside your integration.
