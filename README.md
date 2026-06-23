@@ -35,28 +35,28 @@ The fastest path is to generate a typed parser from an EDIFACT or X12 spec using
 
 ### Step 1: Generate a parser from a spec
 
+Run the following from your Ballerina package to generate the records and parser functions into its default module:
+
 ```bash
 # 1. Convert the EDIFACT D03A ORDERS spec into a Ballerina EDI schema
 $ bal edi convertEdifactSchema -v d03a -t ORDERS -o resources/orders-schema.json
 
-# 2. Generate Ballerina records and parser functions from the schema
-$ bal edi codegen -i resources/orders-schema.json -o modules/orders/orders.bal
+# 2. Generate Ballerina records and parser functions into the default module
+$ bal edi codegen -i resources/orders-schema.json -o orders.bal
 ```
 
-For X12 use `bal edi convertX12Schema` — see the [edi-tools documentation](https://github.com/ballerina-platform/edi-tools).
+For X12 use `bal edi convertX12Schema` — see the [edi-tools documentation](https://github.com/ballerina-platform/edi-tools). For larger projects, the generated EDI code can live in its own package within a Ballerina workspace alongside your integration.
 
 ### Step 2: Use the generated code
 
-The generated module exposes typed records and parser functions for the schema. The top-level
-interchange record is named after the schema (an `ORDERS` schema produces `ORDERSInterchange`):
+The generated code defines typed records and parser functions in the same default module, named after the schema (an `ORDERS` schema produces `ORDERSInterchange`):
 
 ```ballerina
 import ballerina/io;
-import sample.orders;
 
 public function main() returns error? {
     string ediText = check io:fileReadString("resources/order.edi");
-    orders:ORDERSInterchange interchange = check orders:interchangeFromEdiString(ediText);
+    ORDERSInterchange interchange = check interchangeFromEdiString(ediText);
     foreach var txn in interchange.transactions {
         if txn.body is error {
             io:println("Quarantined: ", (<error>txn.body).message());
@@ -119,13 +119,13 @@ for full signatures, parameters, error types, and envelope semantics.
 
 | Function | Purpose |
 |----------|---------|
-| `getSchema` | Load and validate a JSON EDI schema into an `EdiSchema`. |
 | `fromEdiString` / `toEdiString` | Parse a transaction body to JSON / serialize JSON back to EDI text. |
 | `x12HeadersFromEdiString` / `x12HeadersFromEdiFile` | Schema-free peek at X12 ISA/GS headers — routing and partner identification. |
 | `edifactHeadersFromEdiString` / `edifactHeadersFromEdiFile` | Schema-free peek at EDIFACT UNB/UNH headers. |
 | `headersFromEdiString` / `headersFromEdiFile` | Schema-driven header-only parse. |
 | `interchangeFromEdiString` | Parse the full envelope hierarchy into typed records, with fail-safe per-transaction bodies. |
 | `interchangeToEdiString` | Serialize a full interchange back to EDI text (recomputes envelope counts). |
+| `getSchema` | Load and validate a JSON EDI schema into an `EdiSchema`. |
 
 ## Customizing the generated schema
 
