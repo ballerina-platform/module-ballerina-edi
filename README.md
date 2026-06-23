@@ -85,8 +85,9 @@ directly. Each package groups related message types by business domain.
 | [`ballerinax/edifact.d03a.shipping`](https://central.ballerina.io/ballerinax/edifact.d03a.shipping) | Container operations, customs declarations, vessel departures, cargo reports. |
 | [`ballerinax/edifact.d03a.supplychain`](https://central.ballerina.io/ballerinax/edifact.d03a.supplychain) | Purchase orders, order responses, delivery forecasts, inventory, despatch advices. |
 
-Each message type is a submodule (e.g. `mINVOIC`, `mORDERS`) exposing `fromEdiString`,
-`toEdiString`, and `getEDINames`:
+Each message type is available as a submodule (e.g. `finance.mINVOIC`, `supplychain.mORDERS`)
+exposing `fromEdiString` / `toEdiString`; each package's default module also provides
+`getEDINames()` to list its supported message types:
 
 ```ballerina
 import ballerina/io;
@@ -94,7 +95,7 @@ import ballerinax/edifact.d03a.finance.mINVOIC;
 
 public function main() returns error? {
     string ediText = check io:fileReadString("resources/invoice.edi");
-    mINVOIC:EDI_INVOIC_Invoice invoice = check mINVOIC:fromEdiString(ediText);
+    mINVOIC:EDI_INVOIC_Invoice_message invoice = check mINVOIC:fromEdiString(ediText);
     io:println(invoice);
 }
 ```
