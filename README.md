@@ -26,7 +26,7 @@ The Ballerina `edi` module provides schema-driven, envelope-aware conversion bet
 The `edi` module is pulled in automatically when you import it. To generate typed parsers from EDI schemas, install the companion CLI tool:
 
 ```bash
-$ bal tool pull edi
+bal tool pull edi
 ```
 
 ## Quickstart
@@ -40,10 +40,10 @@ Run the following from your Ballerina package to generate the records and parser
 ```bash
 # 1. Convert the EDIFACT D03A ORDERS spec into a Ballerina EDI schema.
 #    -o is a directory; the schema is written to resources/ORDERS.json (named after the message type).
-$ bal edi convertEdifactSchema -v d03a -t ORDERS -o resources
+bal edi convertEdifactSchema -v d03a -t ORDERS -o resources
 
 # 2. Generate Ballerina records and parser functions into the default module
-$ bal edi codegen -i resources/ORDERS.json -o orders.bal
+bal edi codegen -i resources/ORDERS.json -o orders.bal
 ```
 
 For X12 use `bal edi convertX12Schema` — see the [edi-tools documentation](https://github.com/ballerina-platform/edi-tools). For larger projects, the generated EDI code can live in its own package within a Ballerina workspace alongside your integration.
@@ -60,7 +60,7 @@ public function main() returns error? {
     ORDERSInterchange interchange = check interchangeFromEdiString(ediText);
     foreach var txn in interchange.transactions {
         if txn.body is error {
-            io:println("Quarantined: ", (<error>txn.body).message());
+            io:println("Quarantined: ", txn.body.message());
             continue;
         }
         io:println(txn.body);
@@ -108,8 +108,8 @@ published. Instead, convert the X12 schema you are licensed to use into a Baller
 generate a typed parser from it, exactly like the EDIFACT quickstart above:
 
 ```bash
-$ bal edi convertX12Schema -i schema.xsd -o resources/850-schema.json
-$ bal edi codegen -i resources/850-schema.json -o po.bal
+bal edi convertX12Schema -i schema.xsd -o resources/850-schema.json
+bal edi codegen -i resources/850-schema.json -o po.bal
 ```
 
 ## Exposed APIs
