@@ -109,7 +109,7 @@ generate a typed parser from it, exactly like the EDIFACT quickstart above:
 
 ```bash
 $ bal edi convertX12Schema -i schema.xsd -o resources/850-schema.json
-$ bal edi codegen -i resources/850-schema.json -o modules/po/po.bal
+$ bal edi codegen -i resources/850-schema.json -o po.bal
 ```
 
 ## Exposed APIs
