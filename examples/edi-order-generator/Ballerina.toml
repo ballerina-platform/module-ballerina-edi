@@ -1,0 +1,3 @@
+[workspace]
+title = "edi-order-generator"
+packages = ["edi_order_generator", "edi_parser"]

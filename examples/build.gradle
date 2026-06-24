@@ -1,0 +1,82 @@
+/*
+ * Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+ *
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+import org.apache.tools.ant.taskdefs.condition.Os
+
+// The examples are end-to-end integrations built against the local `ballerina/edi`
+// build, so they require the `bal` CLI on the PATH. CI builds the module through the
+// Ballerina Gradle plugin's bundled distribution and does not expose `bal`, so these
+// tasks skip automatically there and run only in local environments that have `bal`.
+def balAvailable() {
+    try {
+        def command = Os.isFamily(Os.FAMILY_WINDOWS) ? ['where', 'bal'] : ['which', 'bal']
+        def process = command.execute()
+        process.waitFor()
+        return process.exitValue() == 0
+    } catch (Exception ignored) {
+        return false
+    }
+}
+
+task test {
+    onlyIf { balAvailable() }
+    doLast {
+        try {
+            exec {
+                workingDir project.projectDir
+                println("Working dir: ${workingDir}")
+                if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                    commandLine 'sh', "/c", "chmod +x ./build.sh && ./build.sh run && exit %%ERRORLEVEL%%"
+                } else {
+                    commandLine 'sh', "-c", "chmod +x ./build.sh && ./build.sh run"
+                }
+            }
+        } catch (Exception e) {
+            println("Example run failed: " + e.message)
+            throw e
+        }
+    }
+}
+
+task build {
+    onlyIf { balAvailable() }
+    gradle.taskGraph.whenReady { graph ->
+        if (graph.hasTask(":edi-examples:test")) {
+            build.enabled = false
+        }
+    }
+    doLast {
+        try {
+            exec {
+                workingDir project.projectDir
+                println("Working dir: ${workingDir}")
+                if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                    commandLine 'sh', "/c", "chmod +x ./build.sh && ./build.sh build && exit %%ERRORLEVEL%%"
+                } else {
+                    commandLine 'sh', "-c", "chmod +x ./build.sh && ./build.sh build"
+                }
+            }
+        } catch (Exception e) {
+            println("Example build failed: " + e.message)
+            throw e
+        }
+    }
+}
+
+test.dependsOn ":edi-ballerina:build"
+build.dependsOn ":edi-ballerina:build"

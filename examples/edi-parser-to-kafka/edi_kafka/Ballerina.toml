@@ -1,0 +1,9 @@
+[package]
+org = "wso2"
+name = "edi_kafka"
+version = "0.1.0"
+distribution = "2201.12.0"
+title = "edi-kafka"
+
+[build-options]
+sticky = true

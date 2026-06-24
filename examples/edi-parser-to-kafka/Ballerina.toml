@@ -1,0 +1,3 @@
+[workspace]
+title = "edi-parser-to-kafka"
+packages = ["edi_kafka", "edi_parser"]
