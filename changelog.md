@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.4]
+
 ### Fixed
 
 - [Fix ISA02/ISA04 space-padded values incorrectly failing required field validation](https://github.com/ballerina-platform/ballerina-library/issues/8834)
