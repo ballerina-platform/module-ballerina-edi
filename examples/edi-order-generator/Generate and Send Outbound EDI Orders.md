@@ -39,7 +39,7 @@ edi-order-generator/
 
 ## Prerequisites
 
-1. **Ballerina** — Swan Lake (2201.13.4 or later).
+1. **Ballerina** — Swan Lake (2201.12.0 or later).
 2. **Postgres + SFTP** — start both with the bundled compose file. Postgres is seeded from `init.sql`
    with one order (`PO20260615`) and two line items:
 

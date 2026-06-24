@@ -38,7 +38,7 @@ edi-parser-to-kafka/
 
 ## Prerequisites
 
-1. **Ballerina** — Swan Lake (2201.13.4 or later).
+1. **Ballerina** — Swan Lake (2201.12.0 or later).
 2. **Kafka broker** — start a local single-node broker with the bundled compose file:
 
    ```bash

@@ -28,7 +28,7 @@ edi-vendor-router/
 
 ## Prerequisites
 
-1. **Ballerina** — Swan Lake (2201.13.4 or later).
+1. **Ballerina** — Swan Lake (2201.12.0 or later).
 2. **SFTP server** — start one with the inbox and vendor folders pre-created:
 
    ```bash
