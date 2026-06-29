@@ -298,7 +298,7 @@ isolated function subsequentSchemaStartsWith(SegmentGroupContext sgContext,
                                              string segmentCode, int fromIndex) returns boolean {
     int index = fromIndex;
     while index < sgContext.unitSchemas.length() {
-        EdiUnitSchema nextSchema = sgContext.unitSchemas[i];
+        EdiUnitSchema nextSchema = sgContext.unitSchemas[index];
         if nextSchema is EdiSegGroupSchema {
             foreach EdiUnitSchema seg in nextSchema.segments {
                 if seg is EdiSegSchema {
