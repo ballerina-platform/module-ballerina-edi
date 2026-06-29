@@ -146,4 +146,10 @@ function testMultiTransactionMerge() returns error? {
     // Member from the second transaction set (ST*834*0002)
     test:assertEquals(check memberList[1].NM103__MemberLastName, "SMITH");
     test:assertEquals(check memberList[1].NM104__MemberFirstName, "JANE");
+
+    // REF is present only in transaction 2: it must survive the merge (key absent from base).
+    json ref = check result.REF;
+    test:assertFalse(ref is (), "REF segment from transaction 2 must not be dropped during merge");
+    test:assertEquals(check ref.REF01__ReferenceIdentificationQualifier, "1L");
+    test:assertEquals(check ref.REF02__MemberGroupOrPolicyNumber, "GRP002");
 }

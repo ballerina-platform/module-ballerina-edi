@@ -63,17 +63,24 @@ public isolated function fromEdiString(string ediText, EdiSchema schema) returns
     if env is EdiEnvelopeSchema {
         context.ediText = check stripEnvelopeSegmentsPositional(context.ediText, env, schema.delimiters.'field);
     } else {
-        string trimmedText = text.trim();
-        string txnStartCode = trimmedText.startsWith(X12_INTERCHANGE_HEADER) ? X12_TRANSACTION_START : EDIFACT_TRANSACTION_START;
+        // Count X12 (ST) and EDIFACT (UNH) transaction-start codes independently so
+        // files that begin at GS or ST level (no ISA/UNB) are detected correctly.
         string fieldDelim = schema.delimiters.'field;
-        int txnCount = 0;
+        int x12TxnCount = 0;
+        int edifactTxnCount = 0;
         foreach string seg in context.ediText {
-            if getSegmentCode(seg.trim(), fieldDelim) == txnStartCode {
-                txnCount += 1;
+            string segCode = getSegmentCode(seg.trim(), fieldDelim);
+            if segCode == X12_TRANSACTION_START {
+                x12TxnCount += 1;
+            } else if segCode == EDIFACT_TRANSACTION_START {
+                edifactTxnCount += 1;
             }
         }
-        if txnCount > 1 {
+        if x12TxnCount > 1 || edifactTxnCount > 1 {
             string[] singles = check splitTransactionStrings(ediText, schema);
+            if singles.length() == 0 {
+                return error Error("EDI text contains multiple transaction starts but no complete transaction sets.");
+            }
             json result = check fromEdiString(singles[0], schema);
             foreach int txnIndex in 1 ..< singles.length() {
                 json txnBody = check fromEdiString(singles[txnIndex], schema);
@@ -92,12 +99,20 @@ isolated function splitTransactionStrings(string ediText, EdiSchema schema) retu
     string fieldDelim = schema.delimiters.'field;
     string[] rawSegs = check splitSegments(stripBom(ediText), segTerm);
 
+    // Detect X12 vs EDIFACT by the segment code of the first non-empty segment so that
+    // files starting at GS or ST level (no ISA) are still classified correctly.
     boolean isX12 = false;
     foreach string rawSeg in rawSegs {
         string trimmedSeg = rawSeg.trim();
         if trimmedSeg.length() > 0 {
-            isX12 = trimmedSeg.startsWith(X12_INTERCHANGE_HEADER);
-            break;
+            string firstCode = getSegmentCode(trimmedSeg, fieldDelim);
+            if firstCode == X12_INTERCHANGE_HEADER || firstCode == X12_GROUP_HEADER || firstCode == X12_TRANSACTION_START {
+                isX12 = true;
+                break;
+            }
+            if firstCode == EDIFACT_INTERCHANGE_HEADER || firstCode == EDIFACT_GROUP_HEADER || firstCode == EDIFACT_TRANSACTION_START {
+                break;
+            }
         }
     }
 
@@ -130,10 +145,14 @@ isolated function splitTransactionStrings(string ediText, EdiSchema schema) retu
         } else if code == grpHdrCode {
             grpHdr = seg;
             string[] segFields = segmentFields(seg, fieldDelim);
-            grpCtrlNum = isX12 
-                ? (segFields.length() > 6 ? segFields[6] : "") 
-                : (segFields.length() > 1 ? segFields[1] : "");
+            // X12 GS06 (index 6) | EDIFACT UNG 0048 (index 5, after id+sender+receiver+date:time)
+            grpCtrlNum = isX12
+                ? (segFields.length() > 6 ? segFields[6] : "")
+                : (segFields.length() > 5 ? segFields[5] : "");
         } else if code == txnStart {
+            if inTxn {
+                return error Error(string `Transaction '${txnStart}' started before previous '${txnEnd}' was closed.`);
+            }
             inTxn = true;
             currentTxn = [seg];
         } else if code == txnEnd && inTxn {
@@ -160,6 +179,9 @@ isolated function splitTransactionStrings(string ediText, EdiSchema schema) retu
         } else if inTxn {
             currentTxn.push(seg);
         }
+    }
+    if inTxn {
+        return error Error(string `Transaction '${txnStart}' is missing its closing '${txnEnd}'.`);
     }
     return result;
 }
@@ -196,7 +218,9 @@ isolated function mergeTransactionBodies(json base, json addition) returns json|
             continue;
         }
         json? baseVal = result['key];
-        if addVal is json[] && baseVal is json[] {
+        if baseVal is () {
+            result['key] = addVal;
+        } else if addVal is json[] && baseVal is json[] {
             json[] merged = [];
             foreach json item in baseVal {
                 merged.push(item);

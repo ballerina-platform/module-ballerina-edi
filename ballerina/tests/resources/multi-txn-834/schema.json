@@ -44,6 +44,18 @@
             ]
         },
         {
+            "code": "REF",
+            "tag": "REF",
+            "minOccurances": 0,
+            "maxOccurances": 1,
+            "truncatable": true,
+            "fields": [
+                {"tag": "code"},
+                {"tag": "REF01__ReferenceIdentificationQualifier"},
+                {"tag": "REF02__MemberGroupOrPolicyNumber"}
+            ]
+        },
+        {
             "code": "SE",
             "tag": "SE",
             "minOccurances": 0,
