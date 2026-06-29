@@ -1,0 +1,59 @@
+{
+    "name": "Test_MultiTransaction_834",
+    "delimiters": {"segment": "~", "field": "*", "component": ":", "repetition": "^"},
+    "ignoreSegments": ["ISA", "GS", "GE", "IEA"],
+    "segments": [
+        {
+            "code": "ST",
+            "tag": "ST",
+            "minOccurances": 0,
+            "maxOccurances": 1,
+            "truncatable": true,
+            "fields": [
+                {"tag": "code"},
+                {"tag": "ST01__TransactionSetIdentifierCode"},
+                {"tag": "ST02__TransactionSetControlNumber"},
+                {"tag": "ST03__ImplementationGuide"}
+            ]
+        },
+        {
+            "code": "BGN",
+            "tag": "BGN",
+            "minOccurances": 0,
+            "maxOccurances": 1,
+            "truncatable": true,
+            "fields": [
+                {"tag": "code"},
+                {"tag": "BGN01__TransactionSetPurposeCode"},
+                {"tag": "BGN02__ReferenceIdentification"},
+                {"tag": "BGN03__Date"}
+            ]
+        },
+        {
+            "code": "NM1",
+            "tag": "members",
+            "minOccurances": 0,
+            "maxOccurances": -1,
+            "truncatable": true,
+            "fields": [
+                {"tag": "code"},
+                {"tag": "NM101__EntityIdentifierCode"},
+                {"tag": "NM102__EntityTypeQualifier"},
+                {"tag": "NM103__MemberLastName"},
+                {"tag": "NM104__MemberFirstName"}
+            ]
+        },
+        {
+            "code": "SE",
+            "tag": "SE",
+            "minOccurances": 0,
+            "maxOccurances": 1,
+            "truncatable": true,
+            "fields": [
+                {"tag": "code"},
+                {"tag": "SE01__NumberOfIncludedSegments"},
+                {"tag": "SE02__TransactionSetControlNumber"}
+            ]
+        }
+    ]
+}

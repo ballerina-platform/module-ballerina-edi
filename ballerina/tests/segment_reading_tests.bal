@@ -126,3 +126,24 @@ function wrongDynamicLengthSchemaTestDataProvider() returns string[][] {
         ["dynamic-length3"]
     ];
 }
+
+@test:Config
+function testMultiTransactionMerge() returns error? {
+    EdiSchema schema = check getTestSchema("multi-txn-834");
+    string ediText = check getEDIMessage("multi-txn-834");
+
+    json result = check fromEdiString(ediText, schema);
+
+    json members = check result.members;
+    test:assertTrue(members is json[], "members field should be a JSON array");
+    json[] memberList = <json[]>members;
+    test:assertEquals(memberList.length(), 2, "Two ST/SE transaction sets should produce two merged members");
+
+    // Member from the first transaction set (ST*834*0001)
+    test:assertEquals(check memberList[0].NM103__MemberLastName, "DOE");
+    test:assertEquals(check memberList[0].NM104__MemberFirstName, "JOHN");
+
+    // Member from the second transaction set (ST*834*0002)
+    test:assertEquals(check memberList[1].NM103__MemberLastName, "SMITH");
+    test:assertEquals(check memberList[1].NM104__MemberFirstName, "JANE");
+}
