@@ -107,6 +107,19 @@ function testQualifierBasedLoopDiscrimination() returns error? {
 }
 
 @test:Config
+function testQualifierDiscriminationFirstOccurrenceLimitation() returns error? {
+    json schemaJson = check io:fileReadJson("tests/resources/qualifier-discrimination/schema.json");
+    EdiSchema schema = check getSchema(schemaJson);
+    string ediText = check io:fileReadString("tests/resources/qualifier-discrimination/message_no_loopA.edi");
+    json result = check fromEdiString(ediText, schema);
+
+    json loopA = check result.LoopTypeA;
+    test:assertTrue(loopA is json[], "LoopTypeA should be an array (receives ENT*B due to first-occurrence limitation)");
+    json[] loopAArr = <json[]>loopA;
+    test:assertEquals(loopAArr.length(), 2, "LoopTypeA incorrectly captures both ENT*B segments due to first-occurrence limitation");
+}
+
+@test:Config
 function testDenormalization() returns error? {
     json schemaJson = check io:fileReadJson("tests/resources/denormalization/normalized_schema.json");
     EdiSchema schema = check getSchema(schemaJson);
