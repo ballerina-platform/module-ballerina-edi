@@ -993,15 +993,13 @@ function testHeadersFromEdiFileWindowOverflow() returns error? {
 // =============================================================================
 
 @test:Config {}
-function testFromEdiStringRejectsMultipleTransactions() returns error? {
-    // Two ST..SE transactions must not silently merge into one body.
+function testFromEdiStringMergesMultipleTransactions() returns error? {
     EdiSchema schema = check buildX12Schema();
-    json|Error result = fromEdiString(X12_MULTI_GROUP, schema);
-    if result !is InvalidEnvelopeError {
-        test:assertFail("Expected an InvalidEnvelopeError for multi-transaction input to fromEdiString.");
-    }
-    test:assertTrue(result.message().includes("interchangeFromEdiString"),
-            "Error should direct the user to interchangeFromEdiString.");
+    json body = check fromEdiString(X12_MULTI_GROUP, schema);
+    test:assertTrue(body is map<json>, "Expected a JSON object from merged transactions.");
+    if body is map<json> {
+        test:assertFalse(body.hasKey("InterchangeHeader"), "Envelope segments must not appear in merged body.");
+    }   
 }
 
 // =============================================================================
