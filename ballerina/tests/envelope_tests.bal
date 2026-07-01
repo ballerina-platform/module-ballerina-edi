@@ -556,8 +556,8 @@ function testHeadersFromEdiStringOldSchemaError() returns error? {
     if result !is SchemaCompatibilityError {
         test:assertFail("Expected a SchemaCompatibilityError for old schema without envelope.");
     }
-    test:assertTrue(result.message().includes("edi-tools"),
-            "Error should direct the user to generate a schema with an envelope.");
+    test:assertTrue(result.message().includes("'envelope' field"),
+            "Error should state the actual requirement: a top-level 'envelope' field.");
 }
 
 @test:Config {}
