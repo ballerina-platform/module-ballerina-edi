@@ -1,0 +1,23 @@
+{
+    "name": "X12_834_MultiTxn",
+    "delimiters": {"segment": "~", "field": "*", "component": ":", "repetition": "^"},
+    "ignoreSegments": ["ISA", "GS", "ST", "SE", "GE", "IEA"],
+    "segments": [
+        {
+            "code": "BGN",
+            "tag": "BGN",
+            "fields": [{"tag": "code"}, {"tag": "BGN01"}, {"tag": "BGN02__ReferenceIdentification"}, {"tag": "BGN03"}]
+        },
+        {
+            "code": "NM1",
+            "tag": "members",
+            "maxOccurances": -1,
+            "fields": [{"tag": "code"}, {"tag": "NM101"}, {"tag": "NM102"}, {"tag": "NM103__MemberLastName"}, {"tag": "NM104__MemberFirstName"}]
+        },
+        {
+            "code": "REF",
+            "tag": "REF",
+            "fields": [{"tag": "code"}, {"tag": "REF01__ReferenceIdentificationQualifier"}, {"tag": "REF02__MemberGroupOrPolicyNumber"}]
+        }
+    ]
+}

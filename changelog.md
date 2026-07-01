@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - [Fix ISA02/ISA04 space-padded values incorrectly failing required field validation](https://github.com/ballerina-platform/ballerina-library/issues/8834)
+- [Support multiple ST/SE transaction sets within a single GS/GE functional group](https://github.com/ballerina-platform/ballerina-library/issues/8860)
 
 ### Changed
 
