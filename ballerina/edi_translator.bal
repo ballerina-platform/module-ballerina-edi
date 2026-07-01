@@ -16,6 +16,22 @@
 
 import ballerina/io;
 
+// X12 segment codes
+const string X12_INTERCHANGE_HEADER = "ISA";
+const string X12_GROUP_HEADER = "GS";
+const string X12_TRANSACTION_START = "ST";
+const string X12_TRANSACTION_END = "SE";
+const string X12_GROUP_TRAILER = "GE";
+const string X12_INTERCHANGE_TRAILER = "IEA";
+
+// EDIFACT segment codes
+const string EDIFACT_INTERCHANGE_HEADER = "UNB";
+const string EDIFACT_GROUP_HEADER = "UNG";
+const string EDIFACT_TRANSACTION_START = "UNH";
+const string EDIFACT_TRANSACTION_END = "UNT";
+const string EDIFACT_GROUP_TRAILER = "UNE";
+const string EDIFACT_INTERCHANGE_TRAILER = "UNZ";
+
 type EdiContext record {|
     EdiSchema schema;
     string[] ediText = [];
@@ -42,12 +58,165 @@ public isolated function fromEdiString(string ediText, EdiSchema schema) returns
     }
     context.ediText = check splitSegments(text, context.schema.delimiters.segment);
 
+    string fieldDelim = schema.delimiters.'field;
+    int x12TxnCount = 0;
+    int edifactTxnCount = 0;
+    foreach string seg in context.ediText {
+        string segCode = getSegmentCode(seg.trim(), fieldDelim);
+        if segCode == X12_TRANSACTION_START {
+            x12TxnCount += 1;
+        } else if segCode == EDIFACT_TRANSACTION_START {
+            edifactTxnCount += 1;
+        }
+    }
+    if x12TxnCount > 1 || edifactTxnCount > 1 {
+        string[] singles = check splitTransactionStrings(ediText, schema);
+        if singles.length() == 0 {
+            return error Error("EDI text contains multiple transaction starts but no complete transaction sets.");
+        }
+        json result = check fromEdiString(singles[0], schema);
+        foreach int txnIndex in 1 ..< singles.length() {
+            json txnBody = check fromEdiString(singles[txnIndex], schema);
+            result = check mergeTransactionBodies(result, txnBody);
+        }
+        return result;
+    }
+
     if env is EdiEnvelopeSchema {
         context.ediText = check stripEnvelopeSegmentsPositional(context.ediText, env, schema.delimiters.'field);
     }
 
     EdiSegmentGroup rootGroup = check readSegmentGroup(currentMapping, context, true);
     return rootGroup;
+}
+
+isolated function splitTransactionStrings(string ediText, EdiSchema schema) returns string[]|Error {
+    string segTerm   = schema.delimiters.segment;
+    string fieldDelim = schema.delimiters.'field;
+    string[] rawSegs = check splitSegments(stripBom(ediText), segTerm);
+
+    // Detect X12 vs EDIFACT by the segment code of the first non-empty segment so that
+    // files starting at GS or ST level (no ISA) are still classified correctly.
+    boolean isX12 = false;
+    foreach string rawSeg in rawSegs {
+        string trimmedSeg = rawSeg.trim();
+        if trimmedSeg.length() > 0 {
+            string firstCode = getSegmentCode(trimmedSeg, fieldDelim);
+            if firstCode == X12_INTERCHANGE_HEADER || firstCode == X12_GROUP_HEADER || firstCode == X12_TRANSACTION_START {
+                isX12 = true;
+                break;
+            }
+            if firstCode == EDIFACT_INTERCHANGE_HEADER || firstCode == EDIFACT_GROUP_HEADER || firstCode == EDIFACT_TRANSACTION_START {
+                break;
+            }
+        }
+    }
+
+    string ixHdrCode  = isX12 ? X12_INTERCHANGE_HEADER  : EDIFACT_INTERCHANGE_HEADER;
+    string grpHdrCode = isX12 ? X12_GROUP_HEADER         : EDIFACT_GROUP_HEADER;
+    string txnStart   = isX12 ? X12_TRANSACTION_START    : EDIFACT_TRANSACTION_START;
+    string txnEnd     = isX12 ? X12_TRANSACTION_END      : EDIFACT_TRANSACTION_END;
+    string grpTrlCode = isX12 ? X12_GROUP_TRAILER        : EDIFACT_GROUP_TRAILER;
+    string ixTrlCode  = isX12 ? X12_INTERCHANGE_TRAILER  : EDIFACT_INTERCHANGE_TRAILER;
+
+    string ixHdr      = "";
+    string grpHdr     = "";
+    string ixCtrlNum  = "";
+    string grpCtrlNum = "";
+    string[] currentTxn = [];
+    boolean inTxn     = false;
+    string[] result   = [];
+
+    foreach string raw in rawSegs {
+        string seg = raw.trim();
+        if seg.length() == 0 { continue; }
+        string code = getSegmentCode(seg, fieldDelim);
+
+        if code == ixHdrCode {
+            ixHdr = seg;
+            string[] segFields = splitByDelimiter(seg, fieldDelim);
+            ixCtrlNum = isX12 
+                ? (segFields.length() > 13 ? segFields[13] : "") 
+                : (segFields.length() > 5 ? segFields[5] : "");
+        } else if code == grpHdrCode {
+            grpHdr = seg;
+            string[] segFields = splitByDelimiter(seg, fieldDelim);
+            // X12 GS06 (index 6) | EDIFACT UNG 0048 (index 5, after id+sender+receiver+date:time)
+            grpCtrlNum = isX12
+                ? (segFields.length() > 6 ? segFields[6] : "")
+                : (segFields.length() > 5 ? segFields[5] : "");
+        } else if code == txnStart {
+            if inTxn {
+                return error Error(string `Transaction '${txnStart}' started before previous '${txnEnd}' was closed.`);
+            }
+            inTxn = true;
+            currentTxn = [seg];
+        } else if code == txnEnd && inTxn {
+            currentTxn.push(seg);
+            string single = "";
+            if ixHdr.length() > 0 {
+                single += ixHdr + segTerm;
+            }
+            if grpHdr.length() > 0 {
+                single += grpHdr + segTerm;
+            }
+            foreach string txnSeg in currentTxn {
+                single += txnSeg + segTerm;
+            }
+            if grpHdr.length() > 0 {
+                single += grpTrlCode + fieldDelim + "1" + fieldDelim + grpCtrlNum + segTerm;
+            }
+            if ixHdr.length() > 0 {
+                single += ixTrlCode + fieldDelim + "1" + fieldDelim + ixCtrlNum + segTerm;
+            }
+            result.push(single.trim());
+            currentTxn = [];
+            inTxn = false;
+        } else if inTxn {
+            currentTxn.push(seg);
+        }
+    }
+    if inTxn {
+        return error Error(string `Transaction '${txnStart}' is missing its closing '${txnEnd}'.`);
+    }
+    return result;
+}
+
+isolated function mergeTransactionBodies(json base, json addition) returns json|Error {
+    if base !is map<json> || addition !is map<json> {
+        return base;
+    }
+    map<json> baseMap = base;
+    map<json> addMap = addition;
+    map<json> result = {};
+    foreach string 'key in baseMap.keys() {
+        json? baseValue = baseMap['key];
+        if baseValue is json {
+            result['key] = baseValue;
+        }
+    }
+    foreach string 'key in addMap.keys() {
+        json? addVal = addMap['key];
+        if addVal is () {
+            continue;
+        }
+        json? baseVal = result['key];
+        if baseVal is () {
+            result['key] = addVal;
+        } else if addVal is json[] && baseVal is json[] {
+            json[] merged = [];
+            foreach json item in baseVal {
+                merged.push(item);
+            }
+            foreach json item in addVal {
+                merged.push(item);
+            }
+            result['key] = merged;
+        } else if addVal is map<json> && baseVal is map<json> {
+            result['key] = check mergeTransactionBodies(baseVal, addVal);
+        }
+    }
+    return result;
 }
 
 # Writes the given JSON varibale into a EDI text according to the provided schema.

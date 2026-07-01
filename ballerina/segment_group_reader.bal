@@ -90,11 +90,11 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
     }
     if rootGroup && ediSchema.delimiters.'field != "FL" {
         foreach int i in context.rawIndex ... (context.ediText.length() - 1) {
-            string unmatchedRaw = context.ediText[context.rawIndex];
+            string unmatchedRaw = context.ediText[i];
             string[] unmatchedSegFields = check split(unmatchedRaw, ediSchema.delimiters.'field);
             if ediSchema.ignoreSegments.indexOf(unmatchedSegFields[0], 0) == () {
-                return error Error(string `Segment text does not match with the schema. 
-                    Segment: ${context.ediText[context.rawIndex]}, Current row: ${context.rawIndex}`);
+                return error Error(string `Segment text does not match with the schema.
+                    Segment: ${context.ediText[i]}, Current row: ${i}`);
             }
         }
     }
