@@ -556,8 +556,8 @@ function testHeadersFromEdiStringOldSchemaError() returns error? {
     if result !is SchemaCompatibilityError {
         test:assertFail("Expected a SchemaCompatibilityError for old schema without envelope.");
     }
-    test:assertTrue(result.message().includes("Regenerate the schema"),
-            "Error should direct user to regenerate the schema.");
+    test:assertTrue(result.message().includes("'envelope' field"),
+            "Error should state the actual requirement: a top-level 'envelope' field.");
 }
 
 @test:Config {}

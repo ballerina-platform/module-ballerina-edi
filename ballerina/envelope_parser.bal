@@ -370,7 +370,9 @@ isolated function getEnvelopeOrError(EdiSchema schema) returns EdiEnvelopeSchema
     EdiEnvelopeSchema? env = schema.envelope;
     if env is () {
         return error SchemaCompatibilityError(string `Schema '${schema.name}' has no envelope defined. ` +
-                "Regenerate the schema with edi-tools 2.2.0 or later to use envelope-aware APIs.");
+                "Envelope-aware APIs require the schema to include a top-level 'envelope' field. " +
+                "Generate one with edi-tools 2.2.0 or later (X12: convertX12Schema; " +
+                "EDIFACT: convertEdifactSchema), or add it to a hand-written schema.");
     }
     return env;
 }
