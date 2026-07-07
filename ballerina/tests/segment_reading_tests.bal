@@ -79,6 +79,47 @@ function testDynamicLengthEDIsWithWrongSchema1(string testName) returns error? {
 }
 
 @test:Config
+function testQualifierBasedLoopDiscrimination() returns error? {
+    json schemaJson = check io:fileReadJson("tests/resources/qualifier-discrimination/schema.json");
+    EdiSchema schema = check getSchema(schemaJson);
+    string ediText = check io:fileReadString("tests/resources/qualifier-discrimination/message.edi");
+    json result = check fromEdiString(ediText, schema);
+
+    // LoopTypeA should contain two ENT*A entries (not ENT*B or ENT*C)
+    json loopA = check result.LoopTypeA;
+    test:assertTrue(loopA is json[], "LoopTypeA should be an array");
+    json[] loopAArr = <json[]>loopA;
+    test:assertEquals(loopAArr.length(), 2, "LoopTypeA should have 2 occurrences (ENT*A*Alpha1 and ENT*A*Alpha2)");
+    test:assertEquals(check loopAArr[0].entity.qualifier, "A", "LoopTypeA[0] qualifier should be 'A'");
+    test:assertEquals(check loopAArr[1].entity.qualifier, "A", "LoopTypeA[1] qualifier should be 'A'");
+
+    // LoopTypeB should contain two ENT*B entries
+    json loopB = check result.LoopTypeB;
+    test:assertTrue(loopB is json[], "LoopTypeB should be an array");
+    json[] loopBArr = <json[]>loopB;
+    test:assertEquals(loopBArr.length(), 2, "LoopTypeB should have 2 occurrences (ENT*B*Beta1 and ENT*B*Beta2)");
+    test:assertEquals(check loopBArr[0].entity.qualifier, "B", "LoopTypeB[0] qualifier should be 'B'");
+
+    // LoopTypeC should contain one ENT*C entry
+    json loopC = check result.LoopTypeC;
+    test:assertTrue(!(loopC is json[]), "LoopTypeC should not be an array (maxOccurances=1)");
+    test:assertEquals(check loopC.entity.qualifier, "C", "LoopTypeC qualifier should be 'C'");
+}
+
+@test:Config
+function testQualifierDiscriminationFirstOccurrenceLimitation() returns error? {
+    json schemaJson = check io:fileReadJson("tests/resources/qualifier-discrimination/schema.json");
+    EdiSchema schema = check getSchema(schemaJson);
+    string ediText = check io:fileReadString("tests/resources/qualifier-discrimination/message_no_loopA.edi");
+    json result = check fromEdiString(ediText, schema);
+
+    json loopA = check result.LoopTypeA;
+    test:assertTrue(loopA is json[], "LoopTypeA should be an array (receives ENT*B due to first-occurrence limitation)");
+    json[] loopAArr = <json[]>loopA;
+    test:assertEquals(loopAArr.length(), 2, "LoopTypeA incorrectly captures both ENT*B segments due to first-occurrence limitation");
+}
+
+@test:Config
 function testDenormalization() returns error? {
     json schemaJson = check io:fileReadJson("tests/resources/denormalization/normalized_schema.json");
     EdiSchema schema = check getSchema(schemaJson);

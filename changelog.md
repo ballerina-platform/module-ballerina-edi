@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - [Fix `convertToType` corrupting numeric values when `decimalSeparator` is a regex metacharacter](https://github.com/ballerina-platform/ballerina-library/issues/8771)
 - [Fix ISA02/ISA04 space-padded values incorrectly failing required field validation](https://github.com/ballerina-platform/ballerina-library/issues/8834)
+- [Fix EDI parser incorrectly matches repeatable segment groups](https://github.com/ballerina-platform/ballerina-library/issues/8862)
 
 ## [1.5.4]
 
