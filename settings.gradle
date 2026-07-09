@@ -25,9 +25,11 @@ plugins {
 
 include ':checkstyle'
 include ':edi-ballerina'
+include ':edi-examples'
 
 project(':checkstyle').projectDir = file("build-config${File.separator}checkstyle")
 project(':edi-ballerina').projectDir = file('ballerina')
+project(':edi-examples').projectDir = file('examples')
 
 develocity {
     buildScan {

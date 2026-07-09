@@ -1,0 +1,14 @@
+[package]
+org = "wso2"
+name = "edi_parser"
+version = "0.1.0"
+distribution = "2201.12.0"
+title = "edi-parser"
+
+[build-options]
+sticky = true
+
+[[dependency]]
+org="ballerina"
+name="edi"
+version="1.6.0"

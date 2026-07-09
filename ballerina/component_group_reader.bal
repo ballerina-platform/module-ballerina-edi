@@ -38,6 +38,18 @@ isolated function readComponentGroup(string compositeText, EdiSchema ediSchema, 
     int componentNumber = 0;
     while componentNumber < components.length() {
         string component = components[componentNumber];
+        if componentNumber >= subMappings.length() {
+            // The input carries more components than the schema declares.
+            // Trailing empty components are tolerated; any extra value-bearing
+            // component is an error (never a panic).
+            if component.trim().length() == 0 {
+                componentNumber += 1;
+                continue;
+            }
+            return error Error(string `Input element contains more components than the schema declares for field: ${fieldSchema.tag}.
+                Schema component count: ${subMappings.length()}, input component count: ${components.length()},
+                Extra component: ${component}, Composite text: ${compositeText}`);
+        }
         EdiComponentSchema subMapping = subMappings[componentNumber];
         if component.trim().length() == 0 {
             if subMapping.required {

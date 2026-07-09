@@ -1,0 +1,76 @@
+{
+  "name": "QualifierTest",
+  "delimiters": {
+    "segment": "~",
+    "field": "*",
+    "component": ":"
+  },
+  "preserveEmptyFields": false,
+  "includeSegmentCode": true,
+  "segments": [
+    {
+      "code": "HDR",
+      "tag": "header",
+      "minOccurances": 1,
+      "maxOccurances": 1,
+      "fields": [
+        {"tag": "code"},
+        {"tag": "id"}
+      ]
+    },
+    {
+      "tag": "LoopTypeA",
+      "minOccurances": 0,
+      "maxOccurances": 3,
+      "segments": [
+        {
+          "code": "ENT",
+          "tag": "entity",
+          "minOccurances": 1,
+          "maxOccurances": 1,
+          "fields": [
+            {"tag": "code"},
+            {"tag": "qualifier", "required": true},
+            {"tag": "name"}
+          ]
+        }
+      ]
+    },
+    {
+      "tag": "LoopTypeB",
+      "minOccurances": 0,
+      "maxOccurances": 3,
+      "segments": [
+        {
+          "code": "ENT",
+          "tag": "entity",
+          "minOccurances": 1,
+          "maxOccurances": 1,
+          "fields": [
+            {"tag": "code"},
+            {"tag": "qualifier", "required": true},
+            {"tag": "name"}
+          ]
+        }
+      ]
+    },
+    {
+      "tag": "LoopTypeC",
+      "minOccurances": 0,
+      "maxOccurances": 1,
+      "segments": [
+        {
+          "code": "ENT",
+          "tag": "entity",
+          "minOccurances": 1,
+          "maxOccurances": 1,
+          "fields": [
+            {"tag": "code"},
+            {"tag": "qualifier", "required": true},
+            {"tag": "name"}
+          ]
+        }
+      ]
+    }
+  ]
+}

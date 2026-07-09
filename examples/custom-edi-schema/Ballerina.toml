@@ -1,0 +1,3 @@
+[workspace]
+title = "custom-edi-schema"
+packages = ["custom_edi_schema", "edi_parser"]

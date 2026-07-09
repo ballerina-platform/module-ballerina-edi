@@ -73,6 +73,16 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
                 check ignoreSchemaGroup(segSchema, sgContext, context);
                 continue;
             }
+            if segSchema.maxOccurances != 1 {
+                EdiSegment|EdiSegment[]|EdiSegmentGroup|EdiSegmentGroup[]? existingGroups = sgContext.segmentGroup[segSchema.tag];
+                if existingGroups is EdiSegmentGroup[] && existingGroups.length() > 0 {
+                    if subsequentSchemaStartsWith(sgContext, fields[0].trim(), sgContext.schemaIndex + 1)
+                            && !qualifierMatchesExistingOccurrence(segSchema, existingGroups[0], fields, ediSchema) {
+                        check ignoreSchemaGroup(segSchema, sgContext, context);
+                        continue;
+                    }
+                }
+            }
             // This logic is very specific to X12 278 dependent loop - 2000D.
             // Made the logic very specific to X12 to avoid any side effects to other messages.
             // FIXME - This is a temporary fix. Need to find a better way to handle this.
@@ -90,11 +100,11 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
     }
     if rootGroup && ediSchema.delimiters.'field != "FL" {
         foreach int i in context.rawIndex ... (context.ediText.length() - 1) {
-            string unmatchedRaw = context.ediText[context.rawIndex];
+            string unmatchedRaw = context.ediText[i];
             string[] unmatchedSegFields = check split(unmatchedRaw, ediSchema.delimiters.'field);
             if ediSchema.ignoreSegments.indexOf(unmatchedSegFields[0], 0) == () {
-                return error Error(string `Segment text does not match with the schema. 
-                    Segment: ${context.ediText[context.rawIndex]}, Current row: ${context.rawIndex}`);
+                return error Error(string `Segment text does not match with the schema.
+                    Segment: ${context.ediText[i]}, Current row: ${i}`);
             }
         }
     }
@@ -282,4 +292,62 @@ isolated function validateRemainingSchemas(SegmentGroupContext sgContext) return
             i += 1;
         }
     }
+}
+
+isolated function subsequentSchemaStartsWith(SegmentGroupContext sgContext, 
+                                             string segmentCode, int fromIndex) returns boolean {
+    int index = fromIndex;
+    while index < sgContext.unitSchemas.length() {
+        EdiUnitSchema nextSchema = sgContext.unitSchemas[index];
+        if nextSchema is EdiSegGroupSchema {
+            foreach EdiUnitSchema seg in nextSchema.segments {
+                if seg is EdiSegSchema {
+                    if seg.code == segmentCode {
+                        return true;
+                    }
+                    if seg.minOccurances > 0 {
+                        break;
+                    }
+                }
+            }
+        } else if nextSchema is EdiSegSchema {
+            if nextSchema.code == segmentCode {
+                return true;
+            }
+        }
+        index += 1;
+    }
+    return false;
+}
+
+isolated function qualifierMatchesExistingOccurrence(EdiSegGroupSchema segGroupSchema, EdiSegmentGroup firstOccurrence,
+                                                     string[] currentFields, EdiSchema schema) returns boolean {
+    if currentFields.length() < 2 {
+        return true;
+    }
+    EdiSegSchema? openingSegSchema = ();
+    foreach EdiUnitSchema seg in segGroupSchema.segments {
+        if seg is EdiSegSchema {
+            openingSegSchema = seg;
+            break;
+        }
+    }
+    if openingSegSchema is () {
+        return true;
+    }
+
+    int qualifierFieldIndex = schema.includeSegmentCode ? 1 : 0;
+    if openingSegSchema.fields.length() <= qualifierFieldIndex {
+        return true;
+    }
+    string qualifierTag = openingSegSchema.fields[qualifierFieldIndex].tag;
+
+    EdiSegment|EdiSegment[]|EdiSegmentGroup|EdiSegmentGroup[]? storedSeg = firstOccurrence[openingSegSchema.tag];
+    if storedSeg is EdiSegment {
+        EdiComponentGroup|EdiComponentGroup[]|SimpleType|SimpleArray? storedQualifier = storedSeg[qualifierTag];
+        string storedQualifierStr = storedQualifier is string ? storedQualifier : "";
+        string currentQualifier = currentFields[1].trim();
+        return storedQualifierStr == currentQualifier;
+    }
+    return true;
 }

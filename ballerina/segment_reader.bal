@@ -40,12 +40,11 @@ isolated function readSegment(EdiSegSchema segMapping, string[] fields, EdiSchem
         }
         EdiFieldSchema fieldMapping = segMapping.fields[fieldNumber];
         string tag = fieldMapping.tag;
-
         // EDI segment starts with the segment name. So we have to skip the first field.
         // string fieldText = fields[fieldNumber + 1];
         string fieldText = fields[fieldNumber];
         if fieldText.trim().length() == 0 {
-            if fieldMapping.required {
+            if fieldMapping.required && fieldText.length() == 0 {
                 return error Error(string `Required field is not provided. Field: ${fieldMapping.tag}, Segment: ${segMapping.code}`);
             } else {
                 if schema.preserveEmptyFields {
