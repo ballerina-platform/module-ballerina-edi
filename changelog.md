@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Fixed
+
+## [1.6.0]
+
+### Added
 - [Add tiered EDI envelope parsing and serialization API, with typed envelope records and a typed error hierarchy (BEP-1441)](https://github.com/ballerina-platform/ballerina-spec/issues/1441)
 
 ### Fixed
