@@ -8,6 +8,9 @@
  */
 
 pluginManagement {
+    repositories {
+        gradlePluginPortal()
+    }
     plugins {
         id "com.github.spotbugs-base" version "${spotbugsPluginVersion}"
         id "com.github.johnrengelman.shadow" version "${shadowJarPluginVersion}"
@@ -17,7 +20,7 @@ pluginManagement {
 }
 
 plugins {
-    id "com.gradle.enterprise" version "3.13.2"
+    id "com.gradle.develocity" version "3.19.2"
 }
 
 include ':checkstyle'
@@ -28,9 +31,9 @@ project(':checkstyle').projectDir = file("build-config${File.separator}checkstyl
 project(':edi-ballerina').projectDir = file('ballerina')
 project(':edi-examples').projectDir = file('examples')
 
-gradleEnterprise {
+develocity {
     buildScan {
-        termsOfServiceUrl = 'https://gradle.com/terms-of-service'
-        termsOfServiceAgree = 'yes'
+        termsOfUseUrl = 'https://gradle.com/terms-of-service'
+        termsOfUseAgree = 'yes'
     }
 }
