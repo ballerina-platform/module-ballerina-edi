@@ -47,7 +47,7 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
         string[] fields = check splitFields(segmentDesc, ediSchema.delimiters.'field, segSchema);
         if segSchema is EdiSegSchema {
             log:printDebug(string `Trying to match [Segment]: ${context.ediText[context.rawIndex]} with segment mapping ${printSegMap(segSchema)}`);
-            if segSchema.code != fields[0].trim() {
+            if !segmentMatches(segSchema, fields) {
                 check ignoreSchema(segSchema, sgContext, context);
                 continue;
             }
@@ -68,7 +68,7 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
                 return error Error("First item of segment group must be a segment. Found a segment group.\nSegment group: " + printSegGroupMap(segSchema));
             }
             // Before proceeding with going through the segment group, check whether the first field value matches the criteria of the segment group.
-            boolean firstFieldMatchesResult = firstFieldMatches(segSchema, fields[0].trim());
+            boolean firstFieldMatchesResult = firstSegmentMatches(segSchema, fields);
             if !firstFieldMatchesResult {
                 check ignoreSchemaGroup(segSchema, sgContext, context);
                 continue;
@@ -112,19 +112,19 @@ isolated function readSegmentGroup(EdiUnitSchema[] currentUnitSchema, EdiContext
     return sgContext.segmentGroup;
 }
 
-# Checks whether any appropriate segment of the given segment group schema matches with the first field of the given segment.
+# Checks whether an appropriate segment in the given segment-group schema matches the input segment.
 #
 # + segSchema - Segment group schema
-# + firstField - First field of the given segment
-# + return - Return true if the first field matches with an appropriate segment of the given segment group schema
-isolated function firstFieldMatches(EdiSegGroupSchema segSchema, string firstField) returns boolean {
+# + fields - Fields of the input segment
+# + return - True if an appropriate segment matches the segment code and field-value constraints
+isolated function firstSegmentMatches(EdiSegGroupSchema segSchema, string[] fields) returns boolean {
     foreach EdiUnitSchema seg in segSchema.segments {
         if seg is EdiSegSchema {
-            if (seg.minOccurances == 1 && seg.code == firstField) {
+            if (seg.minOccurances == 1 && segmentMatches(seg, fields)) {
                 // if the segment is mandatory, then the first field must match with the segment code.
                 return true;
             }
-            if (seg.minOccurances == 0 && seg.code == firstField) {
+            if (seg.minOccurances == 0 && segmentMatches(seg, fields)) {
                 // if the segment is optional, and if the first field matches the segment code.
                 return true;
             }
@@ -134,6 +134,54 @@ isolated function firstFieldMatches(EdiSegGroupSchema segSchema, string firstFie
         }
     }
     return false;
+}
+
+# Checks whether the segment code and every configured field-value constraint match the input fields.
+#
+# Field-value constraints disambiguate adjacent schemas that share a segment code. For example, X12
+# 834 uses REF*0F for a subscriber identifier, REF*1L for a member policy number, and REF*17/23/DX
+# for supplemental identifiers.
+#
+# + segSchema - Segment schema to match
+# + fields - Fields of the input segment
+# + return - True if the code and all configured field-value constraints match
+isolated function segmentMatches(EdiSegSchema segSchema, string[] fields) returns boolean {
+    if fields.length() == 0 || segSchema.code != fields[0].trim() {
+        return false;
+    }
+    map<string[]>? fieldValueConstraints = segSchema.fieldValueConstraints;
+    if fieldValueConstraints is () {
+        return true;
+    }
+    foreach string fieldTag in fieldValueConstraints.keys() {
+        int? fieldIndex = ();
+        EdiFieldSchema? constrainedField = ();
+        foreach int index in 0 ..< segSchema.fields.length() {
+            if segSchema.fields[index].tag == fieldTag {
+                fieldIndex = index;
+                constrainedField = segSchema.fields[index];
+                break;
+            }
+        }
+        if fieldIndex is () || constrainedField is () {
+            return false;
+        }
+        if fieldIndex >= fields.length() || fields[fieldIndex].trim() == "" {
+            if constrainedField.required {
+                return false;
+            }
+            continue;
+        }
+        string[]? configuredValues = fieldValueConstraints[fieldTag];
+        if configuredValues is () {
+            return false;
+        }
+        string[] allowedValues = configuredValues;
+        if allowedValues.indexOf(fields[fieldIndex].trim(), 0) is () {
+            return false;
+        }
+    }
+    return true;
 }
 
 # Ignores the given segment group schema if any of the below two conditions are satisfied.

@@ -100,6 +100,7 @@ public type EdiSegSchema record {|
     boolean truncatable = true;
     int minOccurances = 0;
     int maxOccurances = 1;
+    map<string[]> fieldValueConstraints?;
     EdiFieldSchema[] fields = [];
 |};
 

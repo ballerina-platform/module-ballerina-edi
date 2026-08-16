@@ -120,6 +120,81 @@ function testQualifierDiscriminationFirstOccurrenceLimitation() returns error? {
 }
 
 @test:Config
+function testQualifierBasedSegmentDiscriminationWithoutOptionalSegment() returns error? {
+    json schemaJson = check io:fileReadJson("tests/resources/qualifier-segment-discrimination/schema.json");
+    EdiSchema schema = check getSchema(schemaJson);
+    string ediText = check io:fileReadString(
+        "tests/resources/qualifier-segment-discrimination/message_without_policy.edi");
+    json result = check fromEdiString(ediText, schema);
+    map<json> resultMap = check result.cloneWithType();
+
+    test:assertEquals(check result.MemberLevelDetail.employmentStatus, "FT");
+    test:assertEquals(check result.MemberLevelDetail.handicapIndicator, "N");
+    test:assertFalse(resultMap.hasKey("MemberPolicyNumber"),
+        "REF*17 must not be assigned to the optional member policy segment");
+    test:assertEquals(check result.SubscriberIdentifier.qualifier, "0F");
+    json supplemental = check result.MemberSupplementalIdentifier;
+    test:assertTrue(supplemental is json[]);
+    json[] supplementalIdentifiers = <json[]>supplemental;
+    test:assertEquals(supplementalIdentifiers.length(), 2);
+    test:assertEquals(check supplementalIdentifiers[0].qualifier, "17");
+    test:assertEquals(check supplementalIdentifiers[1].qualifier, "DX");
+}
+
+@test:Config
+function testQualifierBasedSegmentDiscriminationWithOptionalSegment() returns error? {
+    json schemaJson = check io:fileReadJson("tests/resources/qualifier-segment-discrimination/schema.json");
+    EdiSchema schema = check getSchema(schemaJson);
+    string ediText = check io:fileReadString(
+        "tests/resources/qualifier-segment-discrimination/message_with_policy.edi");
+    json result = check fromEdiString(ediText, schema);
+
+    test:assertEquals(check result.SubscriberIdentifier.qualifier, "0F");
+    test:assertEquals(check result.MemberPolicyNumber.qualifier, "1L");
+    test:assertEquals(check result.MemberPolicyNumber.identifier, "373");
+    json supplemental = check result.MemberSupplementalIdentifier;
+    test:assertTrue(supplemental is json[]);
+    json[] supplementalIdentifiers = <json[]>supplemental;
+    test:assertEquals(supplementalIdentifiers.length(), 3);
+    test:assertEquals(check supplementalIdentifiers[0].qualifier, "17");
+    test:assertEquals(check supplementalIdentifiers[1].qualifier, "23");
+    test:assertEquals(check supplementalIdentifiers[2].qualifier, "DX");
+}
+
+@test:Config
+function testWriterRejectsSegmentQualifierConstraintViolation() returns error? {
+    json schemaJson = check io:fileReadJson("tests/resources/qualifier-segment-discrimination/schema.json");
+    EdiSchema schema = check getSchema(schemaJson);
+    json invalidMessage = {
+        MemberLevelDetail: {
+            code: "INS", memberIndicator: "Y", relationship: "18", maintenanceType: "030",
+            maintenanceReason: "XN", benefitStatus: "A", employmentStatus: "FT", handicapIndicator: "N"
+        },
+        SubscriberIdentifier: {code: "REF", qualifier: "0F", identifier: "110011113"},
+        MemberPolicyNumber: {code: "REF", qualifier: "17", identifier: "Bargained"}
+    };
+
+    string|Error result = toEdiString(invalidMessage, schema);
+    test:assertTrue(result is Error, "The writer must reject qualifier 17 for MemberPolicyNumber");
+}
+
+@test:Config
+function testWriterAllowsEmptyOptionalConstrainedFields() returns error? {
+    json schemaJson = check io:fileReadJson("tests/resources/qualifier-segment-discrimination/schema.json");
+    EdiSchema schema = check getSchema(schemaJson);
+    json message = {
+        MemberLevelDetail: {
+            code: "INS", memberIndicator: "Y", relationship: "18", maintenanceType: "030",
+            maintenanceReason: "XN", benefitStatus: "A", employmentStatus: "FT", handicapIndicator: "N"
+        },
+        SubscriberIdentifier: {code: "REF", qualifier: "0F", identifier: "000000001"}
+    };
+
+    string ediText = check toEdiString(message, schema);
+    test:assertEquals(ediText, "INS*Y*18*030*XN*A***FT**N~\nREF*0F*000000001~\n");
+}
+
+@test:Config
 function testDenormalization() returns error? {
     json schemaJson = check io:fileReadJson("tests/resources/denormalization/normalized_schema.json");
     EdiSchema schema = check getSchema(schemaJson);

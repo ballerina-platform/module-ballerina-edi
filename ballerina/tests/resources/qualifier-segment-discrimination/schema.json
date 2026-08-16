@@ -1,0 +1,79 @@
+{
+  "name": "Loop2000RefTest",
+  "delimiters": {
+    "segment": "~",
+    "field": "*",
+    "component": ":"
+  },
+  "preserveEmptyFields": false,
+  "includeSegmentCode": true,
+  "segments": [
+    {
+      "code": "INS",
+      "tag": "MemberLevelDetail",
+      "minOccurances": 1,
+      "maxOccurances": 1,
+      "fieldValueConstraints": {
+        "memberIndicator": ["Y", "N"],
+        "relationship": ["18"],
+        "maintenanceType": ["030"],
+        "maintenanceReason": ["XN"],
+        "benefitStatus": ["A"],
+        "medicareStatus": ["A"],
+        "cobraEvent": ["1"],
+        "employmentStatus": ["FT"],
+        "studentStatus": ["F"],
+        "handicapIndicator": ["Y", "N"]
+      },
+      "fields": [
+        {"tag": "code"},
+        {"tag": "memberIndicator", "required": true},
+        {"tag": "relationship", "required": true},
+        {"tag": "maintenanceType", "required": true},
+        {"tag": "maintenanceReason"},
+        {"tag": "benefitStatus", "required": true},
+        {"tag": "medicareStatus"},
+        {"tag": "cobraEvent"},
+        {"tag": "employmentStatus"},
+        {"tag": "studentStatus"},
+        {"tag": "handicapIndicator"}
+      ]
+    },
+    {
+      "code": "REF",
+      "tag": "SubscriberIdentifier",
+      "minOccurances": 1,
+      "maxOccurances": 1,
+      "fieldValueConstraints": {"qualifier": ["0F"]},
+      "fields": [
+        {"tag": "code"},
+        {"tag": "qualifier", "required": true},
+        {"tag": "identifier", "required": true}
+      ]
+    },
+    {
+      "code": "REF",
+      "tag": "MemberPolicyNumber",
+      "minOccurances": 0,
+      "maxOccurances": 1,
+      "fieldValueConstraints": {"qualifier": ["1L"]},
+      "fields": [
+        {"tag": "code"},
+        {"tag": "qualifier", "required": true},
+        {"tag": "identifier", "required": true}
+      ]
+    },
+    {
+      "code": "REF",
+      "tag": "MemberSupplementalIdentifier",
+      "minOccurances": 0,
+      "maxOccurances": 13,
+      "fieldValueConstraints": {"qualifier": ["17", "23", "DX"]},
+      "fields": [
+        {"tag": "code"},
+        {"tag": "qualifier", "required": true},
+        {"tag": "identifier", "required": true}
+      ]
+    }
+  ]
+}

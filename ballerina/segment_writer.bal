@@ -15,6 +15,43 @@
 // under the License.
 
 isolated function writeSegment(map<json> seg, EdiSegSchema segMap, EdiContext context) returns Error? {
+    map<string[]>? fieldValueConstraints = segMap.fieldValueConstraints;
+    if fieldValueConstraints is map<string[]> {
+        foreach string fieldTag in fieldValueConstraints.keys() {
+            EdiFieldSchema? constrainedField = ();
+            foreach EdiFieldSchema fieldSchema in segMap.fields {
+                if fieldSchema.tag == fieldTag {
+                    constrainedField = fieldSchema;
+                    break;
+                }
+            }
+            if constrainedField is () {
+                return error Error(string `Field-value constraint refers to an unknown field.
+                    Segment: ${segMap.tag}, Field: ${fieldTag}`);
+            }
+            if !seg.hasKey(fieldTag) {
+                if !constrainedField.required {
+                    continue;
+                }
+                return error Error(string `Field constrained by the segment schema is not found in the input.
+                    Segment: ${segMap.tag}, Field: ${fieldTag}`);
+            }
+            json fieldValue = seg.get(fieldTag);
+            if fieldValue.toString() == "" && !constrainedField.required {
+                continue;
+            }
+            string[]? configuredValues = fieldValueConstraints[fieldTag];
+            if configuredValues is () {
+                return error Error(string `Field-value constraint is not valid. Segment: ${segMap.tag}, Field: ${fieldTag}`);
+            }
+            string[] allowedValues = configuredValues;
+            if allowedValues.indexOf(fieldValue.toString(), 0) is () {
+                return error Error(string `Input field value does not match the values allowed by the segment schema.
+                    Segment: ${segMap.tag}, Field: ${fieldTag}, Input value: ${fieldValue.toString()},
+                    Allowed values: ${allowedValues.toString()}`);
+            }
+        }
+    }
     string fd = context.schema.delimiters.'field;
     // string segLine = context.schema.includeSegmentCode? "" : segMap.code;
     string segLine = segMap.code;

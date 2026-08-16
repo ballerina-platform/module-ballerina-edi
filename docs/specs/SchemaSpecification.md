@@ -119,6 +119,7 @@ Each segment entry includes:
 - **`minOccurances`** *(default `0`)* — minimum required occurrences.
 - **`maxOccurances`** *(default `1`, `-1` = unlimited)* — maximum occurrences.
 - **`truncatable`** *(default `true`)* — when `true`, trailing fields may be omitted in the input as long as all required fields up to that point are present.
+- **`fieldValueConstraints`** *(optional)* — maps field tags to allowed string values. The parser uses these constraints to distinguish adjacent schemas that share a segment code, and the writer rejects values outside the configured set.
 - **`fields`** — array of field definitions within the segment.
 
 **Example:**
@@ -134,6 +135,24 @@ Each segment entry includes:
         {"tag": "orderId", "required": true},
         {"tag": "organization"},
         {"tag": "date"}
+    ]
+}
+```
+
+For example, X12 transaction sets may use several adjacent `REF` segments whose qualifier in `REF01`
+determines their meaning. Constraints let the parser skip an optional `REF*1L` schema when the input
+contains `REF*17` instead:
+
+```json
+{
+    "code": "REF",
+    "tag": "MemberPolicyNumber",
+    "minOccurances": 0,
+    "fieldValueConstraints": {"qualifier": ["1L"]},
+    "fields": [
+        {"tag": "code"},
+        {"tag": "qualifier", "required": true},
+        {"tag": "identifier", "required": true}
     ]
 }
 ```
