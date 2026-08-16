@@ -37,7 +37,8 @@ isolated function writeSegment(map<json> seg, EdiSegSchema segMap, EdiContext co
                     Segment: ${segMap.tag}, Field: ${fieldTag}`);
             }
             json fieldValue = seg.get(fieldTag);
-            if fieldValue.toString() == "" && !constrainedField.required {
+            string normalizedFieldValue = fieldValue.toString().trim();
+            if normalizedFieldValue == "" && !constrainedField.required {
                 continue;
             }
             string[]? configuredValues = fieldValueConstraints[fieldTag];
@@ -45,7 +46,7 @@ isolated function writeSegment(map<json> seg, EdiSegSchema segMap, EdiContext co
                 return error Error(string `Field-value constraint is not valid. Segment: ${segMap.tag}, Field: ${fieldTag}`);
             }
             string[] allowedValues = configuredValues;
-            if allowedValues.indexOf(fieldValue.toString(), 0) is () {
+            if allowedValues.indexOf(normalizedFieldValue, 0) is () {
                 return error Error(string `Input field value does not match the values allowed by the segment schema.
                     Segment: ${segMap.tag}, Field: ${fieldTag}, Input value: ${fieldValue.toString()},
                     Allowed values: ${allowedValues.toString()}`);

@@ -195,6 +195,24 @@ function testWriterAllowsEmptyOptionalConstrainedFields() returns error? {
 }
 
 @test:Config
+function testWriterNormalizesConstrainedValuesForValidation() returns error? {
+    json schemaJson = check io:fileReadJson("tests/resources/qualifier-segment-discrimination/schema.json");
+    EdiSchema schema = check getSchema(schemaJson);
+    json message = {
+        MemberLevelDetail: {
+            code: "INS", memberIndicator: "Y", relationship: "18", maintenanceType: "030",
+            maintenanceReason: "XN", benefitStatus: "A", medicareStatus: "   ", employmentStatus: "FT",
+            handicapIndicator: "N"
+        },
+        SubscriberIdentifier: {code: "REF", qualifier: " 0F ", identifier: "000000001"}
+    };
+
+    string|Error result = toEdiString(message, schema);
+    test:assertTrue(result is string,
+        "Writer validation should trim constrained values consistently with parser matching");
+}
+
+@test:Config
 function testDenormalization() returns error? {
     json schemaJson = check io:fileReadJson("tests/resources/denormalization/normalized_schema.json");
     EdiSchema schema = check getSchema(schemaJson);
