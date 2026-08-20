@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-08-03
+
 ### Added
 - [Add tiered EDI envelope parsing and serialization API, with typed envelope records and a typed error hierarchy (BEP-1441)](https://github.com/ballerina-platform/ballerina-spec/issues/1441)
 
@@ -13,8 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Fix `convertToType` corrupting numeric values when `decimalSeparator` is a regex metacharacter](https://github.com/ballerina-platform/ballerina-library/issues/8771)
 - [Fix ISA02/ISA04 space-padded values incorrectly failing required field validation](https://github.com/ballerina-platform/ballerina-library/issues/8834)
 - [Fix EDI parser incorrectly matches repeatable segment groups](https://github.com/ballerina-platform/ballerina-library/issues/8862)
+- [Fix parsing of multiple ST/SE transaction sets within a single GS/GE functional group](https://github.com/ballerina-platform/ballerina-library/issues/8860)
 
-## [1.5.4]
+## [1.5.5] - 2026-07-02
+
+### Fixed
+- [Fix EDI parser incorrectly matches repeatable segment groups](https://github.com/ballerina-platform/ballerina-library/issues/8862)
+- [Fix parsing of multiple ST/SE transaction sets within a single GS/GE functional group](https://github.com/ballerina-platform/ballerina-library/issues/8860)
+
+## [1.5.4] - 2026-06-23
 
 ### Fixed
 

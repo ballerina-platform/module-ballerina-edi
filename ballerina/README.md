@@ -26,12 +26,15 @@ The fastest path is to generate a typed parser from an EDIFACT or X12 spec using
 
 ### Step 1: Generate a parser from a spec
 
-Run the following from your Ballerina package to generate the records and parser functions into its default module:
+Download the release archive for the required EDIFACT version from the [UN/EDIFACT directory
+downloads](https://unece.org/trade/uncefact/unedifact/download), then run the following from your
+Ballerina package to generate the records and parser functions into its default module:
 
 ```bash
 # 1. Convert the EDIFACT D03A ORDERS spec into a Ballerina EDI schema.
+#    -i is the downloaded archive (or a directory it was extracted to).
 #    -o is a directory; the schema is written to resources/ORDERS.json (named after the message type).
-bal edi convertEdifactSchema -v d03a -t ORDERS -o resources
+bal edi convertEdifactSchema -v d03a -t ORDERS -i d03a.zip -o resources
 
 # 2. Generate Ballerina records and parser functions into the default module
 bal edi codegen -i resources/ORDERS.json -o orders.bal
