@@ -1,0 +1,3 @@
+[workspace]
+title = "edi-acknowledgement"
+packages = ["edi_acknowledgement", "orders_parser", "aperak_parser"]

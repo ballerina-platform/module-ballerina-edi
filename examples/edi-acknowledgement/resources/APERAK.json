@@ -1,0 +1,1108 @@
+{
+    "name": "APERAK",
+    "ignoreSegments": [
+        "UNA"
+    ],
+    "delimiters": {
+        "segment": "'",
+        "field": "+",
+        "component": ":",
+        "repetition": "*",
+        "decimalSeparator": ","
+    },
+    "envelope": {
+        "interchange": {
+            "header": [
+                {
+                    "ref": "UNB",
+                    "tag": "interchange_header",
+                    "minOccurances": 1,
+                    "maxOccurances": 1
+                }
+            ],
+            "trailer": [
+                {
+                    "ref": "UNZ",
+                    "tag": "interchange_trailer",
+                    "minOccurances": 1,
+                    "maxOccurances": 1
+                }
+            ]
+        },
+        "transaction": {
+            "header": [
+                {
+                    "ref": "UNH",
+                    "tag": "Message_header",
+                    "minOccurances": 1,
+                    "maxOccurances": 1
+                }
+            ],
+            "trailer": [
+                {
+                    "ref": "UNT",
+                    "tag": "Message_trailer",
+                    "minOccurances": 1,
+                    "maxOccurances": 1
+                }
+            ]
+        }
+    },
+    "segments": [
+        {
+            "ref": "BGM",
+            "tag": "Beginning_of_message",
+            "minOccurances": 1,
+            "maxOccurances": 1
+        },
+        {
+            "ref": "DTM",
+            "tag": "Date_time_period",
+            "maxOccurances": 9
+        },
+        {
+            "ref": "FTX",
+            "tag": "Free_text",
+            "maxOccurances": 9
+        },
+        {
+            "ref": "CNT",
+            "tag": "Control_total",
+            "maxOccurances": 9
+        },
+        {
+            "tag": "group_1",
+            "maxOccurances": 99,
+            "segments": [
+                {
+                    "ref": "DOC",
+                    "tag": "Document_message_details",
+                    "minOccurances": 1,
+                    "maxOccurances": 1
+                },
+                {
+                    "ref": "DTM",
+                    "tag": "Date_time_period",
+                    "maxOccurances": 99
+                }
+            ]
+        },
+        {
+            "tag": "group_2",
+            "maxOccurances": 9,
+            "segments": [
+                {
+                    "ref": "RFF",
+                    "tag": "Reference",
+                    "minOccurances": 1,
+                    "maxOccurances": 1
+                },
+                {
+                    "ref": "DTM",
+                    "tag": "Date_time_period",
+                    "maxOccurances": 9
+                }
+            ]
+        },
+        {
+            "tag": "group_3",
+            "maxOccurances": 9,
+            "segments": [
+                {
+                    "ref": "NAD",
+                    "tag": "Name_and_address",
+                    "minOccurances": 1,
+                    "maxOccurances": 1
+                },
+                {
+                    "ref": "CTA",
+                    "tag": "Contact_information",
+                    "maxOccurances": 9
+                },
+                {
+                    "ref": "COM",
+                    "tag": "Communication_contact",
+                    "maxOccurances": 9
+                }
+            ]
+        },
+        {
+            "tag": "group_4",
+            "maxOccurances": 99999,
+            "segments": [
+                {
+                    "ref": "ERC",
+                    "tag": "Application_error_information",
+                    "minOccurances": 1,
+                    "maxOccurances": 1
+                },
+                {
+                    "ref": "FTX",
+                    "tag": "Free_text",
+                    "maxOccurances": 1
+                },
+                {
+                    "tag": "group_5",
+                    "maxOccurances": 9,
+                    "segments": [
+                        {
+                            "ref": "RFF",
+                            "tag": "Reference",
+                            "minOccurances": 1,
+                            "maxOccurances": 1
+                        },
+                        {
+                            "ref": "FTX",
+                            "tag": "Free_text",
+                            "maxOccurances": 9
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "segmentDefinitions": {
+        "UNH": {
+            "code": "UNH",
+            "tag": "message_header",
+            "fields": [
+                {
+                    "tag": "code",
+                    "required": true,
+                    "repeat": false
+                },
+                {
+                    "tag": "message_reference_number",
+                    "dataType": "string",
+                    "required": true,
+                    "repeat": false
+                },
+                {
+                    "tag": "message_identifier",
+                    "dataType": "composite",
+                    "required": true,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "message_type",
+                            "required": true,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "message_version_number",
+                            "required": true,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "message_release_number",
+                            "required": true,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "controlling_agency",
+                            "required": true,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "association_assigned_code",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "code_list_directory_version",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "message_type_sub_function",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                }
+            ]
+        },
+        "BGM": {
+            "code": "BGM",
+            "tag": "Beginning_of_message",
+            "fields": [
+                {
+                    "tag": "code",
+                    "required": true,
+                    "repeat": false
+                },
+                {
+                    "tag": "DOCUMENT_MESSAGE_NAME",
+                    "dataType": "composite",
+                    "required": false,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "Document_name_code",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Code_list_identification_code",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Code_list_responsible_agency_code",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Document_name",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                },
+                {
+                    "tag": "DOCUMENT_MESSAGE_IDENTIFICATION",
+                    "dataType": "composite",
+                    "required": false,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "Document_identifier",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Version_identifier",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Revision_identifier",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                },
+                {
+                    "tag": "MESSAGE_FUNCTION_CODE",
+                    "dataType": "string",
+                    "required": false,
+                    "repeat": false,
+                    "components": []
+                },
+                {
+                    "tag": "RESPONSE_TYPE_CODE",
+                    "dataType": "string",
+                    "required": false,
+                    "repeat": false,
+                    "components": []
+                }
+            ]
+        },
+        "DTM": {
+            "code": "DTM",
+            "tag": "Date_time_period",
+            "fields": [
+                {
+                    "tag": "code",
+                    "required": true,
+                    "repeat": false
+                },
+                {
+                    "tag": "DATE_TIME_PERIOD",
+                    "dataType": "composite",
+                    "required": false,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "Date_or_time_or_period",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Date_or_time_or_period_text",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Date_or_time_or_period_format_code",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                }
+            ]
+        },
+        "FTX": {
+            "code": "FTX",
+            "tag": "Free_text",
+            "fields": [
+                {
+                    "tag": "code",
+                    "required": true,
+                    "repeat": false
+                },
+                {
+                    "tag": "TEXT_SUBJECT_CODE_QUALIFIER",
+                    "dataType": "string",
+                    "required": false,
+                    "repeat": false,
+                    "components": []
+                },
+                {
+                    "tag": "FREE_TEXT_FUNCTION_CODE",
+                    "dataType": "string",
+                    "required": false,
+                    "repeat": false,
+                    "components": []
+                },
+                {
+                    "tag": "TEXT_REFERENCE",
+                    "dataType": "composite",
+                    "required": false,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "Free_text_description_code",
+                            "required": true,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Code_list_identification_code",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Code_list_responsible_agency_code",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                },
+                {
+                    "tag": "TEXT_LITERAL",
+                    "dataType": "composite",
+                    "required": false,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "Free_text",
+                            "required": true,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Free_text_1",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Free_text_2",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Free_text_3",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Free_text_4",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                },
+                {
+                    "tag": "LANGUAGE_NAME_CODE",
+                    "dataType": "string",
+                    "required": false,
+                    "repeat": false,
+                    "components": []
+                },
+                {
+                    "tag": "FREE_TEXT_FORMAT_CODE",
+                    "dataType": "string",
+                    "required": false,
+                    "repeat": false,
+                    "components": []
+                }
+            ]
+        },
+        "CNT": {
+            "code": "CNT",
+            "tag": "Control_total",
+            "fields": [
+                {
+                    "tag": "code",
+                    "required": true,
+                    "repeat": false
+                },
+                {
+                    "tag": "CONTROL",
+                    "dataType": "composite",
+                    "required": false,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "Control_total_type_code_qualifier",
+                            "required": true,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Control_total_quantity",
+                            "required": true,
+                            "dataType": "int"
+                        },
+                        {
+                            "tag": "Measurement_unit_code",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                }
+            ]
+        },
+        "DOC": {
+            "code": "DOC",
+            "tag": "Document_message_details",
+            "fields": [
+                {
+                    "tag": "code",
+                    "required": true,
+                    "repeat": false
+                },
+                {
+                    "tag": "DOCUMENT_MESSAGE_NAME",
+                    "dataType": "composite",
+                    "required": false,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "Document_name_code",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Code_list_identification_code",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Code_list_responsible_agency_code",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Document_name",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                },
+                {
+                    "tag": "DOCUMENT_MESSAGE_DETAILS",
+                    "dataType": "composite",
+                    "required": false,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "Document_identifier",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Document_status_code",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Document_source_description",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Language_name_code",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Version_identifier",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Revision_identifier",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                },
+                {
+                    "tag": "COMMUNICATION_MEDIUM_TYPE_CODE",
+                    "dataType": "string",
+                    "required": false,
+                    "repeat": false,
+                    "components": []
+                },
+                {
+                    "tag": "DOCUMENT_COPIES_REQUIRED_QUANTITY",
+                    "dataType": "int",
+                    "required": false,
+                    "repeat": false,
+                    "components": []
+                },
+                {
+                    "tag": "DOCUMENT_ORIGINALS_REQUIRED_QUANTITY",
+                    "dataType": "int",
+                    "required": false,
+                    "repeat": false,
+                    "components": []
+                }
+            ]
+        },
+        "RFF": {
+            "code": "RFF",
+            "tag": "Reference",
+            "fields": [
+                {
+                    "tag": "code",
+                    "required": true,
+                    "repeat": false
+                },
+                {
+                    "tag": "REFERENCE",
+                    "dataType": "composite",
+                    "required": false,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "Reference_code_qualifier",
+                            "required": true,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Reference_identifier",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Document_line_identifier",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Reference_version_identifier",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Revision_identifier",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                }
+            ]
+        },
+        "NAD": {
+            "code": "NAD",
+            "tag": "Name_and_address",
+            "fields": [
+                {
+                    "tag": "code",
+                    "required": true,
+                    "repeat": false
+                },
+                {
+                    "tag": "PARTY_FUNCTION_CODE_QUALIFIER",
+                    "dataType": "string",
+                    "required": false,
+                    "repeat": false,
+                    "components": []
+                },
+                {
+                    "tag": "PARTY_IDENTIFICATION_DETAILS",
+                    "dataType": "composite",
+                    "required": false,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "Party_identifier",
+                            "required": true,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Code_list_identification_code",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Code_list_responsible_agency_code",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                },
+                {
+                    "tag": "NAME_AND_ADDRESS",
+                    "dataType": "composite",
+                    "required": false,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "Name_and_address_description",
+                            "required": true,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Name_and_address_description_1",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Name_and_address_description_2",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Name_and_address_description_3",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Name_and_address_description_4",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                },
+                {
+                    "tag": "PARTY_NAME",
+                    "dataType": "composite",
+                    "required": false,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "Party_name",
+                            "required": true,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Party_name_1",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Party_name_2",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Party_name_3",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Party_name_4",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Party_name_format_code",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                },
+                {
+                    "tag": "STREET",
+                    "dataType": "composite",
+                    "required": false,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "Street_and_number_or_post_office_box_identifier",
+                            "required": true,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Street_and_number_or_post_office_box_identifier_1",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Street_and_number_or_post_office_box_identifier_2",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Street_and_number_or_post_office_box_identifier_3",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                },
+                {
+                    "tag": "CITY_NAME",
+                    "dataType": "string",
+                    "required": false,
+                    "repeat": false,
+                    "components": []
+                },
+                {
+                    "tag": "COUNTRY_SUB_ENTITY_DETAILS",
+                    "dataType": "composite",
+                    "required": false,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "Country_sub_entity_name_code",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Code_list_identification_code",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Code_list_responsible_agency_code",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Country_sub_entity_name",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                },
+                {
+                    "tag": "POSTAL_IDENTIFICATION_CODE",
+                    "dataType": "string",
+                    "required": false,
+                    "repeat": false,
+                    "components": []
+                },
+                {
+                    "tag": "COUNTRY_NAME_CODE",
+                    "dataType": "string",
+                    "required": false,
+                    "repeat": false,
+                    "components": []
+                }
+            ]
+        },
+        "CTA": {
+            "code": "CTA",
+            "tag": "Contact_information",
+            "fields": [
+                {
+                    "tag": "code",
+                    "required": true,
+                    "repeat": false
+                },
+                {
+                    "tag": "CONTACT_FUNCTION_CODE",
+                    "dataType": "string",
+                    "required": false,
+                    "repeat": false,
+                    "components": []
+                },
+                {
+                    "tag": "DEPARTMENT_OR_EMPLOYEE_DETAILS",
+                    "dataType": "composite",
+                    "required": false,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "Department_or_employee_name_code",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Department_or_employee_name",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                }
+            ]
+        },
+        "COM": {
+            "code": "COM",
+            "tag": "Communication_contact",
+            "fields": [
+                {
+                    "tag": "code",
+                    "required": true,
+                    "repeat": false
+                },
+                {
+                    "tag": "COMMUNICATION_CONTACT",
+                    "dataType": "composite",
+                    "required": false,
+                    "repeat": true,
+                    "components": [
+                        {
+                            "tag": "Communication_address_identifier",
+                            "required": true,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Communication_address_code_qualifier",
+                            "required": true,
+                            "dataType": "string"
+                        }
+                    ]
+                }
+            ]
+        },
+        "ERC": {
+            "code": "ERC",
+            "tag": "Application_error_information",
+            "fields": [
+                {
+                    "tag": "code",
+                    "required": true,
+                    "repeat": false
+                },
+                {
+                    "tag": "APPLICATION_ERROR_DETAIL",
+                    "dataType": "composite",
+                    "required": false,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "Application_error_code",
+                            "required": true,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Code_list_identification_code",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "Code_list_responsible_agency_code",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                }
+            ]
+        },
+        "UNT": {
+            "code": "UNT",
+            "tag": "message_trailer",
+            "fields": [
+                {
+                    "tag": "code",
+                    "required": true,
+                    "repeat": false
+                },
+                {
+                    "tag": "number_of_segments",
+                    "dataType": "int",
+                    "required": true,
+                    "repeat": false
+                },
+                {
+                    "tag": "message_reference_number",
+                    "dataType": "string",
+                    "required": true,
+                    "repeat": false
+                }
+            ]
+        },
+        "UNB": {
+            "code": "UNB",
+            "tag": "interchange_header",
+            "fields": [
+                {
+                    "tag": "code",
+                    "required": true,
+                    "repeat": false
+                },
+                {
+                    "tag": "syntax_identifier",
+                    "dataType": "composite",
+                    "required": true,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "syntax_id",
+                            "required": true,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "syntax_version",
+                            "required": true,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "service_code_list_directory_version",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "character_encoding",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                },
+                {
+                    "tag": "sender",
+                    "dataType": "composite",
+                    "required": true,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "id",
+                            "required": true,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "qualifier",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "internal_id",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "internal_sub_id",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                },
+                {
+                    "tag": "recipient",
+                    "dataType": "composite",
+                    "required": true,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "id",
+                            "required": true,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "qualifier",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "internal_id",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "internal_sub_id",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                },
+                {
+                    "tag": "date_and_time",
+                    "dataType": "composite",
+                    "required": true,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "date",
+                            "required": true,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "time",
+                            "required": true,
+                            "dataType": "string"
+                        }
+                    ]
+                },
+                {
+                    "tag": "control_reference",
+                    "dataType": "string",
+                    "required": true,
+                    "repeat": false
+                },
+                {
+                    "tag": "recipient_reference_password",
+                    "dataType": "composite",
+                    "required": false,
+                    "repeat": false,
+                    "components": [
+                        {
+                            "tag": "reference_password",
+                            "required": false,
+                            "dataType": "string"
+                        },
+                        {
+                            "tag": "qualifier",
+                            "required": false,
+                            "dataType": "string"
+                        }
+                    ]
+                },
+                {
+                    "tag": "application_reference",
+                    "dataType": "string",
+                    "required": false,
+                    "repeat": false
+                },
+                {
+                    "tag": "processing_priority_code",
+                    "dataType": "string",
+                    "required": false,
+                    "repeat": false
+                },
+                {
+                    "tag": "acknowledgement_request",
+                    "dataType": "string",
+                    "required": false,
+                    "repeat": false
+                },
+                {
+                    "tag": "communications_agreement_id",
+                    "dataType": "string",
+                    "required": false,
+                    "repeat": false
+                },
+                {
+                    "tag": "test_indicator",
+                    "dataType": "string",
+                    "required": false,
+                    "repeat": false
+                }
+            ]
+        },
+        "UNZ": {
+            "code": "UNZ",
+            "tag": "interchange_trailer",
+            "fields": [
+                {
+                    "tag": "code",
+                    "required": true,
+                    "repeat": false
+                },
+                {
+                    "tag": "interchange_control_count",
+                    "dataType": "int",
+                    "required": true,
+                    "repeat": false
+                },
+                {
+                    "tag": "interchange_control_reference",
+                    "dataType": "string",
+                    "required": true,
+                    "repeat": false
+                }
+            ]
+        }
+    }
+}

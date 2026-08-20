@@ -153,6 +153,7 @@ The [`examples`](https://github.com/ballerina-platform/module-ballerina-edi/tree
 - [Vendor router](https://github.com/ballerina-platform/module-ballerina-edi/tree/main/examples/edi-vendor-router) — schema-free header inspection to route inbound messages by trading partner.
 - [Parser to Kafka](https://github.com/ballerina-platform/module-ballerina-edi/tree/main/examples/edi-parser-to-kafka) — parse an interchange with fail-safe per-transaction bodies, forward good transactions to Kafka, and quarantine the rest.
 - [Order generator](https://github.com/ballerina-platform/module-ballerina-edi/tree/main/examples/edi-order-generator) — build and serialize a full interchange with `interchangeToEdiString`, including a parse/serialize round-trip.
+- [Acknowledgement](https://github.com/ballerina-platform/module-ballerina-edi/tree/main/examples/edi-acknowledgement) — reply to an inbound interchange with an EDIFACT `APERAK` naming the orders that were read and the messages that were not.
 
 ## Documentation
 
