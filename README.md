@@ -75,9 +75,16 @@ public function main() returns error? {
 
 ### EDIFACT — prebuilt packages
 
-For common UN/EDIFACT D03A message types you do not need to generate anything: import a ready-made
-package from the `ballerinax` organization and call its `fromEdiString` / `toEdiString` functions
-directly. Each package groups related message types by business domain.
+For common UN/EDIFACT D03A message types you can parse a single message body without generating
+anything: import a ready-made package from the `ballerinax` organization and call its
+`fromEdiString` / `toEdiString` functions directly. Each package groups related message types by
+business domain.
+
+> **These packages predate the envelope-aware API.** They are published at `0.9.0`, and their bundled
+> schemas list `UNA`, `UNB`, `UNH`, `UNT`, and `UNZ` in `ignoreSegments` with no `envelope`
+> declaration. `fromEdiString` therefore parses a single message body and discards the interchange:
+> it cannot read the sender from `UNB`, and it fails on an interchange carrying more than one
+> message. Generate your own module (`codegen` or `libgen`) when you need envelope handling.
 
 | Package | Domain |
 |---------|--------|
