@@ -19,21 +19,21 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Get current date
         id: date
-        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+        run: echo "date=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
 
       - name: Get Repo Name
         id: repo_name
         run: |
           MODULE=${{ github.event.repository.name }}
-          echo "::set-output name=short_name::${MODULE##*-}"
+          echo "short_name=${MODULE##*-}" >> "$GITHUB_OUTPUT"
 
       - name: Trigger Workflow
         run: |
-          curl --request POST \
+          curl --request POST --fail --connect-timeout 10 --max-time 60 \
           'https://api.github.com/repos/ballerina-platform/ballerina-dev-website/dispatches' \
           -H 'Accept: application/vnd.github.v3+json' \
           -H 'Authorization: Bearer ${{ secrets.BALLERINA_BOT_TOKEN }}' \

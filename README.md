@@ -19,7 +19,7 @@ The Ballerina `edi` module provides schema-driven, envelope-aware conversion bet
 - **Full envelope hierarchy parsing** into typed `EdiInterchange` / `EdiFunctionalGroup` / `EdiTransaction` records, with a fail-safe per-transaction body — process what you can and quarantine what you can't.
 - **Transaction body parsing** into JSON or typed Ballerina records (X12, EDIFACT, or any custom format).
 - **Serialization** of JSON / records back to EDI text for outbound flows.
-- **Schema-driven** parsing from a JSON schema — either [generated from an X12 / EDIFACT spec](https://github.com/ballerina-platform/edi-tools) or [defined manually](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md) for partner-specific formats.
+- **Schema-driven** parsing from a JSON schema — either [generated from an X12 / EDIFACT spec](https://github.com/ballerina-platform/edi-tools) or [defined manually](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/spec/spec.md#7-schema-definition) for partner-specific formats.
 
 ## Setup
 
@@ -116,8 +116,8 @@ bal edi codegen -i resources/850-schema.json -o po.bal
 
 Most users call the generated functions rather than this module directly, but the module's public
 functions are available for advanced use. The table below is a cursory overview; see the
-[Module Specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md)
-for full signatures, parameters, error types, and envelope semantics.
+[specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/spec/spec.md) for error types and envelope processing semantics, and the
+[API docs](https://central.ballerina.io/ballerina/edi/latest) for signatures.
 
 | Function | Purpose |
 |----------|---------|
@@ -150,8 +150,7 @@ parser. A minimal schema looks like:
 }
 ```
 
-The [Schema Specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md)
-documents the full grammar — delimiters, segments and segment groups, fields / components /
+The [schema definition](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/spec/spec.md#7-schema-definition) section of the specification documents the full grammar — delimiters, segments and segment groups, fields / components /
 sub-components, the `envelope` declaration, and the additional configuration options.
 
 ## Examples
@@ -165,8 +164,7 @@ The [`examples`](https://github.com/ballerina-platform/module-ballerina-edi/tree
 
 ## Documentation
 
-- [Module Specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/ModuleSpecification.md) — the full API reference and envelope processing semantics.
-- [Schema Specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md) — the JSON grammar for EDI schemas.
+- [Specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/spec/spec.md) — envelope processing semantics, error types, and the JSON grammar for EDI schemas.
 - [edi-tools](https://github.com/ballerina-platform/edi-tools) — converting X12 / EDIFACT specs into schemas (`convertX12Schema` / `convertEdifactSchema`), generating typed parsers (`codegen`), and packaging schema families as libraries (`libgen`).
 
 ## Issues and projects
