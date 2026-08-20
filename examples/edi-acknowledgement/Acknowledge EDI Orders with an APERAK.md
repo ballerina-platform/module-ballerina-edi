@@ -45,6 +45,13 @@ edi-acknowledgement/
 └── resources/              # schemas, sample-data/, outbound/
 ```
 
+`ballerinax/edifact.d03a.supplychain` publishes both `mORDERS` and `mAPERAK`, but this example
+cannot use them: those packages are at `0.9.0`, generated before the envelope-aware API, and their
+schemas list `UNA`, `UNB`, `UNH`, `UNT`, and `UNZ` in `ignoreSegments` with no `envelope`
+declaration. Their `fromEdiString` reads one message body and discards the interchange, so it can
+neither split the inbound batch nor emit an envelope with recomputed counts — the two things this
+example is about.
+
 Both schemas come from the free UN/EDIFACT D03A directory. Download the release archive from the
 [UN/EDIFACT directory downloads](https://unece.org/trade/uncefact/unedifact/download) and regenerate
 them with:
