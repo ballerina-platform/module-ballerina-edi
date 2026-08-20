@@ -21,10 +21,14 @@ The result is a Ballerina module whose `interchangeFromEdiString`, `headersFromE
 ## Step 1 — Generate the base schema
 
 `edi-tools` converts a published EDIFACT version + message type into a Ballerina EDI schema with a
-populated `envelope` (interchange + transaction levels for EDIFACT; no functional group):
+populated `envelope` (interchange + transaction levels for EDIFACT; no functional group). Download
+the release archive for the required version from the [UN/EDIFACT directory
+downloads](https://unece.org/trade/uncefact/unedifact/download) and pass it with `-i`:
 
 ```bash
-bal edi convertEdifactSchema -v d03a -t ORDERS -o resources/ORDERS.json
+# -i is the downloaded archive (or a directory it was extracted to).
+# -o is a directory; the schema is written to resources/ORDERS.json (named after the message type).
+bal edi convertEdifactSchema -v d03a -t ORDERS -i d03a.zip -o resources
 ```
 
 ## Step 2 — Customise the schema
