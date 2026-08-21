@@ -35,12 +35,15 @@ The fastest path is to generate a typed parser from an EDIFACT or X12 spec using
 
 ### Step 1: Generate a parser from a spec
 
-Run the following from your Ballerina package to generate the records and parser functions into its default module:
+Download the release archive for the required EDIFACT version from the [UN/EDIFACT directory
+downloads](https://unece.org/trade/uncefact/unedifact/download), then run the following from your
+Ballerina package to generate the records and parser functions into its default module:
 
 ```bash
 # 1. Convert the EDIFACT D03A ORDERS spec into a Ballerina EDI schema.
+#    -i is the downloaded archive (or a directory it was extracted to).
 #    -o is a directory; the schema is written to resources/ORDERS.json (named after the message type).
-bal edi convertEdifactSchema -v d03a -t ORDERS -o resources
+bal edi convertEdifactSchema -v d03a -t ORDERS -i d03a.zip -o resources
 
 # 2. Generate Ballerina records and parser functions into the default module
 bal edi codegen -i resources/ORDERS.json -o orders.bal
@@ -73,8 +76,8 @@ public function main() returns error? {
 ### EDIFACT — prebuilt packages
 
 For common UN/EDIFACT D03A message types you do not need to generate anything: import a ready-made
-package from the `ballerinax` organization and call its `fromEdiString` / `toEdiString` functions
-directly. Each package groups related message types by business domain.
+package from the `ballerinax` organization and call its functions directly. Each package groups
+related message types by business domain.
 
 | Package | Domain |
 |---------|--------|
@@ -87,8 +90,11 @@ directly. Each package groups related message types by business domain.
 | [`ballerinax/edifact.d03a.supplychain`](https://central.ballerina.io/ballerinax/edifact.d03a.supplychain) | Purchase orders, order responses, delivery forecasts, inventory, despatch advices. |
 
 Each message type is available as a submodule (e.g. `finance.mINVOIC`, `supplychain.mORDERS`)
-exposing `fromEdiString` / `toEdiString`; each package's default module also provides
-`getEDINames()` to list its supported message types:
+exposing the same envelope-aware API as generated code — `fromEdiString` / `toEdiString` for a
+message body, and `headersFromEdiString`, `interchangeFromEdiString`, and `interchangeToEdiString`
+for the envelope — all over typed records. Each package's default module dispatches those same
+functions by message name, and adds `getEDINames()` and `hasEnvelope()`.
+
 
 ```ballerina
 import ballerina/io;
@@ -96,8 +102,11 @@ import ballerinax/edifact.d03a.finance.mINVOIC;
 
 public function main() returns error? {
     string ediText = check io:fileReadString("resources/invoice.edi");
-    mINVOIC:EDI_INVOIC_Invoice_message invoice = check mINVOIC:fromEdiString(ediText);
-    io:println(invoice);
+    mINVOIC:EDI_INVOIC_INVOICInterchange interchange = check mINVOIC:interchangeFromEdiString(ediText);
+    foreach mINVOIC:EDI_INVOIC_INVOICTransaction txn in interchange.transactions {
+        mINVOIC:EDI_INVOIC_INVOIC|error body = txn.body;
+        io:println(body is error ? "quarantined: " + body.message() : body.toString());
+    }
 }
 ```
 
