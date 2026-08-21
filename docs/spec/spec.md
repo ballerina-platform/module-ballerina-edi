@@ -68,7 +68,7 @@ The four schema-free functions know the X12 and EDIFACT envelope structures; eve
 
 ### 2.1. The EDI hierarchy
 
-An EDI file nests six levels:
+An EDI file is a nested structure:
 
 ```text
 EDI file
@@ -381,7 +381,7 @@ into this JSON:
 | Field | Default | Meaning |
 | --- | --- | --- |
 | `name` | — | Name of the schema. Code generation names the top-level record after it |
-| `tag` | `"Root_mapping"` | Tag of the root element in the parsed output |
+| `tag` | `"Root_mapping"` | Tag of the schema's root segment group. `fromEdiString` returns the segment map directly, so this does not appear in the parsed output |
 
 ### 7.2. Delimiters
 
