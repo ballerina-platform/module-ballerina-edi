@@ -29,37 +29,25 @@ The reply is written with `interchangeToEdiString`, which emits the envelope fro
 `EDI_APERAK_APERAKInterchange` and recomputes the `UNT` segment count and the `UNZ` interchange count, so
 neither has to be tracked by hand as errors are added.
 
-## Project layout
-
-Nothing is generated here. Both message types come from the prebuilt
+Nothing is generated here. Both message types are imported from the prebuilt
 [`ballerinax/edifact.d03a.supplychain`](https://central.ballerina.io/ballerinax/edifact.d03a.supplychain)
-package, so the example is a single Ballerina package with two imports:
+package, whose submodules expose the same envelope-aware API over typed records that `bal edi codegen`
+would have produced from the D03A schemas. Generate your own module when a trading partner deviates
+from the published specification — see [Build a Custom EDI Schema and Parser](../custom-edi-schema).
 
-```ballerina
-import ballerinax/edifact.d03a.supplychain.mAPERAK;
-import ballerinax/edifact.d03a.supplychain.mORDERS;
-```
+## Project layout
 
 ```text
 edi-acknowledgement/
-├── main.bal                # integration (orders in → APERAK out)
-└── resources/              # sample-data/, outbound/
+├── main.bal        # the integration (orders in → APERAK out)
+└── resources/      # sample-data/ (inbound) + outbound/ (the reply)
 ```
-
-Each submodule exposes the full envelope-aware API — `interchangeFromEdiString`,
-`interchangeToEdiString`, `headersFromEdiString`, `fromEdiString`, `toEdiString` — over typed
-records, so `mORDERS:EDI_ORDERS_ORDERSInterchange` and `mAPERAK:EDI_APERAK_APERAKInterchange` are
-the same shapes `bal edi codegen` would have produced from the D03A schemas.
-
-Reach for code generation when a trading partner deviates from the published specification, since the
-prebuilt packages track the standard exactly — see
-[Build a Custom EDI Schema and Parser](../custom-edi-schema) for that path.
 
 ## Prerequisites
 
-**Ballerina** — Swan Lake (2201.12.0 or later). The prebuilt EDIFACT package is resolved from
-Ballerina Central on the first build; nothing else is needed, since the example reads and writes
-local files.
+1. **Ballerina** — Swan Lake (2201.12.0 or later).
+2. **Nothing else** — the example reads and writes local files, and the prebuilt EDIFACT package is
+   resolved from Ballerina Central on the first build.
 
 ## Run the example
 
@@ -74,9 +62,9 @@ level=INFO message="Acknowledgement written" file="resources/outbound/acknowledg
 The inbound sample `resources/sample-data/order-batch.edi` holds three messages: `0001` and `0002`
 are well-formed orders, and `0003` is missing its mandatory `BGM` segment.
 
-## The acknowledgement
+## Testing
 
-`resources/outbound/acknowledgement.edi`, split a segment per line:
+Verify the reply the run wrote to `resources/outbound/acknowledgement.edi`, a segment per line:
 
 ```text
 UNB+UNOA:3+SUPPLIER456:14+SUPERMART:14+260820:1601+ACKREF2++APERAK'
@@ -98,12 +86,20 @@ UNZ+1+ACKREF2'
 The interchange sender and recipient are swapped from the inbound `UNB`: the receiver of the orders
 is the issuer of the acknowledgement.
 
-## Notes on the error codes
+## Configuration
+
+Both paths are `configurable`, so a `Config.toml` next to `main.bal` can point the example at real
+files without touching the code:
+
+```toml
+inboundFile = "resources/sample-data/order-batch.edi"
+outboundFile = "resources/outbound/acknowledgement.edi"
+```
 
 EDIFACT does not publish a code list for `ERC` application error codes — they are agreed between the
 trading partners. The example therefore sends the code with `ZZZ` (mutually defined) as the code list
-responsible agency, and puts the reason in the following `FTX`. Replace the code with whatever the
-partner agreement specifies.
+responsible agency, and puts the reason in the following `FTX`. Replace `ERROR_CODE_UNREADABLE` in
+`main.bal` with whatever the partner agreement specifies.
 
 The parse error is written as free text, so the integration collapses its line breaks, drops the
 characters EDIFACT reserves as delimiters, and truncates it to the component length before sending.

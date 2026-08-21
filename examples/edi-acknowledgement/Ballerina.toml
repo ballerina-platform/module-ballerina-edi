@@ -7,8 +7,3 @@ title = "edi-acknowledgement"
 
 [build-options]
 sticky = true
-
-[[dependency]]
-org="ballerina"
-name="edi"
-version="1.6.0"
