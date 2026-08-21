@@ -20,11 +20,11 @@ import ballerina/io;
 import ballerina/log;
 import ballerina/time;
 
-import wso2/aperak_parser;
-import wso2/orders_parser;
+import ballerinax/edifact.d03a.supplychain.mAPERAK;
+import ballerinax/edifact.d03a.supplychain.mORDERS;
 
-configurable string inboundFile = "../resources/sample-data/order-batch.edi";
-configurable string outboundFile = "../resources/outbound/acknowledgement.edi";
+configurable string inboundFile = "resources/sample-data/order-batch.edi";
+configurable string outboundFile = "resources/outbound/acknowledgement.edi";
 
 // EDIFACT leaves ERC application error codes to the trading partners, so the code list
 // responsible agency is "ZZZ" (mutually defined) rather than a UN code list.
@@ -40,15 +40,15 @@ public function main() returns error? {
 
     // 1. Read the inbound interchange. Bodies are fail-safe: a message the schema cannot
     // read leaves its error on that transaction, and the rest of the batch still arrives.
-    orders_parser:ORDERSInterchange orders = check orders_parser:interchangeFromEdiString(ediText);
+    mORDERS:EDI_ORDERS_ORDERSInterchange orders = check mORDERS:interchangeFromEdiString(ediText);
 
     // 2. Acknowledge what was read, and report what was not, in a single APERAK.
-    aperak_parser:APERAKInterchange ack = buildAcknowledgement(orders);
-    string ackText = check aperak_parser:interchangeToEdiString(ack);
+    mAPERAK:EDI_APERAK_APERAKInterchange ack = buildAcknowledgement(orders);
+    string ackText = check mAPERAK:interchangeToEdiString(ack);
     check io:fileWriteString(outboundFile, ackText);
 
-    aperak_parser:APERAK|error ackBody = ack.transactions[0].body;
-    if ackBody is aperak_parser:APERAK {
+    mAPERAK:EDI_APERAK_APERAK|error ackBody = ack.transactions[0].body;
+    if ackBody is mAPERAK:EDI_APERAK_APERAK {
         log:printInfo("Acknowledgement written", file = outboundFile,
                 accepted = ackBody.group_1.length(), rejected = ackBody.group_4.length());
     }
@@ -56,17 +56,17 @@ public function main() returns error? {
 
 // Build an APERAK acknowledging one inbound ORDERS interchange: a DOC segment group for
 // every order that was read, and an ERC segment group for every message that was not.
-function buildAcknowledgement(orders_parser:ORDERSInterchange orders)
-        returns aperak_parser:APERAKInterchange {
-    orders_parser:Interchange_header_Type inbound = orders.interchangeHeader.interchange_header;
+function buildAcknowledgement(mORDERS:EDI_ORDERS_ORDERSInterchange orders)
+        returns mAPERAK:EDI_APERAK_APERAKInterchange {
+    mORDERS:Interchange_header_Type inbound = orders.interchangeHeader.interchange_header;
     time:Civil now = time:utcToCivil(time:utcNow());
 
-    aperak_parser:Group_1_GType[] accepted = [];
-    aperak_parser:Group_4_GType[] rejected = [];
+    mAPERAK:Group_1_GType[] accepted = [];
+    mAPERAK:Group_4_GType[] rejected = [];
 
-    foreach orders_parser:ORDERSTransaction txn in orders.transactions {
+    foreach mORDERS:EDI_ORDERS_ORDERSTransaction txn in orders.transactions {
         string messageRef = txn.transactionHeader.Message_header.message_reference_number;
-        orders_parser:ORDERS|error body = txn.body;
+        mORDERS:EDI_ORDERS_ORDERS|error body = txn.body;
         if body is error {
             rejected.push({
                 Application_error_information: {
@@ -99,7 +99,7 @@ function buildAcknowledgement(orders_parser:ORDERSInterchange orders)
     }
 
     string controlRef = string `ACK${inbound.control_reference}`;
-    aperak_parser:APERAK body = {
+    mAPERAK:EDI_APERAK_APERAK body = {
         Beginning_of_message: {
             DOCUMENT_MESSAGE_NAME: {Document_name_code: DOC_ACKNOWLEDGEMENT},
             DOCUMENT_MESSAGE_IDENTIFICATION: {Document_identifier: controlRef},

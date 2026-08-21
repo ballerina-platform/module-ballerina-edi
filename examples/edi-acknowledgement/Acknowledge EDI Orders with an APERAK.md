@@ -26,57 +26,49 @@ order-batch.edi ──▶ interchangeFromEdiString ──┬── read ──�
 ```
 
 The reply is written with `interchangeToEdiString`, which emits the envelope from the typed
-`APERAKInterchange` and recomputes the `UNT` segment count and the `UNZ` interchange count, so
+`EDI_APERAK_APERAKInterchange` and recomputes the `UNT` segment count and the `UNZ` interchange count, so
 neither has to be tracked by hand as errors are added.
 
 ## Project layout
 
-This example is a Ballerina **workspace** with three packages:
+Nothing is generated here. Both message types come from the prebuilt
+[`ballerinax/edifact.d03a.supplychain`](https://central.ballerina.io/ballerinax/edifact.d03a.supplychain)
+package, so the example is a single Ballerina package with two imports:
 
-- `orders_parser` — the typed `ORDERS` module, generated from `resources/ORDERS.json`.
-- `aperak_parser` — the typed `APERAK` module, generated from `resources/APERAK.json`.
-- `edi_acknowledgement` — the integration that reads the orders and writes the acknowledgement.
+```ballerina
+import ballerinax/edifact.d03a.supplychain.mAPERAK;
+import ballerinax/edifact.d03a.supplychain.mORDERS;
+```
 
 ```text
 edi-acknowledgement/
-├── aperak_parser/          # generated typed APERAK module
-├── edi_acknowledgement/    # integration (orders in → APERAK out)
-├── orders_parser/          # generated typed ORDERS module
-└── resources/              # schemas, sample-data/, outbound/
+├── main.bal                # integration (orders in → APERAK out)
+└── resources/              # sample-data/, outbound/
 ```
 
-`ballerinax/edifact.d03a.supplychain` publishes both `mORDERS` and `mAPERAK`, but this example
-cannot use them: those packages are at `0.9.0`, generated before the envelope-aware API, and their
-schemas list `UNA`, `UNB`, `UNH`, `UNT`, and `UNZ` in `ignoreSegments` with no `envelope`
-declaration. Their `fromEdiString` reads one message body and discards the interchange, so it can
-neither split the inbound batch nor emit an envelope with recomputed counts — the two things this
-example is about.
+Each submodule exposes the full envelope-aware API — `interchangeFromEdiString`,
+`interchangeToEdiString`, `headersFromEdiString`, `fromEdiString`, `toEdiString` — over typed
+records, so `mORDERS:EDI_ORDERS_ORDERSInterchange` and `mAPERAK:EDI_APERAK_APERAKInterchange` are
+the same shapes `bal edi codegen` would have produced from the D03A schemas.
 
-Both schemas come from the free UN/EDIFACT D03A directory. Download the release archive from the
-[UN/EDIFACT directory downloads](https://unece.org/trade/uncefact/unedifact/download) and regenerate
-them with:
-
-```bash
-bal edi convertEdifactSchema -v d03a -t APERAK -i d03a.zip -o resources
-bal edi codegen -i resources/APERAK.json -o edi.bal    # run inside aperak_parser
-```
+Reach for code generation when a trading partner deviates from the published specification, since the
+prebuilt packages track the standard exactly — see
+[Build a Custom EDI Schema and Parser](../custom-edi-schema) for that path.
 
 ## Prerequisites
 
-**Ballerina** — Swan Lake (2201.12.0 or later). Nothing else: the example reads and writes local
-files, so no broker, database, or SFTP server is needed.
+**Ballerina** — Swan Lake (2201.12.0 or later). The prebuilt EDIFACT package is resolved from
+Ballerina Central on the first build; nothing else is needed, since the example reads and writes
+local files.
 
 ## Run the example
 
-Run from inside the `edi_acknowledgement` package so the relative paths resolve:
-
 ```bash
-cd edi_acknowledgement
 bal run
 ```
 
 ```text
-level=INFO message="Acknowledgement written" file="../resources/outbound/acknowledgement.edi" accepted=2 rejected=1
+level=INFO message="Acknowledgement written" file="resources/outbound/acknowledgement.edi" accepted=2 rejected=1
 ```
 
 The inbound sample `resources/sample-data/order-batch.edi` holds three messages: `0001` and `0002`
