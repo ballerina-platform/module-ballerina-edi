@@ -86,9 +86,6 @@ message body, and `headersFromEdiString`, `interchangeFromEdiString`, and `inter
 for the envelope — all over typed records. Each package's default module dispatches those same
 functions by message name, and adds `getEDINames()` and `hasEnvelope()`.
 
-Envelope support arrived in `1.0.0`. The earlier `0.9.0` packages ignore the envelope segments, so
-pin `1.0.0` or later to read interchange headers or process a batch.
-
 ```ballerina
 import ballerina/io;
 import ballerinax/edifact.d03a.finance.mINVOIC;
