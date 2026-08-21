@@ -66,16 +66,9 @@ public function main() returns error? {
 
 ### EDIFACT — prebuilt packages
 
-For common UN/EDIFACT D03A message types you can parse a single message body without generating
-anything: import a ready-made package from the `ballerinax` organization and call its
-`fromEdiString` / `toEdiString` functions directly. Each package groups related message types by
-business domain.
-
-> **These packages predate the envelope-aware API.** They are published at `0.9.0`, and their bundled
-> schemas list `UNA`, `UNB`, `UNH`, `UNT`, and `UNZ` in `ignoreSegments` with no `envelope`
-> declaration. `fromEdiString` therefore parses a single message body and discards the interchange:
-> it cannot read the sender from `UNB`, and it fails on an interchange carrying more than one
-> message. Generate your own module (`codegen` or `libgen`) when you need envelope handling.
+For common UN/EDIFACT D03A message types you do not need to generate anything: import a ready-made
+package from the `ballerinax` organization and call its functions directly. Each package groups
+related message types by business domain.
 
 | Package | Domain |
 |---------|--------|
@@ -88,8 +81,13 @@ business domain.
 | [`ballerinax/edifact.d03a.supplychain`](https://central.ballerina.io/ballerinax/edifact.d03a.supplychain) | Purchase orders, order responses, delivery forecasts, inventory, despatch advices. |
 
 Each message type is available as a submodule (e.g. `finance.mINVOIC`, `supplychain.mORDERS`)
-exposing `fromEdiString` / `toEdiString`; each package's default module also provides
-`getEDINames()` to list its supported message types:
+exposing the same envelope-aware API as generated code — `fromEdiString` / `toEdiString` for a
+message body, and `headersFromEdiString`, `interchangeFromEdiString`, and `interchangeToEdiString`
+for the envelope — all over typed records. Each package's default module dispatches those same
+functions by message name, and adds `getEDINames()` and `hasEnvelope()`.
+
+Envelope support arrived in `1.0.0`. The earlier `0.9.0` packages ignore the envelope segments, so
+pin `1.0.0` or later to read interchange headers or process a batch.
 
 ```ballerina
 import ballerina/io;
@@ -97,8 +95,11 @@ import ballerinax/edifact.d03a.finance.mINVOIC;
 
 public function main() returns error? {
     string ediText = check io:fileReadString("resources/invoice.edi");
-    mINVOIC:EDI_INVOIC_Invoice_message invoice = check mINVOIC:fromEdiString(ediText);
-    io:println(invoice);
+    mINVOIC:EDI_INVOIC_INVOICInterchange interchange = check mINVOIC:interchangeFromEdiString(ediText);
+    foreach mINVOIC:EDI_INVOIC_INVOICTransaction txn in interchange.transactions {
+        mINVOIC:EDI_INVOIC_INVOIC|error body = txn.body;
+        io:println(body is error ? "quarantined: " + body.message() : body.toString());
+    }
 }
 ```
 
