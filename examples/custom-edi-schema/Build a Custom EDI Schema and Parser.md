@@ -47,7 +47,7 @@ segment definition:
 ```
 
 Other common customisations: change a field `length`, mark a segment `required`, add code values, or
-add/remove segments. See the [Schema Specification](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/specs/SchemaSpecification.md)
+add/remove segments. See the [schema definition](https://github.com/ballerina-platform/module-ballerina-edi/blob/main/docs/spec/spec.md#7-schema-definition)
 for the full grammar.
 
 ## Step 3 — Generate the typed module
