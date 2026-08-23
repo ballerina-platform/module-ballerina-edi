@@ -50,11 +50,12 @@ public function main() returns error? {
     string ediText = check io:fileReadString("resources/order.edi");
     ORDERSInterchange interchange = check interchangeFromEdiString(ediText);
     foreach var txn in interchange.transactions {
-        if txn.body is error {
-            io:println("Quarantined: ", txn.body.message());
+        ORDERS|error body = txn.body;
+        if body is error {
+            io:println("Quarantined: ", body.message());
             continue;
         }
-        io:println(txn.body);
+        io:println(body);
     }
 }
 ```
