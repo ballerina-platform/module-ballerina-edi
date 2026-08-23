@@ -52,7 +52,7 @@ import ballerina/io;
 public function main() returns error? {
     string ediText = check io:fileReadString("resources/order.edi");
     ORDERSInterchange interchange = check interchangeFromEdiString(ediText);
-    foreach var txn in interchange.transactions {
+    foreach ORDERSTransaction txn in interchange.transactions {
         ORDERS|error body = txn.body;
         if body is error {
             io:println("Quarantined: ", body.message());
