@@ -1,9 +1,9 @@
 [package]
 org = "ballerina"
 name = "edi"
-version = "1.7.0"
+version = "1.7.1"
 authors = ["Ballerina"]
-keywords = ["edi"]
+keywords = ["edi", "Type/Library", "Area/Built-in", "Area/Developer Tools"]
 repository = "https://github.com/ballerina-platform/module-ballerina-edi"
 icon = "icon.png"
 license = ["Apache-2.0"]
