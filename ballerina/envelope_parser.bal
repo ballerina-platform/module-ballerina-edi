@@ -771,7 +771,7 @@ isolated function readFileChars(string filePath, int maxChars) returns string|Er
         string text = check charCh.read(maxChars);
         check charCh.close();
         return text;
-    } on fail var e {
+    } on fail error e {
         return error Error(string `Failed to read EDI file '${filePath}': ${e.message()}`, e);
     }
 }

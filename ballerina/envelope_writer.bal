@@ -88,7 +88,7 @@ public isolated function interchangeToEdiString(EdiInterchange msg, EdiSchema sc
     }
     // Append a readability newline after every entry (unless the segment
     // delimiter is already a newline). A single join avoids the quadratic cost
-    // of repeated `+=` concatenation when serialising large interchanges.
+    // of repeated `+=` concatenation when serializing large interchanges.
     string suffix = segDelim == "\n" ? "" : "\n";
     return string:'join(suffix, ...ediText) + suffix;
 }
@@ -105,7 +105,7 @@ isolated function writeOneTransaction(EdiTransaction t, EdiEnvelopeSchema env,
 
     json|error rawBody = t.body;
     if rawBody is error {
-        return error SerializationError(string `Cannot serialise transaction with error body: ${rawBody.message()}`);
+        return error SerializationError(string `Cannot serialize transaction with error body: ${rawBody.message()}`);
     }
     if rawBody !is map<json> {
         return error SerializationError(string `Transaction body must be a JSON object. Found: ${rawBody.toString()}`);
@@ -262,7 +262,7 @@ isolated function patchTrailerCounts(json trailerJson, EdiUnitSchema[] trailerUn
 // positionally per the standard layouts: ISA13 (interchange control number),
 // UNB 0020 (interchange control reference), GS06 (group control number),
 // UNG 0048 (group reference number), ST02 (transaction set control number),
-// UNH 0062 (message reference number). Returns `()` for unrecognised header
+// UNH 0062 (message reference number). Returns `()` for unrecognized header
 // codes or when the element is not present.
 isolated function getHeaderControlValue(json headerJson, EdiUnitSchema[] headerUnits,
         EdiSchema schema) returns json {
@@ -295,7 +295,7 @@ isolated function getHeaderControlValue(json headerJson, EdiUnitSchema[] headerU
 }
 
 // Zero-based element index (after the segment code) of the control value in a
-// standard envelope header segment, or -1 for unrecognised codes.
+// standard envelope header segment, or -1 for unrecognized codes.
 isolated function headerControlElementIndex(string code) returns int {
     match code {
         "ISA" => {

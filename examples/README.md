@@ -14,11 +14,17 @@ parsing, and conformant serialization.
    `edifactHeadersFromEdiString`) — no schema and no body parse required.
 
 3. [Generate and Send Outbound EDI Orders](edi-order-generator) — Build an interchange from application
-   data, serialise it with `interchangeToEdiString` (envelope and trailer counts recomputed
+   data, serialize it with `interchangeToEdiString` (envelope and trailer counts recomputed
    automatically), and deliver it to a supplier's SFTP drop.
 
-4. [Build a Custom EDI Schema and Parser](custom-edi-schema) — Start from a standard EDIFACT message,
-   customise the schema for a trading partner's deviations, and generate a typed Ballerina parser with
+4. [Acknowledge EDI Orders with an APERAK](edi-acknowledgement) — Read an inbound `ORDERS`
+   interchange and reply with an EDIFACT `APERAK` that names every order that was read and every
+   message that was not, built from the fail-safe parse result and serialized with
+   `interchangeToEdiString`. Generates nothing: both message types are imported from the prebuilt
+   `ballerinax/edifact.d03a.supplychain` package.
+
+5. [Adapt an EDI Schema to a Trading Partner](adapt-edi-schema) — Start from a standard EDIFACT message,
+   adapt the schema to a trading partner's deviations, and generate a typed Ballerina parser with
    `edi-tools`. The other examples reuse a module produced this way.
 
 ## Prerequisites

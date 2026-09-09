@@ -1,0 +1,3 @@
+[workspace]
+title = "adapt-edi-schema"
+packages = ["adapt_edi_schema", "edi_parser"]

@@ -1,0 +1,48 @@
+{
+  "name": "RffComponentDiscriminationTest",
+  "delimiters": {
+    "segment": "'",
+    "field": "+",
+    "component": ":"
+  },
+  "preserveEmptyFields": false,
+  "includeSegmentCode": true,
+  "segmentDefinitions": {
+    "RFF_SellersReference": {
+      "code": "RFF",
+      "tag": "SellersReference",
+      "fields": [
+        {"tag": "code"},
+        {"tag": "REFERENCE", "required": true, "components": [
+          {"tag": "qualifier", "required": true, "discriminator": ["SS"]},
+          {"tag": "number", "required": true}
+        ]}
+      ]
+    },
+    "RFF_VatNumber": {
+      "code": "RFF",
+      "tag": "VatNumber",
+      "fields": [
+        {"tag": "code"},
+        {"tag": "REFERENCE", "required": true, "components": [
+          {"tag": "qualifier", "required": true, "discriminator": ["VA"]},
+          {"tag": "number", "required": true}
+        ]}
+      ]
+    }
+  },
+  "segments": [
+    {
+      "code": "BGM",
+      "tag": "BeginningOfMessage",
+      "minOccurances": 1,
+      "maxOccurances": 1,
+      "fields": [
+        {"tag": "code"},
+        {"tag": "documentName"}
+      ]
+    },
+    {"ref": "RFF_SellersReference", "minOccurances": 0},
+    {"ref": "RFF_VatNumber", "minOccurances": 0}
+  ]
+}

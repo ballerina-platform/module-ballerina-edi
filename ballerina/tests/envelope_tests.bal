@@ -682,7 +682,7 @@ function testInterchangeFromEdiStringGarbageInputFailsFast() returns error? {
 }
 
 // =============================================================================
-// fromEdiString backward-compatibility and envelope-skip behaviour
+// fromEdiString backward-compatibility and envelope-skip behavior
 // =============================================================================
 
 @test:Config {}
@@ -720,7 +720,7 @@ function testConvertToTypeDecimalSeparatorDot() returns error? {
     // "."  is the EDIFACT default decimal separator and is also a regex
     // metacharacter — the old `regexp:fromString(".")` would match every
     // character and corrupt the value. With the literal-replace fix, "." is
-    // recognised as already-canonical and the value is parsed correctly.
+    // recognized as already-canonical and the value is parsed correctly.
     SimpleType|error v = convertToType("12.34", FLOAT, ".");
     test:assertTrue(v is float, "Expected float value for decimalSeparator='.'.");
     if v is float {
@@ -794,7 +794,7 @@ function testInterchangeToEdiStringRefusesErrorBody() returns error? {
     transactions[0].body = error("simulated bad body");
     string|Error result = interchangeToEdiString(parsed, schema);
     if result !is SerializationError {
-        test:assertFail("Should refuse (with SerializationError) to serialise an interchange whose transaction body is an error.");
+        test:assertFail("Should refuse (with SerializationError) to serialize an interchange whose transaction body is an error.");
     }
     test:assertTrue(result.message().includes("error body"),
             "Error message should mention the offending body.");

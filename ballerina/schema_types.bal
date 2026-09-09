@@ -22,7 +22,7 @@
 #
 # + delimiters - Delimiters used to separate EDI segments, fields, components, etc.  
 #
-# + ignoreSegments - List of segment schemas to be ignored when matching a EDI text. 
+# + ignoreSegments - List of segment schemas to be ignored when matching an EDI text. 
 # For example, if it is necessary to process X12 transaction sets only, without ISA as GS segments,
 # and if the schema contains ISA and GS segments as well, ISA and GS can be provided as ignoreSegments.
 #
@@ -38,7 +38,7 @@
 # + segments - Array of segment and segment group schemas
 # + segmentDefinitions - Map of segment definitions indexed by the segment code
 # + envelope - Hierarchical envelope schema (interchange / group / transaction) enabling
-# the envelope-aware APIs; when nil (older schemas), behaviour is unchanged
+# the envelope-aware APIs; when nil (older schemas), behavior is unchanged
 public type EdiSchema record {|
     string name;
     string tag = "Root_mapping";
@@ -118,6 +118,8 @@ public type EdiFieldSchema record {|
     EdiDataType dataType = STRING;
     int startIndex = -1;
     Range|int length = -1;
+    string[] values?;
+    string[] discriminator?;
     EdiComponentSchema[] components = [];
 |};
 
@@ -131,6 +133,8 @@ public type EdiComponentSchema record {|
     boolean required = false;
     boolean truncatable = true;
     EdiDataType dataType = STRING;
+    string[] values?;
+    string[] discriminator?;
     EdiSubcomponentSchema[] subcomponents = [];
 |};
 
@@ -138,4 +142,6 @@ public type EdiSubcomponentSchema record {|
     string tag;
     boolean required = false;
     EdiDataType dataType = STRING;
+    string[] values?;
+    string[] discriminator?;
 |};
