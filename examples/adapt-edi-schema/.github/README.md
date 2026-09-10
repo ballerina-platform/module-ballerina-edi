@@ -1,0 +1,1 @@
+../Adapt an EDI Schema to a Trading Partner.md

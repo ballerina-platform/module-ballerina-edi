@@ -1,13 +1,13 @@
 # Generate and Send Outbound EDI Orders
 
 This example reads a purchase order from a database, builds an EDIFACT D03A `ORDERS` interchange from
-it, serialises it to conforming EDI text, and delivers it to a supplier's SFTP drop. It is the
+it, serializes it to conforming EDI text, and delivers it to a supplier's SFTP drop. It is the
 outbound counterpart to [Parse EDI Documents and Publish to Kafka](../edi-parser-to-kafka).
 
 ## Overview
 
 A buyer application stores purchase orders in a relational database. For a given order, the program
-queries its header and line items, maps them onto the typed `ORDERSInterchange`, and serialises with
+queries its header and line items, maps them onto the typed `ORDERSInterchange`, and serializes with
 `interchangeToEdiString` — the inverse of `interchangeFromEdiString` — which writes the full envelope
 (UNB/UNH headers and UNT/UNZ trailers) together with the transaction body.
 
@@ -26,7 +26,7 @@ This example is a Ballerina **workspace** with two packages:
 
 - `edi_parser` — the typed `ORDERS` module (records plus `interchangeToEdiString`), generated from an
   `ORDERS` EDI schema and exposed at the package root. See
-  [Build a Custom EDI Schema and Parser](../custom-edi-schema) for how it is produced.
+  [Adapt an EDI Schema to a Trading Partner](../adapt-edi-schema) for how it is produced.
 - `edi_order_generator` — the program that queries the database, builds the interchange, and delivers
   the EDI.
 

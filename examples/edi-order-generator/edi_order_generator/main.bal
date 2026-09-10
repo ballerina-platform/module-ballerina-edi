@@ -67,7 +67,7 @@ public function main() returns error? {
             `SELECT item_code, quantity FROM order_items WHERE order_id = ${orderId} ORDER BY line_no`, OrderItem)
         select item;
 
-    // 2. Build a typed ORDERS interchange and serialise it to conforming EDI text.
+    // 2. Build a typed ORDERS interchange and serialize it to conforming EDI text.
     edi_parser:ORDERSInterchange interchange = buildOrder(header, items);
     string ediText = check edi_parser:interchangeToEdiString(interchange);
 

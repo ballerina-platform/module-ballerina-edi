@@ -84,7 +84,7 @@ public isolated function interchangeFromEdiString(string ediText) returns ORDERS
     edi:EdiSchema ediSchema = check edi:getSchema(schemaJson);
     edi:EdiInterchange raw = check edi:interchangeFromEdiString(ediText, ediSchema);
     ORDERSTransaction[] txns = [];
-        foreach var t in raw.transactions ?: [] {
+        foreach edi:EdiTransaction t in raw.transactions ?: [] {
             ORDERS|error body = convertORDERSBody(t.body);
             ORDERSTransactionHeader th = check t.transactionHeader.cloneWithType();
             ORDERSTransactionTrailer tt = check t.transactionTrailer.cloneWithType();
@@ -95,18 +95,18 @@ public isolated function interchangeFromEdiString(string ediText) returns ORDERS
         return {interchangeHeader: ih, transactions: txns, interchangeTrailer: it};
 }
 
-# Serialise a fully populated ORDERSInterchange into EDI text. Inverse of
+# Serialize a fully populated ORDERSInterchange into EDI text. Inverse of
 # interchangeFromEdiString. A transaction whose body is an error cannot
-# be serialised — filter or replace such transactions before calling.
+# be serialized — filter or replace such transactions before calling.
 #
-# + msg - The interchange to serialise
+# + msg - The interchange to serialize
 # + return - EDI text, or error
 public isolated function interchangeToEdiString(ORDERSInterchange msg) returns string|error {
     edi:EdiSchema ediSchema = check edi:getSchema(schemaJson);
     edi:EdiInterchange raw;
     {
         edi:EdiTransaction[] rawTxns = [];
-        foreach var t in msg.transactions {
+        foreach ORDERSTransaction t in msg.transactions {
             json|error body = unwrapORDERSBody(t.body);
             rawTxns.push({
                 transactionHeader: t.transactionHeader.toJson(),

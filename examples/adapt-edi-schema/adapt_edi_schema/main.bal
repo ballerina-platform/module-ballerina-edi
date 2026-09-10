@@ -21,14 +21,14 @@ import wso2/edi_parser;
 public function main() returns error? {
     string ediText = check io:fileReadString("../resources/sample.edi");
 
-    // Parse with the typed module generated from the customised schema.
+    // Parse with the typed module generated from the adapted schema.
     edi_parser:ORDERSInterchange interchange = check edi_parser:interchangeFromEdiString(ediText);
     edi_parser:Message_information_GType? messageInfo =
             interchange.transactions[0].transactionHeader.Message_header?.message_information;
 
     io:println("Standard message type: ", messageInfo?.name, " D", messageInfo?.version, " ", messageInfo?.status);
     // `new_field` is the partner-specific extension added to the generated schema by hand.
-    io:println("Partner extension (custom new_field): ", messageInfo?.new_field);
+    io:println("Partner extension (new_field): ", messageInfo?.new_field);
 
     edi_parser:ORDERS|error body = interchange.transactions[0].body;
     if body is error {

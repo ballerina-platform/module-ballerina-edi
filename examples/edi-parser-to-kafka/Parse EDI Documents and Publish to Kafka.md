@@ -25,7 +25,7 @@ This example is a Ballerina **workspace** with two packages:
 
 - `edi_parser` — the typed `ORDERS` module (records plus `interchangeFromEdiString` and friends),
   generated from an `ORDERS` EDI schema with the `edi` CLI and exposed at the package root so it can
-  be called from the integration. See the [Build a Custom EDI Schema and Parser](../custom-edi-schema)
+  be called from the integration. See the [Adapt an EDI Schema to a Trading Partner](../adapt-edi-schema)
   example for how that module is produced.
 - `edi_kafka` — the file listener + Kafka producer integration that consumes the typed module.
 

@@ -71,6 +71,7 @@ isolated function writeComponentGroup(json componentGroup, EdiSegSchema segSchem
             if !(componentValue is SimpleType) {
                 return error Error(string `Component must contain a primitive value. Segment: ${segSchema.code}, Field: ${fieldSchema.tag}, Component: ${cmap.tag}, Component value: ${componentValue.toString()}`);
             }
+            check validateAllowedValue(componentValue, cmap.values, cmap.discriminator, segSchema.tag, cmap.tag);
             cGroupText += (cindex == 0 ? "" : cd) + serializeSimpleType(componentValue, context.schema, -1);
             cindex += 1;
         } else {
@@ -136,6 +137,7 @@ isolated function writeSubcomponentGroup(json subcomponentGroup, EdiSegSchema se
         if !(subcomponentValue is SimpleType) {
             return error Error(string `Only primitive types are supported as subcomponent values. Found ${subcomponentValue.toString()}`);
         }
+        check validateAllowedValue(subcomponentValue, scmap.values, scmap.discriminator, segSchema.tag, scmap.tag);
         scGroupText += (scGroupText == "" ? "" : scd) + serializeSimpleType(subcomponentValue, context.schema, -1);
         scindex += 1;
     }
