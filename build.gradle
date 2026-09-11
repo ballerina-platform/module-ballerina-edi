@@ -105,6 +105,14 @@ release {
     }
 }
 
-tasks.named('build') {
-    dependsOn('edi-ballerina:build')
+if (tasks.names.contains('build')) {
+    tasks.named('build') {
+        dependsOn('edi-ballerina:build')
+
+    }
+} else {
+    tasks.register('build') {
+        dependsOn('edi-ballerina:build')
+
+    }
 }
