@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - [[#9132] Updated Keywords and Reformat README for Connector Store Discoverability](https://github.com/ballerina-platform/ballerina-library/issues/9132)
+- [[#9132] Corrected Area keyword from Developer Tools to ERP & Business Operations](https://github.com/ballerina-platform/ballerina-library/issues/9132)
 
 ### Added
 - [Match consecutive same-code sibling definitions that all declare discriminators as an unordered set, so discriminated segments may arrive in any order and interleave (e.g. HIPAA "any order" sub-loops, EANCOM interleaved `ALC` occurrences)](https://github.com/ballerina-platform/ballerina-library/issues/9100)
