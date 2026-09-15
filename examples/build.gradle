@@ -17,6 +17,13 @@
  */
 
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.process.ExecOperations
+
+import javax.inject.Inject
+
+abstract class BallerinaExecHelper {
+    @Inject abstract ExecOperations getExecOperations()
+}
 
 // The examples are end-to-end integrations built against the local `ballerina/edi`
 // build, so they require the `bal` CLI on the PATH. CI builds the module through the
@@ -34,10 +41,11 @@ def balAvailable() {
 }
 
 task test {
+    def execHelper = project.objects.newInstance(BallerinaExecHelper)
     onlyIf { balAvailable() }
     doLast {
         try {
-            exec {
+            execHelper.execOperations.exec {
                 workingDir project.projectDir
                 println("Working dir: ${workingDir}")
                 if (Os.isFamily(Os.FAMILY_WINDOWS)) {
@@ -54,6 +62,7 @@ task test {
 }
 
 task build {
+    def execHelper = project.objects.newInstance(BallerinaExecHelper)
     onlyIf { balAvailable() }
     gradle.taskGraph.whenReady { graph ->
         if (graph.hasTask(":edi-examples:test")) {
@@ -62,7 +71,7 @@ task build {
     }
     doLast {
         try {
-            exec {
+            execHelper.execOperations.exec {
                 workingDir project.projectDir
                 println("Working dir: ${workingDir}")
                 if (Os.isFamily(Os.FAMILY_WINDOWS)) {
