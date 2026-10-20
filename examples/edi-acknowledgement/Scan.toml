@@ -1,0 +1,4 @@
+# ballerina/log:1 is a false positive here: the flagged argument is `outboundFile`, a configurable output file path
+# (default "resources/outbound/acknowledgement.edi") and not a credential or other sensitive value.
+[rule]
+exclude = ["ballerina/log:1"]

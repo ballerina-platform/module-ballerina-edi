@@ -1,0 +1,5 @@
+# ballerina:14 matches the field names `authInfo` and `securityInfo` of the public X12ISA record. They are the
+# X12 ISA02 "Authorization Information" and ISA04 "Security Information" envelope header fields parsed from the
+# EDI message; they are not credentials, and no secret is assigned a fixed value. Renaming them would change the public API.
+[rule]
+exclude = ["ballerina:14"]
