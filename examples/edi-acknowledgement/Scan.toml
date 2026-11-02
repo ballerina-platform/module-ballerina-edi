@@ -1,4 +1,7 @@
 # ballerina/log:1 is a false positive here: the flagged argument is `outboundFile`, a configurable output file path
 # (default "resources/outbound/acknowledgement.edi") and not a credential or other sensitive value.
+# TODO: replace this rule exclusion with a targeted scan suppression (with a reason) once `bal scan` supports it
+# (planned for v0.13.0), and fix the false positives on the scan tool side: a secret-named identifier should only be
+# reported when it is assigned a fixed value.
 [rule]
 exclude = ["ballerina/log:1"]

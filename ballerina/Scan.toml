@@ -1,5 +1,8 @@
 # ballerina:14 matches the field names `authInfo` and `securityInfo` of the public X12ISA record. They are the
 # X12 ISA02 "Authorization Information" and ISA04 "Security Information" envelope header fields parsed from the
 # EDI message; they are not credentials, and no secret is assigned a fixed value. Renaming them would change the public API.
+# TODO: replace this rule exclusion with a targeted scan suppression (with a reason) once `bal scan` supports it
+# (planned for v0.13.0), and fix the false positives on the scan tool side: a secret-named identifier should only be
+# reported when it is assigned a fixed value.
 [rule]
 exclude = ["ballerina:14"]
